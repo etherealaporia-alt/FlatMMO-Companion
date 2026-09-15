@@ -1,6 +1,7 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "generated": "2026-09-15",
+  "release": "deep-ingest-v1.1",
   "layout": "flat-root",
   "branch": "v2-online",
   "counts": {
@@ -10,15 +11,24 @@
     "mechanics": 20,
     "areas": 14
   },
-  "monsterStatus": "bootstrap_mirror_needs_official_refresh",
-  "questStatus": {
-    "cached": 19,
-    "wikiReported": 21
+  "coverage": {
+    "combatStyles": [
+      "melee",
+      "archery",
+      "magic"
+    ],
+    "armourResourceCosts": "deep-normalized for smithable melee, craftable archery, and enchantable mage armour",
+    "questProcedures": "19 records; documented later quests enriched",
+    "skillsExplicit": [
+      "Enchantment",
+      "Farming",
+      "Brewing"
+    ]
   },
-  "excluded": [
-    "news/change notes",
-    "player profiles/state",
-    "market data"
+  "knownIssues": [
+    "wiki says 21 quests but only 19 named quest records are identified",
+    "monster bootstrap mirror still awaits official refresh",
+    "known source conflicts retained in verification notes"
   ],
-  "aiContextSha256": "86ea1cfe185e774ac491c63add789aa0956d160e0289aadb7a738649674dd417"
+  "aiContextSha256": "cc36834e60a6a3f2f5191439eee6f90505e9db039cb3a3c4d31c41f95c862ead"
 }

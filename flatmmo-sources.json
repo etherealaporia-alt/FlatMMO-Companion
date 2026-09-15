@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "generated": "2026-09-15",
   "permissionContext": {
     "wiki": "Liam/Dounford explicitly approved caching wiki data for the described public AI-companion use, with polite update checking rather than bot-like repeated fetching.",
@@ -26,25 +26,33 @@
       "id": "wiki.quests",
       "authority": "community_verified",
       "url": "https://flatmmo.wiki/index.php/Quests",
-      "usage": "normalized facts/procedures"
+      "usage": "deep normalized facts/procedures/progression",
+      "lastChecked": "2026-09-15",
+      "ingestion": "full-rendered-page normalization"
     },
     {
       "id": "wiki.melee",
       "authority": "community_verified",
       "url": "https://flatmmo.wiki/index.php/Melee",
-      "usage": "normalized facts/procedures"
+      "usage": "deep normalized facts/procedures/progression",
+      "lastChecked": "2026-09-15",
+      "ingestion": "full-rendered-page normalization"
     },
     {
       "id": "wiki.archery",
       "authority": "community_verified",
       "url": "https://flatmmo.wiki/index.php/Archery",
-      "usage": "normalized facts/procedures"
+      "usage": "deep normalized facts/procedures/progression",
+      "lastChecked": "2026-09-15",
+      "ingestion": "full-rendered-page normalization"
     },
     {
       "id": "wiki.magic",
       "authority": "community_verified",
       "url": "https://flatmmo.wiki/index.php/Magic",
-      "usage": "normalized facts/procedures"
+      "usage": "deep normalized facts/procedures/progression",
+      "lastChecked": "2026-09-15",
+      "ingestion": "full-rendered-page normalization"
     },
     {
       "id": "wiki.health",
@@ -74,19 +82,25 @@
       "id": "wiki.forging",
       "authority": "community_verified",
       "url": "https://flatmmo.wiki/index.php/Forging",
-      "usage": "normalized facts/procedures"
+      "usage": "deep normalized facts/procedures/progression",
+      "lastChecked": "2026-09-15",
+      "ingestion": "full-rendered-page normalization"
     },
     {
       "id": "wiki.crafting",
       "authority": "community_verified",
       "url": "https://flatmmo.wiki/index.php/Crafting",
-      "usage": "normalized facts/procedures"
+      "usage": "deep normalized facts/procedures/progression",
+      "lastChecked": "2026-09-15",
+      "ingestion": "full-rendered-page normalization"
     },
     {
       "id": "wiki.enchantment",
       "authority": "community_verified",
       "url": "https://flatmmo.wiki/index.php/Enchantment",
-      "usage": "normalized facts/procedures"
+      "usage": "deep normalized facts/procedures/progression",
+      "lastChecked": "2026-09-15",
+      "ingestion": "full-rendered-page normalization"
     },
     {
       "id": "wiki.fishing",
@@ -98,7 +112,9 @@
       "id": "wiki.farming",
       "authority": "community_verified",
       "url": "https://flatmmo.wiki/index.php/Farming",
-      "usage": "normalized facts/procedures"
+      "usage": "deep normalized facts/procedures/progression",
+      "lastChecked": "2026-09-15",
+      "ingestion": "full-rendered-page normalization"
     },
     {
       "id": "wiki.woodcutting",
@@ -122,7 +138,9 @@
       "id": "wiki.brewing",
       "authority": "community_verified",
       "url": "https://flatmmo.wiki/index.php/Brewing",
-      "usage": "normalized facts/procedures"
+      "usage": "deep normalized facts/procedures/progression",
+      "lastChecked": "2026-09-15",
+      "ingestion": "full-rendered-page normalization"
     },
     {
       "id": "wiki.stealing",
@@ -164,7 +182,9 @@
       "id": "wiki.armour",
       "authority": "community_verified",
       "url": "https://flatmmo.wiki/index.php/Armour",
-      "usage": "normalized facts/procedures"
+      "usage": "deep normalized facts/procedures/progression",
+      "lastChecked": "2026-09-15",
+      "ingestion": "full-rendered-page normalization"
     },
     {
       "id": "wiki.tools",
@@ -182,7 +202,9 @@
       "id": "wiki.fermenting",
       "authority": "community_verified",
       "url": "https://flatmmo.wiki/index.php/Fermenting",
-      "usage": "normalized facts/procedures"
+      "usage": "deep normalized facts/procedures/progression",
+      "lastChecked": "2026-09-15",
+      "ingestion": "full-rendered-page normalization"
     },
     {
       "id": "wiki.treasure_maps",
@@ -358,5 +380,6 @@
       "url": "https://flatmmo.wiki/index.php/Hats",
       "usage": "normalized facts/procedures"
     }
-  ]
+  ],
+  "ingestionNote": "2026-09-15 v1.1 deep pass normalized full rendered wiki pages available to the build environment. This pass did not call the MediaWiki API; automated API ingestion remains a later engineering step."
 }

@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "recordCount": 18,
   "records": [
     {
@@ -9,7 +9,8 @@
       "training": "Deal melee damage while a melee-type weapon is equipped.",
       "keyRules": [
         "8 XP per point of melee damage dealt",
-        "+1 Melee damage per 10 Melee levels"
+        "+1 Melee damage per 10 Melee levels",
+        "Melee weapon families include swords, scimitars, maces/clubs, knives/spears/tridents."
       ],
       "equipment": [
         "swords",
@@ -17,7 +18,8 @@
         "maces/clubs",
         "knives/spears"
       ],
-      "source": "https://flatmmo.wiki/index.php/Melee"
+      "source": "https://flatmmo.wiki/index.php/Melee",
+      "progressionRef": "flatmmo-equipment.json#combatStyles.melee"
     },
     {
       "id": "skill.archery",
@@ -27,9 +29,11 @@
       "keyRules": [
         "8 XP per point of Archery damage dealt",
         "+1 Archery damage per 10 Archery levels",
-        "bows provide accuracy; arrows provide damage and are consumed"
+        "A bow and arrows are both required to attack",
+        "Arrows are consumed when attacking"
       ],
-      "source": "https://flatmmo.wiki/index.php/Archery"
+      "source": "https://flatmmo.wiki/index.php/Archery",
+      "progressionRef": "flatmmo-equipment.json#combatStyles.archery"
     },
     {
       "id": "skill.magic",
@@ -37,11 +41,13 @@
       "type": "combat",
       "training": "Attack using staves and magic orbs.",
       "keyRules": [
-        "staves provide Magic accuracy",
-        "elemental orbs interact with monster weaknesses",
-        "damage orbs determine spell damage and are consumed unless another mechanic prevents it"
+        "8 XP per point of Magic damage dealt",
+        "+1 Magic damage per 10 Magic levels",
+        "A staff, Damage Orb, and Element Orb are required to attack",
+        "Element Orbs determine elemental weakness interaction"
       ],
-      "source": "https://flatmmo.wiki/index.php/Magic"
+      "source": "https://flatmmo.wiki/index.php/Magic",
+      "progressionRef": "flatmmo-equipment.json#combatStyles.magic"
     },
     {
       "id": "skill.health",
@@ -118,12 +124,85 @@
       "id": "skill.enchantment",
       "name": "Enchantment",
       "type": "production/magic",
-      "training": "Enchant orbs, armour, gems, weapons and related items.",
+      "training": "Enchant unpowered orbs at elemental shrines; enchant/craft mage armour and other enchanted items.",
       "keyRules": [
-        "Stardust and unpowered orbs are core inputs for orb enchanting",
-        "elemental shrines determine orb type"
+        "Orb recipes have separate base, double-output, and triple-output Enchantment level thresholds.",
+        "Stardust is required by higher-tier Damage Orbs and many armour/gem recipes.",
+        "Mage-armour crafting uses Enchantment levels that are separate from the Magic level required to equip the armour.",
+        "Some shrines require quest/bundle access."
       ],
-      "source": "https://flatmmo.wiki/index.php/Enchantment"
+      "source": "https://flatmmo.wiki/index.php/Enchantment",
+      "progression": {
+        "orbLevels": [
+          {
+            "name": "Damage Orb 1",
+            "level": 1,
+            "double": 20,
+            "triple": 40
+          },
+          {
+            "name": "Grass Orb",
+            "level": 5,
+            "double": 20,
+            "triple": 35
+          },
+          {
+            "name": "Water Orb",
+            "level": 15,
+            "double": 30,
+            "triple": 45
+          },
+          {
+            "name": "Fire Orb",
+            "level": 25,
+            "double": 40,
+            "triple": 65
+          },
+          {
+            "name": "Damage Orb 2",
+            "level": 30,
+            "double": 50,
+            "triple": 70
+          },
+          {
+            "name": "Air Orb",
+            "level": 35,
+            "double": 50,
+            "triple": 65
+          },
+          {
+            "name": "Thorn Leaf Orb",
+            "level": 42,
+            "double": 57,
+            "triple": null
+          },
+          {
+            "name": "Earth Orb",
+            "level": 45,
+            "double": 60,
+            "triple": 77
+          },
+          {
+            "name": "Damage Orb 3",
+            "level": 50,
+            "double": 65,
+            "triple": 88
+          },
+          {
+            "name": "Electric Orb",
+            "level": 60,
+            "double": 75,
+            "triple": 90
+          }
+        ],
+        "mageArmourCrafting": [
+          "Blue Mage Armour",
+          "Red Mage Armour",
+          "Druid Armour",
+          "Desert Mage Armour"
+        ]
+      },
+      "progressionRef": "flatmmo-equipment.json#enchantmentOrbs"
     },
     {
       "id": "skill.fishing",
@@ -140,13 +219,87 @@
       "id": "skill.farming",
       "name": "Farming",
       "type": "gathering/production",
-      "training": "Plant and harvest crops at farming plots.",
+      "training": "Plant and harvest crops, trees and fruit at farming plots, and complete Farming contracts.",
       "keyRules": [
-        "plots exist in multiple regions and a Greenhouse",
-        "crops have growth timers",
-        "farming contracts provide additional progression"
+        "There are 8 documented plots: Everbrook, Mystic Vale, Omboko, Ghost Mansion cemetery, and 4 Greenhouse plots.",
+        "Crops have real-time growth timers.",
+        "Straw Hat gives +10 effective Farming levels when harvesting.",
+        "Secateurs improve leaf yield; Rake speeds plucking.",
+        "Greenhouse access/progression is tied to Farmer Bundle and contract points."
       ],
-      "source": "https://flatmmo.wiki/index.php/Farming"
+      "source": "https://flatmmo.wiki/index.php/Farming",
+      "plots": [
+        "Everbrook",
+        "Mystic Vale",
+        "Omboko",
+        "Ghost Mansion cemetery",
+        "Greenhouse x4"
+      ],
+      "treeProgression": [
+        {
+          "name": "Normal Tree",
+          "level": 5,
+          "bonemeal": 10,
+          "growthHours": 5,
+          "xp": 2152
+        },
+        {
+          "name": "Oak Tree",
+          "level": 10,
+          "bonemeal": 50,
+          "growthHours": 10,
+          "xp": 5124
+        },
+        {
+          "name": "Willow Tree",
+          "level": 20,
+          "bonemeal": 300,
+          "growthHours": 15,
+          "xp": 9215
+        },
+        {
+          "name": "Maple Tree",
+          "level": 30,
+          "bonemeal": 500,
+          "growthHours": 20,
+          "xp": 13025
+        },
+        {
+          "name": "Mangrove Tree",
+          "level": 50,
+          "bonemeal": 750,
+          "growthHours": 30,
+          "xp": 23125
+        },
+        {
+          "name": "Haunted Tree",
+          "level": 65,
+          "bonemeal": 1500,
+          "growthHours": 60,
+          "xp": 52150
+        },
+        {
+          "name": "Cactus Tree",
+          "level": 80,
+          "bonemeal": 4000,
+          "growthHours": 80,
+          "xp": 125000
+        },
+        {
+          "name": "Pine Tree",
+          "level": 82,
+          "bonemeal": 6000,
+          "growthHours": 90,
+          "xp": 184600
+        },
+        {
+          "name": "Magic Tree",
+          "level": 90,
+          "bonemeal": 10000,
+          "growthHours": 105,
+          "xp": 354125
+        }
+      ]
     },
     {
       "id": "skill.woodcutting",
@@ -187,12 +340,51 @@
       "id": "skill.brewing",
       "name": "Brewing",
       "type": "production",
-      "training": "Create potions and use fermenting systems.",
+      "training": "Brew potions from vials, crops/leaves/mushrooms and use the fermenting system for beverages.",
       "keyRules": [
-        "base potion duration is documented as 5 minutes plus 30 seconds per Brewing level",
-        "some potions alter gathering/production behaviour"
+        "Each potion begins with 5 minutes duration and gains 30 seconds per Brewing level.",
+        "Potion-duration scaling does not apply to beverages.",
+        "Fermenting unlocks at Brewing 10.",
+        "Brewing recipes can improve combat, gathering, production and utility activities."
       ],
-      "source": "https://flatmmo.wiki/index.php/Brewing"
+      "source": "https://flatmmo.wiki/index.php/Brewing",
+      "starterRecipes": [
+        {
+          "name": "Melee Potion",
+          "level": 1,
+          "xp": 75,
+          "effect": "+5 Melee Damage",
+          "materials": {
+            "vial": 1,
+            "dotted_green_leaf": 3,
+            "red_mushroom": 10
+          }
+        },
+        {
+          "name": "Archery Potion",
+          "level": 3,
+          "xp": 80,
+          "effect": "+5 Arrow Damage",
+          "materials": {
+            "vial": 1,
+            "dotted_green_leaf": 4,
+            "green_mushroom": 10
+          }
+        },
+        {
+          "name": "Magic Potion",
+          "level": 5,
+          "effect": "+5 Magic Damage",
+          "materialsStatus": "recipe present on source page; full row should be refreshed by automated ingest"
+        },
+        {
+          "name": "Mining Potion",
+          "level": 10,
+          "effect": "Documented gathering boost",
+          "materialsStatus": "full recipe should be refreshed by automated ingest"
+        }
+      ],
+      "fermentingUnlockLevel": 10
     },
     {
       "id": "skill.stealing",
@@ -216,5 +408,7 @@
       ],
       "source": "https://flatmmo.wiki/index.php/Agility"
     }
-  ]
+  ],
+  "generated": "2026-09-15",
+  "status": "deep-normalized core progression enrichment"
 }

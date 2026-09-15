@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "reportedTotal": 21,
   "recordCount": 19,
   "records": [
@@ -293,7 +293,17 @@
         "Additional Mine access",
         "3 Gemstone Fragments"
       ],
-      "source": "https://flatmmo.wiki/index.php/Quests"
+      "source": "https://flatmmo.wiki/index.php/Quests",
+      "procedure": [
+        "Speak to the Dwarf in the Mining Area; he asks for gemstones connected to Beach, Omboko, and Mystic Vale.",
+        "Speak to the Research Dwarf in each of the three regions, then report back to the Mining Dwarf.",
+        "Return to each Research Dwarf's room and dig as directed.",
+        "In Omboko, defeat the Tiger guarding the gemstone and obtain/mine the gemstone fragment.",
+        "In Mystic Vale, defeat the Red Mage guarding the gemstone and obtain/mine the gemstone fragment.",
+        "At the Beach, defeat the Crocodile guarding the gemstone and obtain/mine the gemstone fragment.",
+        "Return/complete the hand-in sequence with the Mining Dwarf to unlock the documented gemstone/mine rewards."
+      ],
+      "procedureStatus": "full-normalized-from-wiki"
     },
     {
       "id": "quest.saving_marin",
@@ -311,7 +321,18 @@
         "Pirate Isle access"
       ],
       "source": "https://flatmmo.wiki/index.php/Quests",
-      "procedureStatus": "summary-only-in-bootstrap"
+      "procedureStatus": "full-normalized-from-wiki",
+      "procedure": [
+        "At Dock Haven, speak to the Watcher underneath the bank and accept the swim to Pirate Isle; unequip all gear before swimming.",
+        "On Pirate Isle, go south from the beach into the quicksand, speak to Marin, and agree to help.",
+        "Return to Dock Haven, take a Shovel from the bank, and give it to the Fishing Pirate in the room to the left.",
+        "Return to Pirate Isle, loot 1 Glass, then loot a Shovel one screen south.",
+        "Use the Worship Dig Anywhere ability with the shovel to get Gunpowder; combine Gunpowder and Glass into a Vial of Gunpowder.",
+        "Use the Vial of Gunpowder on the broken board east of the pirates.",
+        "Follow the quest's explosive/tunnel sequence to open the route to Marin.",
+        "Reach Marin through the tunnel and help him escape.",
+        "Return to Dock Haven; speak to the Retired Pirate and then the Watcher to finish."
+      ]
     },
     {
       "id": "quest.volcano_bridge",
@@ -323,8 +344,8 @@
       "requirements": [
         "Crafting 60",
         "Pyro Gloves",
-        "Saving Marin",
-        "Shrimp Sandwich",
+        "Complete Saving Marin",
+        "Complete Shrimp Sandwich",
         "100 Cactus Planks",
         "Nethergrass"
       ],
@@ -332,7 +353,15 @@
         "Ancient Ore Node access"
       ],
       "source": "https://flatmmo.wiki/index.php/Quests",
-      "procedureStatus": "summary-only-in-bootstrap"
+      "procedureStatus": "full-normalized-from-wiki",
+      "procedure": [
+        "Speak to Volcanic Rocky near the lava pit in the Volcano.",
+        "Bring him a Cactus Log for testing.",
+        "Craft 100 Cactus Planks and deliver them; the test demonstrates that untreated planks burn.",
+        "Speak to the Everbrook Chef about oil coating.",
+        "Bring the Chef 100 Cactus Planks and Nethergrass from the Volcanic Rocky room so the planks can be coated.",
+        "Return to the Volcano with Pyro Gloves, equip the gloves, and build the bridge."
+      ]
     },
     {
       "id": "quest.mount_frostvale",
@@ -342,16 +371,26 @@
         "Frostvale"
       ],
       "requirements": [
-        "Desert Temple",
-        "Cooking 60",
-        "Woodcutting 65",
+        "Complete Desert Temple",
+        "100 Oak Logs",
+        "100 Mangrove Logs",
+        "100 Haunted Logs",
+        "1 Dragonfruit Pie of any star/quality",
         "Warm armour recommended"
       ],
       "rewards": [
         "Mount Frostvale access"
       ],
       "source": "https://flatmmo.wiki/index.php/Quests",
-      "procedureStatus": "summary-only-in-bootstrap"
+      "procedureStatus": "full-normalized-from-wiki",
+      "procedure": [
+        "Speak to Frostboot in Frostvale about the key to Mount Frostvale.",
+        "Speak to the Mayor for approval.",
+        "Fill the Mayor's log piles with 100 Oak Logs, 100 Mangrove Logs, and 100 Haunted Logs.",
+        "Bring the Mayor a Dragonfruit Pie of any quality.",
+        "Sign the Mayor's waiver.",
+        "Return to Frostboot, collect the key, and unlock the Mount Frostvale door."
+      ]
     },
     {
       "id": "quest.desert_island",
@@ -361,6 +400,7 @@
         "Desert"
       ],
       "requirements": [
+        "Pirate Isle access",
         "Agility 40"
       ],
       "rewards": [
@@ -368,7 +408,22 @@
         "Ability to find green maps"
       ],
       "source": "https://flatmmo.wiki/index.php/Quests",
-      "procedureStatus": "summary-only-in-bootstrap"
+      "procedureStatus": "full-normalized-from-wiki",
+      "procedure": [
+        "Speak to the drunken pirate in the Jafa Tavern, then speak to the Pirate Ship Captain and accept the Desert Island voyage.",
+        "On the boat, defeat the Stormy Clouds; after the boat is damaged, repair the three holes using 30 Mangrove Planks and 300 Nails.",
+        "At the island, bank all gear and inventory before swimming ashore.",
+        "Follow the island survival route: defeat a Small Cloud, descend the ladder, take the Bronze Axe, defeat a beetle and take Bait.",
+        "Cut 43 Logs for the Bow, shafts, bridge repair, and a fire.",
+        "Loot Earth Orbs and a Pickaxe; mine the required Coal/Copper; restore Worship Points.",
+        "Kill Chickens for feathers, repair the bridge, collect a Fishing Rod, and kill Spiders for String.",
+        "Loot an Unpowered Orb and fish Sardines.",
+        "Sell one Earth Orb remotely, buy Matches, light a fire, cook/eat Sardines, then obtain the Fire Orb.",
+        "Smelt a Bronze Bar, forge Bronze Arrowheads, and craft Bronze Arrows.",
+        "Defeat Splashy and craft a Damage Orb 1.",
+        "Place the required orbs in the tombs, descend the ladder, take the shovel, then return and dig by the pirate.",
+        "Loot the map and chest and return them to the Jafa bar to complete the route."
+      ]
     },
     {
       "id": "quest.desert_temple",
@@ -379,17 +434,32 @@
       ],
       "requirements": [
         "3,500 Coins",
-        "3 Beers",
-        "High combat capability",
-        "Hunting 30",
-        "Stealing 40"
+        "3 Beers (2 Normal, 1 Premium)",
+        "High combat capability (summary table)",
+        "Hunting 30 (summary table)",
+        "Stealing 40 (summary table)"
       ],
       "rewards": [
         "Water supply to outpost",
         "Train access"
       ],
       "source": "https://flatmmo.wiki/index.php/Quests",
-      "procedureStatus": "summary-only-in-bootstrap"
+      "procedureStatus": "full-normalized-from-wiki",
+      "procedure": [
+        "Bring 3,500 Coins and 3 Beers to the Supplier's Store west of Jafa Outpost bank.",
+        "Pay 3,000 Coins for a Water Bucket and give it to the Dehydrated Ali outside.",
+        "Follow the Cousin dialogue to the Ali at the Everbrook Well, then return to the Supplier.",
+        "Use the beers to get the Supplier drunk, ask for a Water Bucket, and obtain the Temple door key he mistakenly gives you.",
+        "Enter the Desert Temple and progress through the statue, beetle, mirror, Angry Eye, and Black Statue rooms; collect keys from the relevant chests.",
+        "In the water/fire room, use the levers to reveal the route; solve the later lever combination using the hanging-fire clue.",
+        "Solve the chest puzzle in order 2, 1, 3, 4 to obtain a key, and survive the multi-Angry-Eye section for another key.",
+        "Continue through the Black Statues and Zebeth route; locate the hidden researcher and recover the key near Zebeth's earlier position.",
+        "At the keypad door enter 1988; attempt the lever and get sent to jail.",
+        "Pick your cell lock, pick the adjacent cell, and take the dead Ali's key.",
+        "Defeat 10 Poison Alis to continue; use the pickaxe wall shortcut if useful.",
+        "Return through the researcher/water-patch route, reach the Supplier confrontation, defeat the Supplier, and pull the lever to complete the quest."
+      ],
+      "verificationNote": "Detailed walkthrough header lists 3,500 Coins and 3 Beers; the quest summary table also lists high combat, Hunting 30 and Stealing 40."
     },
     {
       "id": "quest.desert_temple_2",
@@ -399,19 +469,37 @@
         "Desert"
       ],
       "requirements": [
+        "Complete Desert Temple",
         "Stealing 60",
-        "Desert Temple completion"
+        "Complete Desert Bundle for waterfall/secret entrance"
       ],
       "rewards": [
-        "Cactus Seeds",
-        "Stardust (wiki summary uncertain)",
-        "Zebeth boss access",
-        "Rock Enchant Altar access"
+        "50,000 Stealing XP",
+        "1 Cactus Seed"
       ],
       "source": "https://flatmmo.wiki/index.php/Quests",
-      "procedureStatus": "summary-only-in-bootstrap"
+      "procedureStatus": "full-normalized-from-wiki",
+      "procedure": [
+        "Complete the Desert Bundle to unlock the Waterfall Entrance.",
+        "Use the entrance and activate the lever that opens access to the researcher in the Desert Temple.",
+        "Speak to the researcher; he sends you to find a second researcher in a randomly selected Rogue Crypt.",
+        "Run Rogue Crypts until you find and speak to that researcher.",
+        "Return to the first researcher; he tells you to dig deeper in the crypt.",
+        "Go to Crypt 4 (the room with four skeletons and a plant) and dig inside it to enter the deeper room.",
+        "Dig in front of the large purple cross to trigger a fight with three Deep Rogues at the same time; defeat all three.",
+        "Use the ladder that appears, interact with the statue, and collect three prisms.",
+        "Return through the Desert Temple route and place the three prisms on the three statues.",
+        "Return to the first researcher; follow him downstairs and speak to him again to complete the quest."
+      ],
+      "verificationNote": "Detailed August 2026 walkthrough gives 50,000 Stealing XP + 1 Cactus Seed; older summary text mentions additional/uncertain rewards and is not treated as authoritative here."
     }
   ],
   "source": "https://flatmmo.wiki/index.php/Quests",
-  "status": "bootstrap_partial_due_source_summary_discrepancy"
+  "status": "deep-normalized; 19 named quest records documented while page summary reports 21 total",
+  "generated": "2026-09-15",
+  "verificationNotes": [
+    "The Quests page reports 21 total quests but the documented named list in this ingestion contains 19; two are not invented.",
+    "Later quest procedures were rebuilt from the full rendered Quests page rather than summary-table rows.",
+    "Desert Temple and Desert Temple 2 contain source discrepancies between summary and detailed sections; notes are retained on those records."
+  ]
 }
