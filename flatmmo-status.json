@@ -1,7 +1,7 @@
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "generated": "2026-09-16",
-  "release": "world-model-v1.2",
+  "release": "entity-links-v1.3",
   "layout": "flat-root",
   "branch": "v2-online",
   "counts": {
@@ -12,7 +12,15 @@
     "areas": 14,
     "rooms": 193,
     "documentedBeds": 12,
-    "functionalNpcs": 71
+    "functionalNpcs": 71,
+    "monsterRecordsWithRoomLinks": 52,
+    "monsterRoomLinks": 82,
+    "questProcedureSteps": 104,
+    "questStepsWithExactRoomLinks": 55,
+    "questStepsAreaOnly": 49,
+    "questStepsWithLinkConflict": 2,
+    "resourceNodes": 61,
+    "roomsWithResourceNodes": 44
   },
   "coverage": {
     "combatStyles": [
@@ -30,14 +38,21 @@
     "worldModel": "area -> internal room/sub-location -> services/features/NPCs/access/links",
     "beds": "first-class index for explicitly documented bed locations",
     "functionalNpcs": "structured quest/shop/bank/travel/trade/service functions where documented",
-    "internalRooms": "detailed for 13/14 areas; Desert currently partial"
+    "internalRooms": "detailed for 13/14 areas; Desert currently partial",
+    "entityGraph": "quest steps <-> rooms/NPCs/monsters; monsters <-> rooms; rooms <-> resource nodes",
+    "monsterRoomLinks": "52/82 monster records linked to 82 exact room/access references",
+    "questRoomLinks": "55/104 quest steps have one or more exact room IDs; all 104 carry structured area/room link state",
+    "resourceNodes": "61 conservative nodes across 44 rooms",
+    "bedSemantics": "bedStatus distinguishes documented beds from rooms where a bed is merely not documented"
   },
   "knownIssues": [
-    "Desert internal-room coverage is partial because the rendered wiki page was blocked by an interstitial during this pass.",
-    "Room adjacency is incomplete where the wiki does not explicitly state a route.",
+    "Desert internal-room coverage remains partial; Desert quest steps are intentionally mostly area-only.",
+    "30 monster records have no exact room link in v1.3.",
+    "Some bootstrap monster area labels conflict with current room-page evidence; v1.3 retains both instead of overwriting either.",
+    "Room adjacency remains incomplete where the wiki does not explicitly state a route.",
     "Monster bootstrap mirror still awaits official refresh.",
     "Wiki says 21 quests but only 19 named quest records are identified.",
     "Known source conflicts remain retained in verification notes."
   ],
-  "aiContextSha256": "d206536a7b575726b2c3c050891fd618f5cfae0dba67ffaf0580465638ee133a"
+  "aiContextSha256": "062c7be1ed97dd43c76781fe44ff0a26f49d2de099f9aac21cd386587d10798c"
 }

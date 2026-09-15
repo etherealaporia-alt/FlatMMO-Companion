@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "generated": "2026-09-16",
   "permissionContext": {
     "wiki": "Liam/Dounford explicitly approved caching wiki data for the described public AI-companion use, with polite update checking rather than bot-like repeated fetching.",
@@ -409,5 +409,11 @@
       "usage": "normalized facts/procedures"
     }
   ],
-  "ingestionNote": "2026-09-16 world-model v1.2 pass normalized area pages into areas, rooms/sub-locations, functional NPCs, beds, services, access requirements and explicit travel links. Desert remained partial because the rendered page returned an interstitial."
+  "ingestionNote": "2026-09-16 v1.3 entity-link pass added quest-step-to-room/NPC/monster relationships, monster-to-room relationships, room reverse links, bedStatus semantics, and conservative structured resource nodes. No missing relationships were filled from RuneScape or unsupported inference.",
+  "derivedRelationshipPolicy": {
+    "authority": "derived",
+    "basis": "v1.3 cross-links are deterministic joins across the already sourced v1.2 world model, quest procedures, and monster records.",
+    "noNewExternalFactClaim": "A relationship marked derived does not claim a new independently sourced game fact; it points between existing sourced records.",
+    "conflictHandling": "Broad monster-area labels and more specific room-page evidence are both preserved when they disagree."
+  }
 }

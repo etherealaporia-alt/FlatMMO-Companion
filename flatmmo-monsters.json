@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "status": "bootstrap_mirror_needs_official_refresh",
   "authority": "official-derived-community-mirror",
   "canonicalEndpoint": "https://flatmmo.com/data/monsters.json",
@@ -74,7 +74,55 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "omboko.jungle_river",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Gorilla",
+          "roomArea": "Omboko",
+          "matchesBootstrapArea": true
+        },
+        {
+          "roomId": "omboko.village",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Gorilla",
+          "roomArea": "Omboko",
+          "matchesBootstrapArea": true
+        },
+        {
+          "roomId": "omboko.fire_spirit",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Gorillas",
+          "roomArea": "Omboko",
+          "matchesBootstrapArea": true
+        },
+        {
+          "roomId": "omboko.shop_outside",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Gorilla",
+          "roomArea": "Omboko",
+          "matchesBootstrapArea": true
+        },
+        {
+          "roomId": "omboko.shop_inside",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Gorilla",
+          "roomArea": "Omboko",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.chicken",
@@ -117,7 +165,37 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "everbrook.farmlands",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Chickens",
+          "roomArea": "Everbrook",
+          "matchesBootstrapArea": true
+        },
+        {
+          "roomId": "everbrook.east_town_square",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Chicken",
+          "roomArea": "Everbrook",
+          "matchesBootstrapArea": true
+        },
+        {
+          "roomId": "everbrook.chicken_pen",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Chickens",
+          "roomArea": "Everbrook",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.seagull",
@@ -153,7 +231,20 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "dock_haven.seagulls",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Seagulls",
+          "roomArea": "Dock Haven",
+          "matchesBootstrapArea": false,
+          "note": "Current room-page evidence places/mentions this entity outside the monster bootstrap record's broad area label; both are retained."
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.pirate",
@@ -252,7 +343,30 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "pirate_isle.beach",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "2 Pirates",
+          "roomArea": "Pirate Isle",
+          "matchesBootstrapArea": false,
+          "note": "Current room-page evidence places/mentions this entity outside the monster bootstrap record's broad area label; both are retained."
+        },
+        {
+          "roomId": "pirate_isle.ship_inside",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "2 Pirates",
+          "roomArea": "Pirate Isle",
+          "matchesBootstrapArea": false,
+          "note": "Current room-page evidence places/mentions this entity outside the monster bootstrap record's broad area label; both are retained."
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.earth_golem",
@@ -288,7 +402,9 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [],
+      "roomLinkStatus": "no_exact_room_link_in_v1.3"
     },
     {
       "id": "monster.trible_feller",
@@ -359,7 +475,19 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "omboko.shop_outside",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Trible Fellers",
+          "roomArea": "Omboko",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.upper_pirate",
@@ -458,7 +586,20 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "pirate_isle.ship_mast",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Upper Pirates",
+          "roomArea": "Pirate Isle",
+          "matchesBootstrapArea": false,
+          "note": "Current room-page evidence places/mentions this entity outside the monster bootstrap record's broad area label; both are retained."
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.everbrook_guard",
@@ -536,7 +677,9 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [],
+      "roomLinkStatus": "no_exact_room_link_in_v1.3"
     },
     {
       "id": "monster.cloud",
@@ -565,7 +708,20 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "everbrook.clouds",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "3 Cloud enemies",
+          "roomArea": "Everbrook",
+          "matchesBootstrapArea": false,
+          "note": "Current room-page evidence places/mentions this entity outside the monster bootstrap record's broad area label; both are retained."
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.storm_cloud",
@@ -594,7 +750,9 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [],
+      "roomLinkStatus": "no_exact_room_link_in_v1.3"
     },
     {
       "id": "monster.raccoon",
@@ -623,7 +781,9 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [],
+      "roomLinkStatus": "no_exact_room_link_in_v1.3"
     },
     {
       "id": "monster.dust_devil",
@@ -659,7 +819,9 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [],
+      "roomLinkStatus": "no_exact_room_link_in_v1.3"
     },
     {
       "id": "monster.rat",
@@ -688,7 +850,39 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "everbrook.mini_sewer",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Rats",
+          "roomArea": "Everbrook",
+          "matchesBootstrapArea": false,
+          "note": "Current room-page evidence places/mentions this entity outside the monster bootstrap record's broad area label; both are retained."
+        },
+        {
+          "roomId": "everbrook.tavern",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Rat",
+          "roomArea": "Everbrook",
+          "matchesBootstrapArea": false,
+          "note": "Current room-page evidence places/mentions this entity outside the monster bootstrap record's broad area label; both are retained."
+        },
+        {
+          "roomId": "sewer.rats",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Rats",
+          "roomArea": "Sewer",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.thief",
@@ -738,7 +932,47 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "thieves_hideout.entrance",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Gold Knife Thief",
+          "roomArea": "Thieves Hideout",
+          "matchesBootstrapArea": true
+        },
+        {
+          "roomId": "thieves_hideout.main_room",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "3 Thieves",
+          "roomArea": "Thieves Hideout",
+          "matchesBootstrapArea": true
+        },
+        {
+          "roomId": "thieves_hideout.locked_room",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "2 Thieves",
+          "roomArea": "Thieves Hideout",
+          "matchesBootstrapArea": true
+        },
+        {
+          "roomId": "beach.quicksand_thief_entrance",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Thief",
+          "roomArea": "Beach",
+          "matchesBootstrapArea": false,
+          "note": "Current room-page evidence places/mentions this entity outside the monster bootstrap record's broad area label; both are retained."
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.trible_fishermen",
@@ -774,7 +1008,9 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [],
+      "roomLinkStatus": "no_exact_room_link_in_v1.3"
     },
     {
       "id": "monster.snake",
@@ -803,7 +1039,19 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "sewer.hunter",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Snakes",
+          "roomArea": "Sewer",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.great_thief",
@@ -853,7 +1101,9 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [],
+      "roomLinkStatus": "no_exact_room_link_in_v1.3"
     },
     {
       "id": "monster.pig",
@@ -889,7 +1139,19 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "everbrook.pig_farm",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "3 Pigs",
+          "roomArea": "Everbrook",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.cow",
@@ -918,7 +1180,28 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "everbrook.farmlands",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Cows",
+          "roomArea": "Everbrook",
+          "matchesBootstrapArea": true
+        },
+        {
+          "roomId": "everbrook.cow_farm",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Cows",
+          "roomArea": "Everbrook",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.tiger",
@@ -947,7 +1230,19 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "omboko.tigers",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Aggressive Tigers",
+          "roomArea": "Omboko",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.crocodile",
@@ -983,7 +1278,19 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "beach.boat",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Crocodiles",
+          "roomArea": "Beach",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.giant_rat",
@@ -1012,7 +1319,19 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "sewer.rats",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Giant Rat",
+          "roomArea": "Sewer",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.rocky",
@@ -1069,7 +1388,9 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [],
+      "roomLinkStatus": "no_exact_room_link_in_v1.3"
     },
     {
       "id": "monster.volcanic_rocky",
@@ -1119,7 +1440,28 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "volcano.graphite",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Volcanic Rocky",
+          "roomArea": "Volcano",
+          "matchesBootstrapArea": true
+        },
+        {
+          "roomId": "volcano.bridge",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Volcanic Rocky",
+          "roomArea": "Volcano",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.lava_rocky",
@@ -1211,7 +1553,9 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [],
+      "roomLinkStatus": "no_exact_room_link_in_v1.3"
     },
     {
       "id": "monster.hell_goblin",
@@ -1289,7 +1633,19 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "hell.layer2_2",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Aggressive Hell Goblins",
+          "roomArea": "Hell",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.deranged_mage",
@@ -1381,7 +1737,19 @@
         }
       ],
       "boss": true,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "mystic_vale.starting_area",
+          "relation": "access_point",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Deranged Mage boss entrance",
+          "roomArea": "Mystic Vale",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.guard_mage",
@@ -1445,7 +1813,28 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "mystic_vale.locked_house",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Guard Mage",
+          "roomArea": "Mystic Vale",
+          "matchesBootstrapArea": true
+        },
+        {
+          "roomId": "mystic_vale.orb_pile",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "3 Guard Mages",
+          "roomArea": "Mystic Vale",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.ali_dark_mage_leader",
@@ -1474,7 +1863,9 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [],
+      "roomLinkStatus": "no_exact_room_link_in_v1.3"
     },
     {
       "id": "monster.desert_mage",
@@ -1559,7 +1950,9 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [],
+      "roomLinkStatus": "no_exact_room_link_in_v1.3"
     },
     {
       "id": "monster.mad_priest",
@@ -1595,7 +1988,9 @@
         }
       ],
       "boss": true,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [],
+      "roomLinkStatus": "no_exact_room_link_in_v1.3"
     },
     {
       "id": "monster.druid",
@@ -1687,7 +2082,19 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "omboko.ents",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Druid",
+          "roomArea": "Omboko",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.shamen",
@@ -1737,7 +2144,19 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "omboko.cemetery_shaman",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Shaman",
+          "roomArea": "Omboko",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.mage",
@@ -1759,7 +2178,19 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "mystic_vale.ladder_to_farm",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Mage",
+          "roomArea": "Mystic Vale",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.red_mage",
@@ -1844,7 +2275,19 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "mystic_vale.red_mages",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "3 aggressive Red Mages",
+          "roomArea": "Mystic Vale",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.noctyrix",
@@ -1999,7 +2442,20 @@
         }
       ],
       "boss": true,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "omboko.dungeon_boss_entrance",
+          "relation": "access_point",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Noctyrix entrance",
+          "roomArea": "Omboko",
+          "matchesBootstrapArea": false,
+          "note": "Current room-page evidence places/mentions this entity outside the monster bootstrap record's broad area label; both are retained."
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.silkfang",
@@ -2126,7 +2582,28 @@
         }
       ],
       "boss": true,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "sewer.giant_spiders",
+          "relation": "access_point",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Silkfang boss hole",
+          "roomArea": "Sewer",
+          "matchesBootstrapArea": true
+        },
+        {
+          "roomId": "sewer.silkfang",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Silkfang",
+          "roomArea": "Sewer",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.cave_beetle",
@@ -2162,7 +2639,20 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "omboko.dungeon_cave_beetles",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Cave Beetles",
+          "roomArea": "Omboko",
+          "matchesBootstrapArea": false,
+          "note": "Current room-page evidence places/mentions this entity outside the monster bootstrap record's broad area label; both are retained."
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.slime",
@@ -2184,7 +2674,9 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [],
+      "roomLinkStatus": "no_exact_room_link_in_v1.3"
     },
     {
       "id": "monster.beetle",
@@ -2213,7 +2705,19 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "omboko.jungle_beetles",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Beetles",
+          "roomArea": "Omboko",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.beads_dwarf",
@@ -2361,7 +2865,9 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [],
+      "roomLinkStatus": "no_exact_room_link_in_v1.3"
     },
     {
       "id": "monster.flamester",
@@ -2404,7 +2910,19 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "volcano.lava_altar",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Flamesters",
+          "roomArea": "Volcano",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.ice_beetle",
@@ -2440,7 +2958,28 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "frostvale.northern_fields",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Ice Beetle",
+          "roomArea": "Frostvale",
+          "matchesBootstrapArea": true
+        },
+        {
+          "roomId": "frostvale.waterfall",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "2 Ice Beetles",
+          "roomArea": "Frostvale",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.desert_beetle",
@@ -2469,7 +3008,9 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [],
+      "roomLinkStatus": "no_exact_room_link_in_v1.3"
     },
     {
       "id": "monster.rogue_warrior",
@@ -2491,7 +3032,9 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [],
+      "roomLinkStatus": "no_exact_room_link_in_v1.3"
     },
     {
       "id": "monster.ball",
@@ -2513,7 +3056,9 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [],
+      "roomLinkStatus": "no_exact_room_link_in_v1.3"
     },
     {
       "id": "monster.rogue_mage",
@@ -2535,7 +3080,9 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [],
+      "roomLinkStatus": "no_exact_room_link_in_v1.3"
     },
     {
       "id": "monster.rogue_archer",
@@ -2557,7 +3104,9 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [],
+      "roomLinkStatus": "no_exact_room_link_in_v1.3"
     },
     {
       "id": "monster.archer_thief",
@@ -2607,7 +3156,19 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "thieves_hideout.floor2",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Archer Thieves",
+          "roomArea": "Thieves Hideout",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.ghost",
@@ -2636,7 +3197,29 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "everbrook.cemetery",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Ghosts",
+          "roomArea": "Everbrook",
+          "matchesBootstrapArea": true
+        },
+        {
+          "roomId": "mystic_vale.cemetery",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Ghosts",
+          "roomArea": "Mystic Vale",
+          "matchesBootstrapArea": false,
+          "note": "Current room-page evidence places/mentions this entity outside the monster bootstrap record's broad area label; both are retained."
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.ice_ghost",
@@ -2665,7 +3248,19 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "frostvale.cemetery",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "2 Ice Ghosts",
+          "roomArea": "Frostvale",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.crypt_skeleton",
@@ -2687,7 +3282,9 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [],
+      "roomLinkStatus": "no_exact_room_link_in_v1.3"
     },
     {
       "id": "monster.archer_goblin",
@@ -2751,7 +3348,19 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "everbrook.willow_trees",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Archer Goblin",
+          "roomArea": "Everbrook",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.farmer",
@@ -2843,7 +3452,37 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "everbrook.farmlands",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Farmers",
+          "roomArea": "Everbrook",
+          "matchesBootstrapArea": true
+        },
+        {
+          "roomId": "everbrook.wheat_fields",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Farmers",
+          "roomArea": "Everbrook",
+          "matchesBootstrapArea": true
+        },
+        {
+          "roomId": "everbrook.chefs_house",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "2 Farmers",
+          "roomArea": "Everbrook",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.master_farmer",
@@ -2956,7 +3595,19 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "everbrook.chefs_house",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Master Farmer",
+          "roomArea": "Everbrook",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.bear",
@@ -2985,7 +3636,28 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "everbrook.willow_oak_grove",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Bear",
+          "roomArea": "Everbrook",
+          "matchesBootstrapArea": true
+        },
+        {
+          "roomId": "everbrook.maple_tree_area",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Bears",
+          "roomArea": "Everbrook",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.wolf",
@@ -3014,7 +3686,19 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "frostvale.northern_fields",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Wolves",
+          "roomArea": "Frostvale",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.lochness_monster",
@@ -3036,7 +3720,20 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "dock_haven.lochness",
+          "relation": "minigame_access",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Lochness minigame",
+          "roomArea": "Dock Haven",
+          "matchesBootstrapArea": false,
+          "note": "Current room-page evidence places/mentions this entity outside the monster bootstrap record's broad area label; both are retained."
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.flufflare",
@@ -3065,7 +3762,19 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "hell.layer1",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "2 Flufflares",
+          "roomArea": "Hell",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.iceflare",
@@ -3101,7 +3810,19 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "frostvale.cave1",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Iceflares",
+          "roomArea": "Frostvale",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.ent",
@@ -3186,7 +3907,19 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "omboko.ents",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Ent",
+          "roomArea": "Omboko",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.crystadune",
@@ -3236,7 +3969,9 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [],
+      "roomLinkStatus": "no_exact_room_link_in_v1.3"
     },
     {
       "id": "monster.giant_flufflare",
@@ -3328,7 +4063,9 @@
         }
       ],
       "boss": true,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [],
+      "roomLinkStatus": "no_exact_room_link_in_v1.3"
     },
     {
       "id": "monster.lizard",
@@ -3364,7 +4101,19 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "volcano.lizards",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Volcanic Lizards",
+          "roomArea": "Volcano",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.goblin",
@@ -3414,7 +4163,28 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "sewer.gold_ore",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "2 aggressive Goblins",
+          "roomArea": "Sewer",
+          "matchesBootstrapArea": true
+        },
+        {
+          "roomId": "sewer.goblins",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "4 aggressive Goblins",
+          "roomArea": "Sewer",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.mummy",
@@ -3443,7 +4213,9 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [],
+      "roomLinkStatus": "no_exact_room_link_in_v1.3"
     },
     {
       "id": "monster.scorpion",
@@ -3465,7 +4237,9 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [],
+      "roomLinkStatus": "no_exact_room_link_in_v1.3"
     },
     {
       "id": "monster.cobra",
@@ -3487,7 +4261,9 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [],
+      "roomLinkStatus": "no_exact_room_link_in_v1.3"
     },
     {
       "id": "monster.soaked_bat",
@@ -3509,7 +4285,9 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [],
+      "roomLinkStatus": "no_exact_room_link_in_v1.3"
     },
     {
       "id": "monster.heal_bat",
@@ -3531,7 +4309,9 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [],
+      "roomLinkStatus": "no_exact_room_link_in_v1.3"
     },
     {
       "id": "monster.fire_bat",
@@ -3553,7 +4333,9 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [],
+      "roomLinkStatus": "no_exact_room_link_in_v1.3"
     },
     {
       "id": "monster.bat",
@@ -3610,7 +4392,20 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "omboko.dungeon_bats",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Bats",
+          "roomArea": "Omboko",
+          "matchesBootstrapArea": false,
+          "note": "Current room-page evidence places/mentions this entity outside the monster bootstrap record's broad area label; both are retained."
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.poison_ali_dark",
@@ -3632,7 +4427,9 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [],
+      "roomLinkStatus": "no_exact_room_link_in_v1.3"
     },
     {
       "id": "monster.ogre",
@@ -3668,7 +4465,19 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "mystic_vale.ogres",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Ogres",
+          "roomArea": "Mystic Vale",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.ice_ogre",
@@ -3704,7 +4513,28 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "frostvale.mount",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Ice Ogre",
+          "roomArea": "Frostvale",
+          "matchesBootstrapArea": true
+        },
+        {
+          "roomId": "frostvale.cave2",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Ice Ogres",
+          "roomArea": "Frostvale",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.poison_scorpion",
@@ -3726,7 +4556,9 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [],
+      "roomLinkStatus": "no_exact_room_link_in_v1.3"
     },
     {
       "id": "monster.demon",
@@ -3783,7 +4615,19 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "sewer.entrance",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Demon",
+          "roomArea": "Sewer",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.baby_silkfang",
@@ -3812,7 +4656,19 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "sewer.silkfang",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Baby Silkfang",
+          "roomArea": "Sewer",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.spider",
@@ -3834,7 +4690,39 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "sewer.entrance",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Spiders",
+          "roomArea": "Sewer",
+          "matchesBootstrapArea": true
+        },
+        {
+          "roomId": "everbrook.mini_sewer",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Spiders",
+          "roomArea": "Everbrook",
+          "matchesBootstrapArea": false,
+          "note": "Current room-page evidence places/mentions this entity outside the monster bootstrap record's broad area label; both are retained."
+        },
+        {
+          "roomId": "everbrook.fishermans_shop",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Spiders",
+          "roomArea": "Everbrook",
+          "matchesBootstrapArea": false,
+          "note": "Current room-page evidence places/mentions this entity outside the monster bootstrap record's broad area label; both are retained."
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.giant_spider",
@@ -3856,7 +4744,29 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "sewer.giant_spiders",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Giant Spiders",
+          "roomArea": "Sewer",
+          "matchesBootstrapArea": true
+        },
+        {
+          "roomId": "beach.quicksand_giant_spiders",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Giant Spiders",
+          "roomArea": "Beach",
+          "matchesBootstrapArea": false,
+          "note": "Current room-page evidence places/mentions this entity outside the monster bootstrap record's broad area label; both are retained."
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.bully_thief",
@@ -3885,7 +4795,28 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "thieves_hideout.fat_guy",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Bully Thief",
+          "roomArea": "Thieves Hideout",
+          "matchesBootstrapArea": true
+        },
+        {
+          "roomId": "thieves_hideout.basement",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Barbed Wire",
+          "roomArea": "Thieves Hideout",
+          "matchesBootstrapArea": true
+        }
+      ],
+      "roomLinkStatus": "linked"
     },
     {
       "id": "monster.crab",
@@ -3928,7 +4859,53 @@
         }
       ],
       "boss": false,
-      "image_path": null
+      "image_path": null,
+      "roomRefs": [
+        {
+          "roomId": "beach.quicksand",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Crab",
+          "roomArea": "Beach",
+          "matchesBootstrapArea": true
+        },
+        {
+          "roomId": "beach.quicksand_cave",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Crabs",
+          "roomArea": "Beach",
+          "matchesBootstrapArea": true
+        },
+        {
+          "roomId": "beach.quicksand_crabs",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Crabs",
+          "roomArea": "Beach",
+          "matchesBootstrapArea": true
+        },
+        {
+          "roomId": "pirate_isle.beach",
+          "relation": "present",
+          "authority": "derived",
+          "confidence": "high",
+          "evidenceFeature": "Crab",
+          "roomArea": "Pirate Isle",
+          "matchesBootstrapArea": false,
+          "note": "Current room-page evidence places/mentions this entity outside the monster bootstrap record's broad area label; both are retained."
+        }
+      ],
+      "roomLinkStatus": "linked"
     }
-  ]
+  ],
+  "generated": "2026-09-16",
+  "linkPolicy": {
+    "authority": "derived",
+    "method": "Exact/current room-page entity mentions joined to existing monster records; broad bootstrap area labels are preserved rather than overwritten.",
+    "unlinkedMeaning": "No exact room relationship was established from the current world model; do not infer a room."
+  }
 }

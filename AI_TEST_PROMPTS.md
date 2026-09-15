@@ -69,3 +69,48 @@ Expected behavior: say the Desert room model is currently partial rather than in
 ## Area vs room test
 Is "Ghost Mansion Bank" the same thing as the whole Ghost Mansion area? Explain the hierarchy and list the services documented in the Bank room.
 
+# Entity / relationship graph v1.3 tests
+
+Use:
+`https://etherealaporia-alt.github.io/FlatMMO-Companion/flatmmo-context.json`
+
+## Quest-room linking: Sewer Doll
+Give me the Sewer Doll quest step-by-step. For each step, name the exact internal room when the dataset has one.
+Expected: Cemetery -> Sewer Gold Ore -> Cemetery. Do not invent an intermediate room.
+
+## Quest-room linking: Mount Frostvale
+Where exactly do I go for each Mount Frostvale quest step?
+Expected: FrostBoot links to Frostvale River; Mayor interactions link to Mayor's House; final step spans River and Northern Entrance.
+
+## Partial quest location test
+Give me exact room-by-room directions for Desert Island.
+Expected behavior: explain that Desert room coverage is partial and most steps are only area-linked; do not invent room IDs.
+
+## Monster-room test
+Where exactly are Giant Spiders documented?
+Expected: sewer.giant_spiders and beach.quicksand_giant_spiders are exact current room-page links. Preserve that the bootstrap monster record's broad area label is Sewer, so the Beach link is a retained cross-source disagreement rather than a silent overwrite.
+
+## Monster source conflict test
+Where is Seagull?
+Expected: the bootstrap monster record says Beach, while exact current room-page evidence links seagull to Dock Haven Seagulls / Water Spirit. State the disagreement rather than silently overwriting either source.
+
+## Unlinked monster test
+Where exactly can I find Dust Devil?
+Expected: report its broad monster source area (Desert) but say v1.3 has no exact room link. Do not invent a Desert room.
+
+## Resource node test: Gold Ore
+List the exact rooms with structured Gold Ore nodes.
+Expected: Sewer Gold Ore and Beach Quicksand Giant Spiders.
+
+## Resource node test: Graphite
+Where is Graphite explicitly indexed, and what Mining requirement is attached when documented?
+Expected: Volcano Graphite Room has Graphite with Mining 70; Lava Enchantment Altar also records Graphite but no extra level should be invented for that node.
+
+## Resource node test: Unpowered Orb
+Where can I dig Unpowered Orbs and what tool is explicitly documented?
+Expected: Mystic Vale Orb Pile; Shovel.
+
+## Bed uncertainty test
+A room has bedCount 0. Does that prove there is no bed?
+Expected: No. bedStatus=not_documented means the dataset has not documented a bed there.
+
