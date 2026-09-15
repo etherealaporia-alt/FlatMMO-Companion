@@ -30,3 +30,42 @@ How many quests are represented? Explain the 21-vs-19 discrepancy without invent
 ## Uncertainty test
 What is the Mangrove Staff accuracy? Mention any recorded source conflict.
 What Forging level makes an Iron Scimitar? Mention the recorded older-source conflict if relevant.
+
+# World / room model v1.2 tests
+
+Use:
+`https://etherealaporia-alt.github.io/FlatMMO-Companion/flatmmo-context.json`
+
+## Everbrook room test
+List the documented places in Everbrook where I can sleep. For each one, name the internal room/sub-location rather than just saying "Everbrook".
+
+Expected grounding: Cow Farm farmhouse, Mayor's House, Fisherman's Shop, Inside Chef's House.
+
+## Functional NPC / travel test
+I'm in Everbrook and want to get to Omboko. Which NPC handles that route, where are they, and what coin requirement is documented?
+
+Expected grounding: Ned the Boat Guy at Everbrook Docks; hold 25 Coins.
+
+## Bank + shop distinction test
+In Everbrook, distinguish the East Town Square from the Bank and Fisherman's Shop. Which of those rooms actually contains the bed?
+
+Expected grounding: East Town Square contains the entrances; Fisherman's Shop contains a documented bed; Bank is a separate interior.
+
+## Thieves Hideout room test
+Where are the beds inside Thieves Hideout, and how many are documented?
+
+Expected grounding: first interior room named Thieves Hideout; 4 beds.
+
+## Mystic Vale services test
+Where is the documented bed in Mystic Vale? Where are the Magic Shop, General Supply Shop and Unpowered Orb digging location?
+
+## Frostvale beds test
+Name every documented Frostvale bed location in this dataset and identify which rooms are cold-safe.
+
+## Navigation uncertainty test
+Give me the full internal-room route through the Desert.
+Expected behavior: say the Desert room model is currently partial rather than inventing a route.
+
+## Area vs room test
+Is "Ghost Mansion Bank" the same thing as the whole Ghost Mansion area? Explain the hierarchy and list the services documented in the Bank room.
+
