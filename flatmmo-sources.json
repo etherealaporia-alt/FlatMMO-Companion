@@ -1,6 +1,6 @@
 {
-  "schemaVersion": 2,
-  "generated": "2026-09-15",
+  "schemaVersion": 3,
+  "generated": "2026-09-16",
   "permissionContext": {
     "wiki": "Liam/Dounford explicitly approved caching wiki data for the described public AI-companion use, with polite update checking rather than bot-like repeated fetching.",
     "updateCadence": "Daily recentchanges check approved; query only the interval since the last successful check.",
@@ -276,85 +276,113 @@
       "id": "wiki.everbrook",
       "authority": "community_verified",
       "url": "https://flatmmo.wiki/index.php/Everbrook",
-      "usage": "normalized facts/procedures"
+      "usage": "area/room/NPC/service/world-navigation normalization",
+      "lastChecked": "2026-09-16",
+      "ingestion": "full-rendered-page normalization"
     },
     {
       "id": "wiki.ghost_mansion",
       "authority": "community_verified",
       "url": "https://flatmmo.wiki/index.php/Ghost_Mansion",
-      "usage": "normalized facts/procedures"
+      "usage": "area/room/NPC/service/world-navigation normalization",
+      "lastChecked": "2026-09-16",
+      "ingestion": "full-rendered-page normalization"
     },
     {
       "id": "wiki.mystic_vale",
       "authority": "community_verified",
       "url": "https://flatmmo.wiki/index.php/Mystic_Vale",
-      "usage": "normalized facts/procedures"
+      "usage": "area/room/NPC/service/world-navigation normalization",
+      "lastChecked": "2026-09-16",
+      "ingestion": "full-rendered-page normalization"
     },
     {
       "id": "wiki.beach",
       "authority": "community_verified",
       "url": "https://flatmmo.wiki/index.php/Beach",
-      "usage": "normalized facts/procedures"
+      "usage": "area/room/NPC/service/world-navigation normalization",
+      "lastChecked": "2026-09-16",
+      "ingestion": "full-rendered-page normalization"
     },
     {
       "id": "wiki.thieves_hideout",
       "authority": "community_verified",
       "url": "https://flatmmo.wiki/index.php/Thieves_Hideout",
-      "usage": "normalized facts/procedures"
+      "usage": "area/room/NPC/service/world-navigation normalization",
+      "lastChecked": "2026-09-16",
+      "ingestion": "full-rendered-page normalization"
     },
     {
       "id": "wiki.hell",
       "authority": "community_verified",
       "url": "https://flatmmo.wiki/index.php/Hell",
-      "usage": "normalized facts/procedures"
+      "usage": "area/room/NPC/service/world-navigation normalization",
+      "lastChecked": "2026-09-16",
+      "ingestion": "full-rendered-page normalization"
     },
     {
       "id": "wiki.omboko",
       "authority": "community_verified",
       "url": "https://flatmmo.wiki/index.php/Omboko",
-      "usage": "normalized facts/procedures"
+      "usage": "area/room/NPC/service/world-navigation normalization",
+      "lastChecked": "2026-09-16",
+      "ingestion": "full-rendered-page normalization"
     },
     {
       "id": "wiki.sewer",
       "authority": "community_verified",
       "url": "https://flatmmo.wiki/index.php/Sewer",
-      "usage": "normalized facts/procedures"
+      "usage": "area/room/NPC/service/world-navigation normalization",
+      "lastChecked": "2026-09-16",
+      "ingestion": "full-rendered-page normalization"
     },
     {
       "id": "wiki.pirate_isle",
       "authority": "community_verified",
       "url": "https://flatmmo.wiki/index.php/Pirate_Isle",
-      "usage": "normalized facts/procedures"
+      "usage": "area/room/NPC/service/world-navigation normalization",
+      "lastChecked": "2026-09-16",
+      "ingestion": "full-rendered-page normalization"
     },
     {
       "id": "wiki.frostvale",
       "authority": "community_verified",
       "url": "https://flatmmo.wiki/index.php/Frostvale",
-      "usage": "normalized facts/procedures"
+      "usage": "area/room/NPC/service/world-navigation normalization",
+      "lastChecked": "2026-09-16",
+      "ingestion": "full-rendered-page normalization"
     },
     {
       "id": "wiki.desert",
       "authority": "community_verified",
       "url": "https://flatmmo.wiki/index.php/Desert",
-      "usage": "normalized facts/procedures"
+      "usage": "area/room/NPC/service/world-navigation normalization",
+      "lastChecked": "2026-09-16",
+      "ingestion": "partial rendered/search normalization due interstitial"
     },
     {
       "id": "wiki.volcano",
       "authority": "community_verified",
       "url": "https://flatmmo.wiki/index.php/Volcano",
-      "usage": "normalized facts/procedures"
+      "usage": "area/room/NPC/service/world-navigation normalization",
+      "lastChecked": "2026-09-16",
+      "ingestion": "full-rendered-page normalization"
     },
     {
       "id": "wiki.dock_haven",
       "authority": "community_verified",
       "url": "https://flatmmo.wiki/index.php/Dock_Haven",
-      "usage": "normalized facts/procedures"
+      "usage": "area/room/NPC/service/world-navigation normalization",
+      "lastChecked": "2026-09-16",
+      "ingestion": "full-rendered-page normalization"
     },
     {
       "id": "wiki.atlas",
       "authority": "community_verified",
       "url": "https://flatmmo.wiki/index.php/Atlas",
-      "usage": "normalized facts/procedures"
+      "usage": "area/room/NPC/service/world-navigation normalization",
+      "lastChecked": "2026-09-16",
+      "ingestion": "full-rendered-page normalization"
     },
     {
       "id": "wiki.swords",
@@ -381,5 +409,5 @@
       "usage": "normalized facts/procedures"
     }
   ],
-  "ingestionNote": "2026-09-15 v1.1 deep pass normalized full rendered wiki pages available to the build environment. This pass did not call the MediaWiki API; automated API ingestion remains a later engineering step."
+  "ingestionNote": "2026-09-16 world-model v1.2 pass normalized area pages into areas, rooms/sub-locations, functional NPCs, beds, services, access requirements and explicit travel links. Desert remained partial because the rendered page returned an interstitial."
 }

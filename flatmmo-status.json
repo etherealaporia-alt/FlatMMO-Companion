@@ -1,7 +1,7 @@
 {
-  "schemaVersion": 2,
-  "generated": "2026-09-15",
-  "release": "deep-ingest-v1.1",
+  "schemaVersion": 3,
+  "generated": "2026-09-16",
+  "release": "world-model-v1.2",
   "layout": "flat-root",
   "branch": "v2-online",
   "counts": {
@@ -9,7 +9,10 @@
     "quests": 19,
     "skills": 18,
     "mechanics": 20,
-    "areas": 14
+    "areas": 14,
+    "rooms": 193,
+    "documentedBeds": 12,
+    "functionalNpcs": 71
   },
   "coverage": {
     "combatStyles": [
@@ -23,12 +26,18 @@
       "Enchantment",
       "Farming",
       "Brewing"
-    ]
+    ],
+    "worldModel": "area -> internal room/sub-location -> services/features/NPCs/access/links",
+    "beds": "first-class index for explicitly documented bed locations",
+    "functionalNpcs": "structured quest/shop/bank/travel/trade/service functions where documented",
+    "internalRooms": "detailed for 13/14 areas; Desert currently partial"
   },
   "knownIssues": [
-    "wiki says 21 quests but only 19 named quest records are identified",
-    "monster bootstrap mirror still awaits official refresh",
-    "known source conflicts retained in verification notes"
+    "Desert internal-room coverage is partial because the rendered wiki page was blocked by an interstitial during this pass.",
+    "Room adjacency is incomplete where the wiki does not explicitly state a route.",
+    "Monster bootstrap mirror still awaits official refresh.",
+    "Wiki says 21 quests but only 19 named quest records are identified.",
+    "Known source conflicts remain retained in verification notes."
   ],
-  "aiContextSha256": "cc36834e60a6a3f2f5191439eee6f90505e9db039cb3a3c4d31c41f95c862ead"
+  "aiContextSha256": "d206536a7b575726b2c3c050891fd618f5cfae0dba67ffaf0580465638ee133a"
 }
