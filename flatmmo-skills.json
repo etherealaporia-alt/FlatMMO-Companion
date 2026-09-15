@@ -1,0 +1,220 @@
+{
+  "schemaVersion": 1,
+  "recordCount": 18,
+  "records": [
+    {
+      "id": "skill.melee",
+      "name": "Melee",
+      "type": "combat",
+      "training": "Deal melee damage while a melee-type weapon is equipped.",
+      "keyRules": [
+        "8 XP per point of melee damage dealt",
+        "+1 Melee damage per 10 Melee levels"
+      ],
+      "equipment": [
+        "swords",
+        "scimitars",
+        "maces/clubs",
+        "knives/spears"
+      ],
+      "source": "https://flatmmo.wiki/index.php/Melee"
+    },
+    {
+      "id": "skill.archery",
+      "name": "Archery",
+      "type": "combat",
+      "training": "Attack with a bow and arrows.",
+      "keyRules": [
+        "8 XP per point of Archery damage dealt",
+        "+1 Archery damage per 10 Archery levels",
+        "bows provide accuracy; arrows provide damage and are consumed"
+      ],
+      "source": "https://flatmmo.wiki/index.php/Archery"
+    },
+    {
+      "id": "skill.magic",
+      "name": "Magic",
+      "type": "combat",
+      "training": "Attack using staves and magic orbs.",
+      "keyRules": [
+        "staves provide Magic accuracy",
+        "elemental orbs interact with monster weaknesses",
+        "damage orbs determine spell damage and are consumed unless another mechanic prevents it"
+      ],
+      "source": "https://flatmmo.wiki/index.php/Magic"
+    },
+    {
+      "id": "skill.health",
+      "name": "Health",
+      "type": "combat-passive",
+      "training": "Gain Health XP through combat damage dealt.",
+      "keyRules": [
+        "2 Health XP per point of damage dealt",
+        "+1 maximum HP per Health level",
+        "documented cap 109 HP"
+      ],
+      "source": "https://flatmmo.wiki/index.php/Health"
+    },
+    {
+      "id": "skill.hunting",
+      "name": "Hunting",
+      "type": "combat-support",
+      "training": "Complete hunting tasks/expeditions.",
+      "keyRules": [
+        "Hunting has unlockable task upgrades",
+        "upgrades modify hunt selection/rewards/behaviour"
+      ],
+      "source": "https://flatmmo.wiki/index.php/Hunting"
+    },
+    {
+      "id": "skill.worship",
+      "name": "Worship",
+      "type": "utility",
+      "training": "Bury bones/ashes and interact with worship mechanics.",
+      "keyRules": [
+        "Worship Points begin at 1 and increase by 1 per Worship level",
+        "cemeteries refill Worship Points",
+        "abilities include movement, teleport, digging and other utility effects"
+      ],
+      "source": "https://flatmmo.wiki/index.php/Worship"
+    },
+    {
+      "id": "skill.mining",
+      "name": "Mining",
+      "type": "gathering",
+      "training": "Mine ore/rock nodes with a pickaxe.",
+      "keyRules": [
+        "starts with a bronze pickaxe",
+        "higher Mining levels and better pickaxes reduce mining ticks",
+        "mining consumes Sleep Points",
+        "rare gems can be obtained while mining"
+      ],
+      "source": "https://flatmmo.wiki/index.php/Mining"
+    },
+    {
+      "id": "skill.forging",
+      "name": "Forging",
+      "type": "production",
+      "training": "Smelt bars and forge items.",
+      "keyRules": [
+        "bars are smelted at a furnace",
+        "weapons/armour and other products are forged at anvils",
+        "higher-tier metals require increasing fuel/material requirements"
+      ],
+      "source": "https://flatmmo.wiki/index.php/Forging"
+    },
+    {
+      "id": "skill.crafting",
+      "name": "Crafting",
+      "type": "production",
+      "training": "Craft items from logs, hides, bars, gems and other materials.",
+      "keyRules": [
+        "crafting can be started by left-clicking a log to open recipes",
+        "products include bows, staves, arrows, armour, vials and gems"
+      ],
+      "source": "https://flatmmo.wiki/index.php/Crafting"
+    },
+    {
+      "id": "skill.enchantment",
+      "name": "Enchantment",
+      "type": "production/magic",
+      "training": "Enchant orbs, armour, gems, weapons and related items.",
+      "keyRules": [
+        "Stardust and unpowered orbs are core inputs for orb enchanting",
+        "elemental shrines determine orb type"
+      ],
+      "source": "https://flatmmo.wiki/index.php/Enchantment"
+    },
+    {
+      "id": "skill.fishing",
+      "name": "Fishing",
+      "type": "gathering",
+      "training": "Use fishing spots with the required fishing tool/bait.",
+      "keyRules": [
+        "fishing consumes Sleep Points",
+        "different fish require different tools/locations/levels"
+      ],
+      "source": "https://flatmmo.wiki/index.php/Fishing"
+    },
+    {
+      "id": "skill.farming",
+      "name": "Farming",
+      "type": "gathering/production",
+      "training": "Plant and harvest crops at farming plots.",
+      "keyRules": [
+        "plots exist in multiple regions and a Greenhouse",
+        "crops have growth timers",
+        "farming contracts provide additional progression"
+      ],
+      "source": "https://flatmmo.wiki/index.php/Farming"
+    },
+    {
+      "id": "skill.woodcutting",
+      "name": "Woodcutting",
+      "type": "gathering",
+      "training": "Chop trees with an axe.",
+      "keyRules": [
+        "tree tiers progress from normal/oak/willow/maple and beyond",
+        "higher levels/tools improve access and speed"
+      ],
+      "source": "https://flatmmo.wiki/index.php/Woodcutting"
+    },
+    {
+      "id": "skill.firemake",
+      "name": "Firemaking",
+      "wikiPageName": "Firemake",
+      "type": "production/utility",
+      "training": "Light fires using logs and matches.",
+      "keyRules": [
+        "fires can be made in many world tiles but not teleport tiles",
+        "log types have different burn times and XP"
+      ],
+      "source": "https://flatmmo.wiki/index.php/Firemake"
+    },
+    {
+      "id": "skill.cooking",
+      "name": "Cooking",
+      "type": "production",
+      "training": "Cook raw food on fires and use ovens for recipes such as pies.",
+      "keyRules": [
+        "fires cook ordinary food",
+        "ovens support pie cooking",
+        "special potion-created fires/ovens can increase cooking speed"
+      ],
+      "source": "https://flatmmo.wiki/index.php/Cooking"
+    },
+    {
+      "id": "skill.brewing",
+      "name": "Brewing",
+      "type": "production",
+      "training": "Create potions and use fermenting systems.",
+      "keyRules": [
+        "base potion duration is documented as 5 minutes plus 30 seconds per Brewing level",
+        "some potions alter gathering/production behaviour"
+      ],
+      "source": "https://flatmmo.wiki/index.php/Brewing"
+    },
+    {
+      "id": "skill.stealing",
+      "name": "Stealing",
+      "type": "gathering/utility",
+      "training": "Pickpocket NPCs, steal from stalls and open stealable chests.",
+      "keyRules": [
+        "some stalls are guarded",
+        "Silent Gloves can bypass some guard requirements"
+      ],
+      "source": "https://flatmmo.wiki/index.php/Stealing"
+    },
+    {
+      "id": "skill.agility",
+      "name": "Agility",
+      "type": "movement/utility",
+      "training": "Complete agility tracks and dodge.",
+      "keyRules": [
+        "Agility grants movement/dodge progression",
+        "documented passive unlocks include permanent running outside combat at level 20 and running during combat at level 40"
+      ],
+      "source": "https://flatmmo.wiki/index.php/Agility"
+    }
+  ]
+}

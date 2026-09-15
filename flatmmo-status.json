@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "generated": "2026-09-15",
+  "layout": "flat-root",
+  "branch": "v2-online",
+  "counts": {
+    "monsters": 82,
+    "quests": 19,
+    "skills": 18,
+    "mechanics": 20,
+    "areas": 14
+  },
+  "monsterStatus": "bootstrap_mirror_needs_official_refresh",
+  "questStatus": {
+    "cached": 19,
+    "wikiReported": 21
+  },
+  "excluded": [
+    "news/change notes",
+    "player profiles/state",
+    "market data"
+  ],
+  "aiContextSha256": "86ea1cfe185e774ac491c63add789aa0956d160e0289aadb7a738649674dd417"
+}

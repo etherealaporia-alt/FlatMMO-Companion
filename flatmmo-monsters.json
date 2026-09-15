@@ -1,0 +1,3934 @@
+{
+  "schemaVersion": 1,
+  "status": "bootstrap_mirror_needs_official_refresh",
+  "authority": "official-derived-community-mirror",
+  "canonicalEndpoint": "https://flatmmo.com/data/monsters.json",
+  "bootstrapSource": {
+    "repository": "https://github.com/Dounford-Felipe/FlatMMO-Wiki-Extras",
+    "path": "dbUpdater/enemies_db.lua",
+    "commit": "f9e163380f6c61c6c281c60cc580c34328f774ff",
+    "license": "MIT",
+    "note": "The mirror's updater states this data comes from the game server. Replace with the canonical endpoint on the first successful online refresh."
+  },
+  "recordCount": 82,
+  "records": [
+    {
+      "id": "monster.gorilla",
+      "name": "gorilla",
+      "area": "Omboko",
+      "damage": 10,
+      "accuracy": 12,
+      "defence": 10,
+      "magic_defence": 0,
+      "hp": 70,
+      "weakness": null,
+      "drops": [
+        {
+          "item": "giant_bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "banana",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 2,
+          "unique": false
+        },
+        {
+          "item": "dotted_green_leaf",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 6,
+          "unique": false
+        },
+        {
+          "item": "green_leaf",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "lime_leaf",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 20,
+          "unique": false
+        },
+        {
+          "item": "gold_leaf",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 30,
+          "unique": false
+        },
+        {
+          "item": "gorilla_foot_artifact",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 100,
+          "unique": true
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.chicken",
+      "name": "chicken",
+      "area": "Everbrook",
+      "damage": 0,
+      "accuracy": 0,
+      "defence": 0,
+      "magic_defence": 0,
+      "hp": 3,
+      "weakness": null,
+      "drops": [
+        {
+          "item": "bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "raw_chicken",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "feathers",
+          "min": 2,
+          "max": 6,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "wheat_seeds",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 3,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.seagull",
+      "name": "seagull",
+      "area": "Beach",
+      "damage": 1,
+      "accuracy": 0,
+      "defence": 0,
+      "magic_defence": 0,
+      "hp": 15,
+      "weakness": null,
+      "drops": [
+        {
+          "item": "bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "feathers",
+          "min": 20,
+          "max": 40,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "raw_sardine",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.pirate",
+      "name": "pirate",
+      "area": "Beach",
+      "damage": 4,
+      "accuracy": 18,
+      "defence": 7,
+      "magic_defence": 7,
+      "hp": 100,
+      "weakness": null,
+      "drops": [
+        {
+          "item": "bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "barley_seeds",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 5,
+          "unique": false
+        },
+        {
+          "item": "beer_mug",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "sand",
+          "min": 10,
+          "max": 20,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "seashroom",
+          "min": 1,
+          "max": 5,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "seashroom_seeds",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 40,
+          "unique": false
+        },
+        {
+          "item": "raw_lobster",
+          "min": 1,
+          "max": 10,
+          "rarity_denominator": 40,
+          "unique": false
+        },
+        {
+          "item": "seaweed",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 50,
+          "unique": false
+        },
+        {
+          "item": "silver_scimitar",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 50,
+          "unique": false
+        },
+        {
+          "item": "cooked_lobster",
+          "min": 1,
+          "max": 10,
+          "rarity_denominator": 70,
+          "unique": false
+        },
+        {
+          "item": "scimitar_handle",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 500,
+          "unique": false
+        },
+        {
+          "item": "raw_blue_lobster",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1000000,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.earth_golem",
+      "name": "earth_golem",
+      "area": "Desert",
+      "damage": 4,
+      "accuracy": 100,
+      "defence": 25,
+      "magic_defence": 100,
+      "hp": 10,
+      "weakness": null,
+      "drops": [
+        {
+          "item": "earth_orb",
+          "min": 100,
+          "max": 400,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "earth_emblem",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 5,
+          "unique": false
+        },
+        {
+          "item": "earth_totem",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 5,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.trible_feller",
+      "name": "trible_feller",
+      "area": "Omboko",
+      "damage": 6,
+      "accuracy": 16,
+      "defence": 0,
+      "magic_defence": 50,
+      "hp": 100,
+      "weakness": null,
+      "drops": [
+        {
+          "item": "bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "bronze_axe",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 20,
+          "unique": false
+        },
+        {
+          "item": "iron_axe",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 30,
+          "unique": false
+        },
+        {
+          "item": "bamboo",
+          "min": 3,
+          "max": 8,
+          "rarity_denominator": 5,
+          "unique": false
+        },
+        {
+          "item": "dotted_green_leaf",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 5,
+          "unique": false
+        },
+        {
+          "item": "green_leaf",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "lime_leaf",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 30,
+          "unique": false
+        },
+        {
+          "item": "omboko_axe",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 400,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.upper_pirate",
+      "name": "upper_pirate",
+      "area": "Beach",
+      "damage": 10,
+      "accuracy": 23,
+      "defence": 8,
+      "magic_defence": 15,
+      "hp": 300,
+      "weakness": null,
+      "drops": [
+        {
+          "item": "bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "barley_seeds",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 4,
+          "unique": false
+        },
+        {
+          "item": "beer_mug",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "sand",
+          "min": 20,
+          "max": 40,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "seashroom",
+          "min": 1,
+          "max": 10,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "seashroom_seeds",
+          "min": 1,
+          "max": 2,
+          "rarity_denominator": 40,
+          "unique": false
+        },
+        {
+          "item": "raw_lobster",
+          "min": 1,
+          "max": 20,
+          "rarity_denominator": 40,
+          "unique": false
+        },
+        {
+          "item": "seaweed",
+          "min": 1,
+          "max": 2,
+          "rarity_denominator": 50,
+          "unique": false
+        },
+        {
+          "item": "promethium_scimitar",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 50,
+          "unique": false
+        },
+        {
+          "item": "cooked_lobster",
+          "min": 1,
+          "max": 20,
+          "rarity_denominator": 70,
+          "unique": false
+        },
+        {
+          "item": "scimitar_handle",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 300,
+          "unique": false
+        },
+        {
+          "item": "raw_blue_lobster",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1000000,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.everbrook_guard",
+      "name": "everbrook_guard",
+      "area": "Everbrook",
+      "damage": 2,
+      "accuracy": 0,
+      "defence": 1,
+      "magic_defence": 0,
+      "hp": 5,
+      "weakness": null,
+      "drops": [
+        {
+          "item": "bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "coins",
+          "min": 10,
+          "max": 20,
+          "rarity_denominator": 4,
+          "unique": false
+        },
+        {
+          "item": "vial",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 5,
+          "unique": false
+        },
+        {
+          "item": "shovel",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 5,
+          "unique": false
+        },
+        {
+          "item": "matches",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "bronze_sword",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "bronze_bar",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 20,
+          "unique": false
+        },
+        {
+          "item": "dotted_green_leaf",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 40,
+          "unique": false
+        },
+        {
+          "item": "green_leaf",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 60,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.cloud",
+      "name": "cloud",
+      "area": "Beanstalk",
+      "damage": 3,
+      "accuracy": 0,
+      "defence": 10,
+      "magic_defence": 0,
+      "hp": 75,
+      "weakness": "air",
+      "drops": [
+        {
+          "item": "air_orb",
+          "min": 10,
+          "max": 20,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "storm_scroll",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 500,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.storm_cloud",
+      "name": "storm_cloud",
+      "area": "Beanstalk",
+      "damage": 10,
+      "accuracy": 5,
+      "defence": 10,
+      "magic_defence": 0,
+      "hp": 250,
+      "weakness": "earth",
+      "drops": [
+        {
+          "item": "electric_orb",
+          "min": 10,
+          "max": 20,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "storm_scroll",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 300,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.raccoon",
+      "name": "raccoon",
+      "area": "Everbrook",
+      "damage": 0,
+      "accuracy": 0,
+      "defence": 0,
+      "magic_defence": 0,
+      "hp": 2,
+      "weakness": null,
+      "drops": [
+        {
+          "item": "bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "bread",
+          "min": 5,
+          "max": 5,
+          "rarity_denominator": 1,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.dust_devil",
+      "name": "dust_devil",
+      "area": "Desert",
+      "damage": 10,
+      "accuracy": 10,
+      "defence": 1,
+      "magic_defence": 0,
+      "hp": 350,
+      "weakness": "air",
+      "drops": [
+        {
+          "item": "air_orb",
+          "min": 10,
+          "max": 20,
+          "rarity_denominator": 2,
+          "unique": false
+        },
+        {
+          "item": "sand",
+          "min": 10,
+          "max": 20,
+          "rarity_denominator": 5,
+          "unique": false
+        },
+        {
+          "item": "milk_bucket",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 30,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.rat",
+      "name": "rat",
+      "area": "Sewer",
+      "damage": 1,
+      "accuracy": 0,
+      "defence": 0,
+      "magic_defence": 0,
+      "hp": 3,
+      "weakness": null,
+      "drops": [
+        {
+          "item": "raw_rat_meat",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.thief",
+      "name": "thief",
+      "area": "Thieves Hideout",
+      "damage": 5,
+      "accuracy": 5,
+      "defence": 0,
+      "magic_defence": 0,
+      "hp": 15,
+      "weakness": null,
+      "drops": [
+        {
+          "item": "bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "thieves_hood",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "coins",
+          "min": 10,
+          "max": 20,
+          "rarity_denominator": 2,
+          "unique": false
+        },
+        {
+          "item": "iron_knife",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "dotted_green_leaf",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 20,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.trible_fishermen",
+      "name": "trible_fishermen",
+      "area": "Omboko",
+      "damage": 5,
+      "accuracy": 0,
+      "defence": 0,
+      "magic_defence": 0,
+      "hp": 20,
+      "weakness": null,
+      "drops": [
+        {
+          "item": "bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "harpoon",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "raw_tuna",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 30,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.snake",
+      "name": "snake",
+      "area": "Sewer",
+      "damage": 3,
+      "accuracy": 1,
+      "defence": 0,
+      "magic_defence": 0,
+      "hp": 10,
+      "weakness": null,
+      "drops": [
+        {
+          "item": "snakeskin",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "snake_rattle_artifact",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 10,
+          "unique": true
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.great_thief",
+      "name": "great_thief",
+      "area": "Thieves Hideout",
+      "damage": 5,
+      "accuracy": 10,
+      "defence": 0,
+      "magic_defence": 0,
+      "hp": 25,
+      "weakness": null,
+      "drops": [
+        {
+          "item": "bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "thieves_hood",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "coins",
+          "min": 35,
+          "max": 50,
+          "rarity_denominator": 2,
+          "unique": false
+        },
+        {
+          "item": "dotted_green_leaf",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 15,
+          "unique": false
+        },
+        {
+          "item": "gold_knife",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 20,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.pig",
+      "name": "pig",
+      "area": "Everbrook",
+      "damage": 1,
+      "accuracy": 0,
+      "defence": 0,
+      "magic_defence": 0,
+      "hp": 30,
+      "weakness": null,
+      "drops": [
+        {
+          "item": "bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "raw_pork",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "raw_bacon",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 20,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.cow",
+      "name": "cow",
+      "area": "Everbrook",
+      "damage": 1,
+      "accuracy": 0,
+      "defence": 0,
+      "magic_defence": 0,
+      "hp": 5,
+      "weakness": null,
+      "drops": [
+        {
+          "item": "bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "raw_steak",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.tiger",
+      "name": "tiger",
+      "area": "Omboko",
+      "damage": 15,
+      "accuracy": 7,
+      "defence": 0,
+      "magic_defence": 0,
+      "hp": 40,
+      "weakness": null,
+      "drops": [
+        {
+          "item": "bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "tiger_fur",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.crocodile",
+      "name": "crocodile",
+      "area": "Beach",
+      "damage": 20,
+      "accuracy": 12,
+      "defence": 8,
+      "magic_defence": 0,
+      "hp": 50,
+      "weakness": null,
+      "drops": [
+        {
+          "item": "bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "crocodile_hides",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "crocodile_jaw_artifact",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 100,
+          "unique": true
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.giant_rat",
+      "name": "giant_rat",
+      "area": "Sewer",
+      "damage": 2,
+      "accuracy": 1,
+      "defence": 0,
+      "magic_defence": 0,
+      "hp": 30,
+      "weakness": null,
+      "drops": [
+        {
+          "item": "raw_rat_meat",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "giant_bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.rocky",
+      "name": "rocky",
+      "area": "Everbrook",
+      "damage": 1,
+      "accuracy": 0,
+      "defence": 1,
+      "magic_defence": 0,
+      "hp": 10,
+      "weakness": null,
+      "drops": [
+        {
+          "item": "coal",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "copper",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 5,
+          "unique": false
+        },
+        {
+          "item": "rockshroom",
+          "min": 3,
+          "max": 9,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "iron",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 30,
+          "unique": false
+        },
+        {
+          "item": "silver",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 100,
+          "unique": false
+        },
+        {
+          "item": "gold",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 200,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.volcanic_rocky",
+      "name": "volcanic_rocky",
+      "area": "Volcano",
+      "damage": 10,
+      "accuracy": 15,
+      "defence": 50,
+      "magic_defence": 16,
+      "hp": 500,
+      "weakness": "water",
+      "drops": [
+        {
+          "item": "ashes",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "gold",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 20,
+          "unique": false
+        },
+        {
+          "item": "promethium",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 40,
+          "unique": false
+        },
+        {
+          "item": "titanium",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 100,
+          "unique": false
+        },
+        {
+          "item": "graphite",
+          "min": 5,
+          "max": 10,
+          "rarity_denominator": 100,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.lava_rocky",
+      "name": "lava_rocky",
+      "area": "Hell",
+      "damage": 5,
+      "accuracy": 15,
+      "defence": 50,
+      "magic_defence": 5,
+      "hp": 250,
+      "weakness": "water",
+      "drops": [
+        {
+          "item": "ashes",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "coal",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "copper",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 5,
+          "unique": false
+        },
+        {
+          "item": "rockshroom",
+          "min": 1,
+          "max": 9,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "iron",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 20,
+          "unique": false
+        },
+        {
+          "item": "silver",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 30,
+          "unique": false
+        },
+        {
+          "item": "gold",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 40,
+          "unique": false
+        },
+        {
+          "item": "rockshroom_seeds",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 50,
+          "unique": false
+        },
+        {
+          "item": "promethium",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 100,
+          "unique": false
+        },
+        {
+          "item": "charcoal",
+          "min": 1,
+          "max": 5,
+          "rarity_denominator": 100,
+          "unique": false
+        },
+        {
+          "item": "fire_pages",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 10000,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.hell_goblin",
+      "name": "hell_goblin",
+      "area": "Hell",
+      "damage": 7,
+      "accuracy": 12,
+      "defence": 0,
+      "magic_defence": 0,
+      "hp": 100,
+      "weakness": "water",
+      "drops": [
+        {
+          "item": "ashes",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "dotted_green_leaf",
+          "min": 1,
+          "max": 3,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "green_leaf",
+          "min": 1,
+          "max": 3,
+          "rarity_denominator": 15,
+          "unique": false
+        },
+        {
+          "item": "mangrove_logs",
+          "min": 1,
+          "max": 5,
+          "rarity_denominator": 20,
+          "unique": false
+        },
+        {
+          "item": "bronze_arrow_heads",
+          "min": 50,
+          "max": 100,
+          "rarity_denominator": 20,
+          "unique": false
+        },
+        {
+          "item": "iron_arrow_heads",
+          "min": 25,
+          "max": 50,
+          "rarity_denominator": 20,
+          "unique": false
+        },
+        {
+          "item": "stone_boots",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 70,
+          "unique": false
+        },
+        {
+          "item": "goblin_toenails_artifact",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 200,
+          "unique": false
+        },
+        {
+          "item": "fire_pages",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 10000,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.deranged_mage",
+      "name": "deranged_mage",
+      "area": "Mystic Vale",
+      "damage": 5,
+      "accuracy": 10,
+      "defence": 0,
+      "magic_defence": 5,
+      "hp": 300,
+      "weakness": "archery",
+      "drops": [
+        {
+          "item": "bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "stardust",
+          "min": 10,
+          "max": 50,
+          "rarity_denominator": 2,
+          "unique": false
+        },
+        {
+          "item": "blue_mage_silk",
+          "min": 1,
+          "max": 10,
+          "rarity_denominator": 2,
+          "unique": false
+        },
+        {
+          "item": "air_orb",
+          "min": 10,
+          "max": 20,
+          "rarity_denominator": 5,
+          "unique": false
+        },
+        {
+          "item": "fire_orb",
+          "min": 10,
+          "max": 40,
+          "rarity_denominator": 5,
+          "unique": false
+        },
+        {
+          "item": "blue_mushroom_seeds",
+          "min": 1,
+          "max": 3,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "willow_staff",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 15,
+          "unique": false
+        },
+        {
+          "item": "stardust_seeds",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 30,
+          "unique": false
+        },
+        {
+          "item": "deranged_mage_key",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 30,
+          "unique": true
+        },
+        {
+          "item": "deranged_mask",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 100,
+          "unique": false
+        },
+        {
+          "item": "baby_deranged_mage_pet",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 10000,
+          "unique": false
+        }
+      ],
+      "boss": true,
+      "image_path": null
+    },
+    {
+      "id": "monster.guard_mage",
+      "name": "guard_mage",
+      "area": "Mystic Vale",
+      "damage": 5,
+      "accuracy": 5,
+      "defence": 0,
+      "magic_defence": 5,
+      "hp": 50,
+      "weakness": "archery",
+      "drops": [
+        {
+          "item": "bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "blue_mage_silk",
+          "min": 1,
+          "max": 3,
+          "rarity_denominator": 2,
+          "unique": false
+        },
+        {
+          "item": "coins",
+          "min": 5,
+          "max": 10,
+          "rarity_denominator": 5,
+          "unique": false
+        },
+        {
+          "item": "water_orb",
+          "min": 10,
+          "max": 20,
+          "rarity_denominator": 5,
+          "unique": false
+        },
+        {
+          "item": "oak_staff",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 15,
+          "unique": false
+        },
+        {
+          "item": "stardust",
+          "min": 5,
+          "max": 25,
+          "rarity_denominator": 20,
+          "unique": false
+        },
+        {
+          "item": "stardust_seeds",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 100,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.ali_dark_mage_leader",
+      "name": "ali_dark_mage_leader",
+      "area": "Desert",
+      "damage": 20,
+      "accuracy": 20,
+      "defence": 10,
+      "magic_defence": 17,
+      "hp": 500,
+      "weakness": "archery",
+      "drops": [
+        {
+          "item": "bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "water_bucket",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.desert_mage",
+      "name": "desert_mage",
+      "area": "Desert",
+      "damage": 20,
+      "accuracy": 20,
+      "defence": 10,
+      "magic_defence": 17,
+      "hp": 400,
+      "weakness": "archery",
+      "drops": [
+        {
+          "item": "bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "earth_orb",
+          "min": 10,
+          "max": 20,
+          "rarity_denominator": 5,
+          "unique": false
+        },
+        {
+          "item": "desert_mage_silk",
+          "min": 1,
+          "max": 3,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "stardust",
+          "min": 100,
+          "max": 150,
+          "rarity_denominator": 20,
+          "unique": false
+        },
+        {
+          "item": "stardust_seeds",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 30,
+          "unique": false
+        },
+        {
+          "item": "desert_mage_coif",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 500,
+          "unique": false
+        },
+        {
+          "item": "desert_mage_top",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 500,
+          "unique": false
+        },
+        {
+          "item": "desert_mage_skirt",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 500,
+          "unique": false
+        },
+        {
+          "item": "desert_mage_gloves",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 500,
+          "unique": false
+        },
+        {
+          "item": "desert_mage_boots",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 500,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.mad_priest",
+      "name": "mad_priest",
+      "area": "Graveyard",
+      "damage": 40,
+      "accuracy": 33,
+      "defence": 0,
+      "magic_defence": 50,
+      "hp": 200,
+      "weakness": "archery",
+      "drops": [
+        {
+          "item": "bones",
+          "min": 10,
+          "max": 20,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "air_orb",
+          "min": 20,
+          "max": 40,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "tears_of_the_mad_priest",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 50,
+          "unique": false
+        }
+      ],
+      "boss": true,
+      "image_path": null
+    },
+    {
+      "id": "monster.druid",
+      "name": "druid",
+      "area": "Omboko",
+      "damage": 20,
+      "accuracy": 20,
+      "defence": 0,
+      "magic_defence": 17,
+      "hp": 400,
+      "weakness": "archery",
+      "drops": [
+        {
+          "item": "bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "grass_orb",
+          "min": 10,
+          "max": 20,
+          "rarity_denominator": 5,
+          "unique": false
+        },
+        {
+          "item": "druid_silk",
+          "min": 1,
+          "max": 3,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "bamboo",
+          "min": 20,
+          "max": 30,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "stardust",
+          "min": 60,
+          "max": 110,
+          "rarity_denominator": 20,
+          "unique": false
+        },
+        {
+          "item": "stardust_seeds",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 40,
+          "unique": false
+        },
+        {
+          "item": "druid_headband",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 500,
+          "unique": false
+        },
+        {
+          "item": "druid_top",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 500,
+          "unique": false
+        },
+        {
+          "item": "druid_skirt",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 500,
+          "unique": false
+        },
+        {
+          "item": "druid_gloves",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 500,
+          "unique": false
+        },
+        {
+          "item": "druid_boots",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 500,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.shamen",
+      "name": "shamen",
+      "area": "Omboko",
+      "damage": 10,
+      "accuracy": 30,
+      "defence": 20,
+      "magic_defence": 80,
+      "hp": 300,
+      "weakness": "archery",
+      "drops": [
+        {
+          "item": "bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "grass_orb",
+          "min": 10,
+          "max": 50,
+          "rarity_denominator": 20,
+          "unique": false
+        },
+        {
+          "item": "damage_orb_4",
+          "min": 1,
+          "max": 10,
+          "rarity_denominator": 20,
+          "unique": false
+        },
+        {
+          "item": "jiggy_artifact",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 100,
+          "unique": true
+        },
+        {
+          "item": "hunters_feather",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 500,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.mage",
+      "name": "mage",
+      "area": "Mystic Vale",
+      "damage": 1,
+      "accuracy": 1,
+      "defence": 0,
+      "magic_defence": 10,
+      "hp": 5,
+      "weakness": null,
+      "drops": [
+        {
+          "item": "bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.red_mage",
+      "name": "red_mage",
+      "area": "Mystic Vale",
+      "damage": 10,
+      "accuracy": 10,
+      "defence": 0,
+      "magic_defence": 10,
+      "hp": 150,
+      "weakness": "archery",
+      "drops": [
+        {
+          "item": "bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "fire_orb",
+          "min": 10,
+          "max": 20,
+          "rarity_denominator": 5,
+          "unique": false
+        },
+        {
+          "item": "red_mage_silk",
+          "min": 1,
+          "max": 3,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "stardust",
+          "min": 30,
+          "max": 60,
+          "rarity_denominator": 20,
+          "unique": false
+        },
+        {
+          "item": "stardust_seeds",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 50,
+          "unique": false
+        },
+        {
+          "item": "red_mage_hat",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 500,
+          "unique": false
+        },
+        {
+          "item": "red_mage_top",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 500,
+          "unique": false
+        },
+        {
+          "item": "red_mage_skirt",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 500,
+          "unique": false
+        },
+        {
+          "item": "red_mage_gloves",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 500,
+          "unique": false
+        },
+        {
+          "item": "red_mage_boots",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 500,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.noctyrix",
+      "name": "noctyrix",
+      "area": "Volcano Cave",
+      "damage": 20,
+      "accuracy": 25,
+      "defence": 15,
+      "magic_defence": 100,
+      "hp": 500,
+      "weakness": null,
+      "drops": [
+        {
+          "item": "giant_bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "apple",
+          "min": 5,
+          "max": 10,
+          "rarity_denominator": 20,
+          "unique": false
+        },
+        {
+          "item": "banana",
+          "min": 5,
+          "max": 10,
+          "rarity_denominator": 20,
+          "unique": false
+        },
+        {
+          "item": "pineapple",
+          "min": 5,
+          "max": 10,
+          "rarity_denominator": 20,
+          "unique": false
+        },
+        {
+          "item": "starfruit",
+          "min": 5,
+          "max": 10,
+          "rarity_denominator": 20,
+          "unique": false
+        },
+        {
+          "item": "dragonfruit",
+          "min": 5,
+          "max": 10,
+          "rarity_denominator": 20,
+          "unique": false
+        },
+        {
+          "item": "pear",
+          "min": 5,
+          "max": 10,
+          "rarity_denominator": 20,
+          "unique": false
+        },
+        {
+          "item": "noctyrix_mask",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 100,
+          "unique": false
+        },
+        {
+          "item": "noctyrix_body",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 100,
+          "unique": false
+        },
+        {
+          "item": "noctyrix_legs",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 100,
+          "unique": false
+        },
+        {
+          "item": "noctyrix_boots",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 100,
+          "unique": false
+        },
+        {
+          "item": "noctyrix_gloves",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 100,
+          "unique": false
+        },
+        {
+          "item": "apple_tree_seeds",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 200,
+          "unique": false
+        },
+        {
+          "item": "banana_tree_seeds",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 200,
+          "unique": false
+        },
+        {
+          "item": "pineapple_tree_seeds",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 200,
+          "unique": false
+        },
+        {
+          "item": "starfruit_tree_seeds",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 200,
+          "unique": false
+        },
+        {
+          "item": "dragonfruit_tree_seeds",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 200,
+          "unique": false
+        },
+        {
+          "item": "pear_tree_seeds",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 200,
+          "unique": false
+        },
+        {
+          "item": "noctyrix_ears",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 200,
+          "unique": false
+        },
+        {
+          "item": "noctyrix_pet",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 10000,
+          "unique": false
+        }
+      ],
+      "boss": true,
+      "image_path": null
+    },
+    {
+      "id": "monster.silkfang",
+      "name": "silkfang",
+      "area": "Sewer",
+      "damage": 20,
+      "accuracy": 16,
+      "defence": 0,
+      "magic_defence": 100,
+      "hp": 500,
+      "weakness": "crush",
+      "drops": [
+        {
+          "item": "string",
+          "min": 5,
+          "max": 10,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "dotted_green_leaf_seeds",
+          "min": 2,
+          "max": 3,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "green_leaf_seeds",
+          "min": 1,
+          "max": 2,
+          "rarity_denominator": 20,
+          "unique": false
+        },
+        {
+          "item": "lime_leaf_seeds",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 30,
+          "unique": false
+        },
+        {
+          "item": "maple_bow",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 30,
+          "unique": false
+        },
+        {
+          "item": "mangrove_bow",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 40,
+          "unique": false
+        },
+        {
+          "item": "silkfang_hide",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 50,
+          "unique": false
+        },
+        {
+          "item": "silkfang_skin_artifact",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 50,
+          "unique": true
+        },
+        {
+          "item": "gold_leaf_seeds",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 50,
+          "unique": false
+        },
+        {
+          "item": "silkfang_mask",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 200,
+          "unique": false
+        },
+        {
+          "item": "silkfang_body",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 200,
+          "unique": false
+        },
+        {
+          "item": "silkfang_legs",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 200,
+          "unique": false
+        },
+        {
+          "item": "silkfang_gloves",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 200,
+          "unique": false
+        },
+        {
+          "item": "silkfang_boots",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 200,
+          "unique": false
+        },
+        {
+          "item": "silkfang_string",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 300,
+          "unique": false
+        },
+        {
+          "item": "silkfang_pet",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 10000,
+          "unique": false
+        }
+      ],
+      "boss": true,
+      "image_path": null
+    },
+    {
+      "id": "monster.cave_beetle",
+      "name": "cave_beetle",
+      "area": "Volcano Cave",
+      "damage": 5,
+      "accuracy": 12,
+      "defence": 0,
+      "magic_defence": 0,
+      "hp": 150,
+      "weakness": "crush",
+      "drops": [
+        {
+          "item": "bait",
+          "min": 5,
+          "max": 10,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "moldshroom",
+          "min": 5,
+          "max": 10,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "cave_bait",
+          "min": 5,
+          "max": 10,
+          "rarity_denominator": 30,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.slime",
+      "name": "slime",
+      "area": "Volcano Cave",
+      "damage": 1,
+      "accuracy": 50,
+      "defence": 0,
+      "magic_defence": 0,
+      "hp": 200,
+      "weakness": "slash",
+      "drops": [
+        {
+          "item": "slime_oil",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.beetle",
+      "name": "beetle",
+      "area": "Omboko",
+      "damage": 4,
+      "accuracy": 7,
+      "defence": 0,
+      "magic_defence": 0,
+      "hp": 20,
+      "weakness": "crush",
+      "drops": [
+        {
+          "item": "bait",
+          "min": 5,
+          "max": 10,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "moldshroom",
+          "min": 5,
+          "max": 10,
+          "rarity_denominator": 10,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.beads_dwarf",
+      "name": "beads_dwarf",
+      "area": "Everbrook",
+      "damage": 8,
+      "accuracy": 20,
+      "defence": 8,
+      "magic_defence": 15,
+      "hp": 100,
+      "weakness": null,
+      "drops": [
+        {
+          "item": "bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "coal",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "copper",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "rockshroom",
+          "min": 1,
+          "max": 9,
+          "rarity_denominator": 3,
+          "unique": false
+        },
+        {
+          "item": "iron",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 5,
+          "unique": false
+        },
+        {
+          "item": "silver",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "charcoal",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "gold",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 20,
+          "unique": false
+        },
+        {
+          "item": "rockshroom_seeds",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 20,
+          "unique": false
+        },
+        {
+          "item": "promethium",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 50,
+          "unique": false
+        },
+        {
+          "item": "titanium",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 100,
+          "unique": false
+        },
+        {
+          "item": "miners_gem_beads_necklace",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 400,
+          "unique": false
+        },
+        {
+          "item": "ancient_ore",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 500,
+          "unique": false
+        },
+        {
+          "item": "sapphire",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 2000,
+          "unique": false
+        },
+        {
+          "item": "emerald",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 3000,
+          "unique": false
+        },
+        {
+          "item": "titanium_pickaxe",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 3000,
+          "unique": false
+        },
+        {
+          "item": "ruby",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 6000,
+          "unique": false
+        },
+        {
+          "item": "ancient_pickaxe",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 6000,
+          "unique": false
+        },
+        {
+          "item": "diamond",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 8000,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.flamester",
+      "name": "flamester",
+      "area": "Volcano",
+      "damage": 8,
+      "accuracy": 20,
+      "defence": 8,
+      "magic_defence": 15,
+      "hp": 300,
+      "weakness": "water",
+      "drops": [
+        {
+          "item": "ashes",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "lava_orb",
+          "min": 5,
+          "max": 10,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "fireshroom",
+          "min": 5,
+          "max": 10,
+          "rarity_denominator": 40,
+          "unique": false
+        },
+        {
+          "item": "hot_berries",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 100,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.ice_beetle",
+      "name": "ice_beetle",
+      "area": "Frostvale",
+      "damage": 8,
+      "accuracy": 20,
+      "defence": 8,
+      "magic_defence": 15,
+      "hp": 300,
+      "weakness": "crush",
+      "drops": [
+        {
+          "item": "frozen_bait",
+          "min": 5,
+          "max": 10,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "moldshroom",
+          "min": 5,
+          "max": 10,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "frozen_berries",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 200,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.desert_beetle",
+      "name": "desert_beetle",
+      "area": "Desert",
+      "damage": 8,
+      "accuracy": 20,
+      "defence": 8,
+      "magic_defence": 15,
+      "hp": 200,
+      "weakness": "crush",
+      "drops": [
+        {
+          "item": "bait",
+          "min": 20,
+          "max": 40,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "moldshroom",
+          "min": 5,
+          "max": 10,
+          "rarity_denominator": 10,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.rogue_warrior",
+      "name": "rogue_warrior",
+      "area": "Desert",
+      "damage": 20,
+      "accuracy": 12,
+      "defence": 20,
+      "magic_defence": 0,
+      "hp": 1000,
+      "weakness": "fire",
+      "drops": [
+        {
+          "item": "bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.ball",
+      "name": "ball",
+      "area": "Unreleased",
+      "damage": 0,
+      "accuracy": 0,
+      "defence": 0,
+      "magic_defence": 0,
+      "hp": 1000,
+      "weakness": null,
+      "drops": [
+        {
+          "item": "bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.rogue_mage",
+      "name": "rogue_mage",
+      "area": "Desert",
+      "damage": 20,
+      "accuracy": 23,
+      "defence": 0,
+      "magic_defence": 20,
+      "hp": 1000,
+      "weakness": "archery",
+      "drops": [
+        {
+          "item": "bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.rogue_archer",
+      "name": "rogue_archer",
+      "area": "Desert",
+      "damage": 20,
+      "accuracy": 30,
+      "defence": 0,
+      "magic_defence": 20,
+      "hp": 1000,
+      "weakness": "slash",
+      "drops": [
+        {
+          "item": "bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.archer_thief",
+      "name": "archer_thief",
+      "area": "Thieves Hideout",
+      "damage": 4,
+      "accuracy": 3,
+      "defence": 0,
+      "magic_defence": 0,
+      "hp": 20,
+      "weakness": null,
+      "drops": [
+        {
+          "item": "bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "arrow_shafts",
+          "min": 1,
+          "max": 5,
+          "rarity_denominator": 5,
+          "unique": false
+        },
+        {
+          "item": "bronze_arrows",
+          "min": 10,
+          "max": 25,
+          "rarity_denominator": 5,
+          "unique": false
+        },
+        {
+          "item": "iron_arrows",
+          "min": 5,
+          "max": 10,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "bow",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 10,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.ghost",
+      "name": "ghost",
+      "area": "Everbrook",
+      "damage": 3,
+      "accuracy": 3,
+      "defence": 0,
+      "magic_defence": 0,
+      "hp": 15,
+      "weakness": "blessed",
+      "drops": [
+        {
+          "item": "damage_orb_1",
+          "min": 10,
+          "max": 20,
+          "rarity_denominator": 6,
+          "unique": false
+        },
+        {
+          "item": "air_orb",
+          "min": 10,
+          "max": 20,
+          "rarity_denominator": 11,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.ice_ghost",
+      "name": "ice_ghost",
+      "area": "Frostvale",
+      "damage": 20,
+      "accuracy": 6,
+      "defence": 0,
+      "magic_defence": 0,
+      "hp": 40,
+      "weakness": "fire",
+      "drops": [
+        {
+          "item": "damage_orb_3",
+          "min": 10,
+          "max": 20,
+          "rarity_denominator": 6,
+          "unique": false
+        },
+        {
+          "item": "ice_orb",
+          "min": 10,
+          "max": 20,
+          "rarity_denominator": 11,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.crypt_skeleton",
+      "name": "crypt_skeleton",
+      "area": "Desert",
+      "damage": 0,
+      "accuracy": 0,
+      "defence": 0,
+      "magic_defence": 0,
+      "hp": 300,
+      "weakness": "crush",
+      "drops": [
+        {
+          "item": "bones",
+          "min": 10,
+          "max": 20,
+          "rarity_denominator": 1,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.archer_goblin",
+      "name": "archer_goblin",
+      "area": "Everbrook",
+      "damage": 4,
+      "accuracy": 3,
+      "defence": 0,
+      "magic_defence": 0,
+      "hp": 20,
+      "weakness": null,
+      "drops": [
+        {
+          "item": "bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "coins",
+          "min": 1,
+          "max": 3,
+          "rarity_denominator": 2,
+          "unique": false
+        },
+        {
+          "item": "willow_logs",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 5,
+          "unique": false
+        },
+        {
+          "item": "bronze_arrows",
+          "min": 5,
+          "max": 20,
+          "rarity_denominator": 5,
+          "unique": false
+        },
+        {
+          "item": "dotted_green_leaf",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 15,
+          "unique": false
+        },
+        {
+          "item": "willow_bow",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 20,
+          "unique": false
+        },
+        {
+          "item": "goblin_toenails_artifact",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 200,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.farmer",
+      "name": "farmer",
+      "area": "Everbrook",
+      "damage": 2,
+      "accuracy": 2,
+      "defence": 0,
+      "magic_defence": 0,
+      "hp": 5,
+      "weakness": null,
+      "drops": [
+        {
+          "item": "bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "wheat_seeds",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 2,
+          "unique": false
+        },
+        {
+          "item": "red_mushroom_seeds",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 5,
+          "unique": false
+        },
+        {
+          "item": "green_mushroom_seeds",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 5,
+          "unique": false
+        },
+        {
+          "item": "blue_mushroom_seeds",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 5,
+          "unique": false
+        },
+        {
+          "item": "bonemeal",
+          "min": 1,
+          "max": 3,
+          "rarity_denominator": 5,
+          "unique": false
+        },
+        {
+          "item": "dotted_green_leaf",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 8,
+          "unique": false
+        },
+        {
+          "item": "bonecrusher",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "green_leaf",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 15,
+          "unique": false
+        },
+        {
+          "item": "dotted_green_leaf_seeds",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 20,
+          "unique": false
+        },
+        {
+          "item": "green_leaf_seeds",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 40,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.master_farmer",
+      "name": "master_farmer",
+      "area": "Everbrook",
+      "damage": 4,
+      "accuracy": 4,
+      "defence": 0,
+      "magic_defence": 0,
+      "hp": 50,
+      "weakness": null,
+      "drops": [
+        {
+          "item": "bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "red_mushroom_seeds",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 3,
+          "unique": false
+        },
+        {
+          "item": "green_mushroom_seeds",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 3,
+          "unique": false
+        },
+        {
+          "item": "blue_mushroom_seeds",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 3,
+          "unique": false
+        },
+        {
+          "item": "bonemeal",
+          "min": 1,
+          "max": 3,
+          "rarity_denominator": 3,
+          "unique": false
+        },
+        {
+          "item": "dotted_green_leaf",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 5,
+          "unique": false
+        },
+        {
+          "item": "green_leaf",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "lime_leaf",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 30,
+          "unique": false
+        },
+        {
+          "item": "gold_leaf",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 150,
+          "unique": false
+        },
+        {
+          "item": "dotted_green_leaf_seeds",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 15,
+          "unique": false
+        },
+        {
+          "item": "green_leaf_seeds",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 30,
+          "unique": false
+        },
+        {
+          "item": "straw_hat",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 100,
+          "unique": false
+        },
+        {
+          "item": "lime_leaf_seeds",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 200,
+          "unique": false
+        },
+        {
+          "item": "gold_leaf_seeds",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 600,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.bear",
+      "name": "bear",
+      "area": "Everbrook",
+      "damage": 1,
+      "accuracy": 5,
+      "defence": 0,
+      "magic_defence": 0,
+      "hp": 30,
+      "weakness": null,
+      "drops": [
+        {
+          "item": "bear_fur",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "giant_bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.wolf",
+      "name": "wolf",
+      "area": "Frostvale",
+      "damage": 5,
+      "accuracy": 10,
+      "defence": 10,
+      "magic_defence": 10,
+      "hp": 200,
+      "weakness": "fire",
+      "drops": [
+        {
+          "item": "wolf_fur",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.lochness_monster",
+      "name": "lochness_monster",
+      "area": "Beach",
+      "damage": 0,
+      "accuracy": 0,
+      "defence": 0,
+      "magic_defence": 1000,
+      "hp": 30,
+      "weakness": null,
+      "drops": [
+        {
+          "item": "bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.flufflare",
+      "name": "flufflare",
+      "area": "Hell",
+      "damage": 3,
+      "accuracy": 20,
+      "defence": 0,
+      "magic_defence": 0,
+      "hp": 150,
+      "weakness": "water",
+      "drops": [
+        {
+          "item": "ashes",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "fire_orb",
+          "min": 10,
+          "max": 20,
+          "rarity_denominator": 10,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.iceflare",
+      "name": "iceflare",
+      "area": "Frostvale",
+      "damage": 7,
+      "accuracy": 20,
+      "defence": 0,
+      "magic_defence": 0,
+      "hp": 300,
+      "weakness": "fire",
+      "drops": [
+        {
+          "item": "ashes",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "ice_orb",
+          "min": 10,
+          "max": 20,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "frozen_berries",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 100,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.ent",
+      "name": "ent",
+      "area": "Omboko",
+      "damage": 12,
+      "accuracy": 16,
+      "defence": 6,
+      "magic_defence": 1000,
+      "hp": 500,
+      "weakness": "axes",
+      "drops": [
+        {
+          "item": "logs",
+          "min": 10,
+          "max": 20,
+          "rarity_denominator": 6,
+          "unique": false
+        },
+        {
+          "item": "oak_logs",
+          "min": 10,
+          "max": 20,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "willow_logs",
+          "min": 10,
+          "max": 20,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "maple_logs",
+          "min": 10,
+          "max": 20,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "mangrove_logs",
+          "min": 10,
+          "max": 20,
+          "rarity_denominator": 30,
+          "unique": false
+        },
+        {
+          "item": "haunted_logs",
+          "min": 10,
+          "max": 20,
+          "rarity_denominator": 50,
+          "unique": false
+        },
+        {
+          "item": "birdnest",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 50,
+          "unique": false
+        },
+        {
+          "item": "woodchips",
+          "min": 250,
+          "max": 500,
+          "rarity_denominator": 200,
+          "unique": false
+        },
+        {
+          "item": "grass_pages",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 400,
+          "unique": false
+        },
+        {
+          "item": "omboko_axe_head",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 2000,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.crystadune",
+      "name": "crystadune",
+      "area": "Desert",
+      "damage": 5,
+      "accuracy": 27,
+      "defence": 9,
+      "magic_defence": 1000,
+      "hp": 300,
+      "weakness": "crush",
+      "drops": [
+        {
+          "item": "vial",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "glass",
+          "min": 10,
+          "max": 20,
+          "rarity_denominator": 6,
+          "unique": false
+        },
+        {
+          "item": "large_vial",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 20,
+          "unique": false
+        },
+        {
+          "item": "huge_vial",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 150,
+          "unique": false
+        },
+        {
+          "item": "crystal_shard",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 300,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.giant_flufflare",
+      "name": "giant_flufflare",
+      "area": "Hell",
+      "damage": 15,
+      "accuracy": 10,
+      "defence": 0,
+      "magic_defence": 0,
+      "hp": 1500,
+      "weakness": "water",
+      "drops": [
+        {
+          "item": "ashes",
+          "min": 10,
+          "max": 20,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "fire_orb",
+          "min": 50,
+          "max": 100,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "damage_orb_1",
+          "min": 50,
+          "max": 100,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "damage_orb_2",
+          "min": 50,
+          "max": 100,
+          "rarity_denominator": 20,
+          "unique": false
+        },
+        {
+          "item": "fireshroom_seeds",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 40,
+          "unique": false
+        },
+        {
+          "item": "fireshroom",
+          "min": 3,
+          "max": 7,
+          "rarity_denominator": 30,
+          "unique": false
+        },
+        {
+          "item": "damage_orb_3",
+          "min": 50,
+          "max": 100,
+          "rarity_denominator": 50,
+          "unique": false
+        },
+        {
+          "item": "fire_pages",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 50,
+          "unique": false
+        },
+        {
+          "item": "burnt_ashes_artifact",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 50,
+          "unique": true
+        },
+        {
+          "item": "fire_emblem",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 300,
+          "unique": false
+        },
+        {
+          "item": "flufflare_pet",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 10000,
+          "unique": false
+        }
+      ],
+      "boss": true,
+      "image_path": null
+    },
+    {
+      "id": "monster.lizard",
+      "name": "lizard",
+      "area": "Volcano",
+      "damage": 3,
+      "accuracy": 20,
+      "defence": 0,
+      "magic_defence": 0,
+      "hp": 200,
+      "weakness": "water",
+      "drops": [
+        {
+          "item": "ashes",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "fire_orb",
+          "min": 10,
+          "max": 20,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "gold_leaf",
+          "min": 1,
+          "max": 3,
+          "rarity_denominator": 70,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.goblin",
+      "name": "goblin",
+      "area": "Sewer",
+      "damage": 3,
+      "accuracy": 0,
+      "defence": 2,
+      "magic_defence": 0,
+      "hp": 20,
+      "weakness": null,
+      "drops": [
+        {
+          "item": "bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "coins",
+          "min": 1,
+          "max": 10,
+          "rarity_denominator": 2,
+          "unique": false
+        },
+        {
+          "item": "cooked_shrimp",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "dotted_green_leaf",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 20,
+          "unique": false
+        },
+        {
+          "item": "goblin_toenails_artifact",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 200,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.mummy",
+      "name": "mummy",
+      "area": "Desert",
+      "damage": 7,
+      "accuracy": 15,
+      "defence": 10,
+      "magic_defence": 15,
+      "hp": 250,
+      "weakness": "blessed",
+      "drops": [
+        {
+          "item": "mummified_bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "mummified_skull",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 30,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.scorpion",
+      "name": "scorpion",
+      "area": "Desert",
+      "damage": 3,
+      "accuracy": 20,
+      "defence": 10,
+      "magic_defence": 30,
+      "hp": 200,
+      "weakness": "crush",
+      "drops": [
+        {
+          "item": "bait",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.cobra",
+      "name": "cobra",
+      "area": "Desert",
+      "damage": 3,
+      "accuracy": 20,
+      "defence": 10,
+      "magic_defence": 30,
+      "hp": 200,
+      "weakness": "slash",
+      "drops": [
+        {
+          "item": "large_antidote_potion",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 50,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.soaked_bat",
+      "name": "soaked_bat",
+      "area": "Volcano Cave",
+      "damage": 0,
+      "accuracy": 0,
+      "defence": 0,
+      "magic_defence": 0,
+      "hp": 1,
+      "weakness": "electric",
+      "drops": [
+        {
+          "item": "soaked_bat_wing_artifact",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 200,
+          "unique": true
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.heal_bat",
+      "name": "heal_bat",
+      "area": "Volcano Cave",
+      "damage": 0,
+      "accuracy": 0,
+      "defence": 0,
+      "magic_defence": 0,
+      "hp": 1,
+      "weakness": null,
+      "drops": [
+        {
+          "item": "heal_bat_wing_artifact",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 200,
+          "unique": true
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.fire_bat",
+      "name": "fire_bat",
+      "area": "Volcano Cave",
+      "damage": 10,
+      "accuracy": 100,
+      "defence": 0,
+      "magic_defence": 0,
+      "hp": 1,
+      "weakness": "fire",
+      "drops": [
+        {
+          "item": "fire_bat_wing_artifact",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 200,
+          "unique": true
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.bat",
+      "name": "bat",
+      "area": "Volcano Cave",
+      "damage": 3,
+      "accuracy": 10,
+      "defence": 0,
+      "magic_defence": 0,
+      "hp": 100,
+      "weakness": null,
+      "drops": [
+        {
+          "item": "bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "apple",
+          "min": 5,
+          "max": 10,
+          "rarity_denominator": 50,
+          "unique": false
+        },
+        {
+          "item": "banana",
+          "min": 5,
+          "max": 10,
+          "rarity_denominator": 50,
+          "unique": false
+        },
+        {
+          "item": "pineapple",
+          "min": 5,
+          "max": 10,
+          "rarity_denominator": 50,
+          "unique": false
+        },
+        {
+          "item": "dragonfruit",
+          "min": 5,
+          "max": 10,
+          "rarity_denominator": 50,
+          "unique": false
+        },
+        {
+          "item": "bat_wing_artifact",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 200,
+          "unique": true
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.poison_ali_dark",
+      "name": "poison_ali_dark",
+      "area": "Desert",
+      "damage": 10,
+      "accuracy": 24,
+      "defence": 10,
+      "magic_defence": 10,
+      "hp": 350,
+      "weakness": null,
+      "drops": [
+        {
+          "item": "large_antidote_potion",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 50,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.ogre",
+      "name": "ogre",
+      "area": "Mystic Vale",
+      "damage": 50,
+      "accuracy": 50,
+      "defence": 10,
+      "magic_defence": 100,
+      "hp": 500,
+      "weakness": null,
+      "drops": [
+        {
+          "item": "ogre_bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "club",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 300,
+          "unique": false
+        },
+        {
+          "item": "ogre_club",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 300,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.ice_ogre",
+      "name": "ice_ogre",
+      "area": "Frostvale",
+      "damage": 70,
+      "accuracy": 70,
+      "defence": 15,
+      "magic_defence": 100,
+      "hp": 1000,
+      "weakness": "fire",
+      "drops": [
+        {
+          "item": "ogre_bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "club",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 300,
+          "unique": false
+        },
+        {
+          "item": "ice_ogre_club",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 300,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.poison_scorpion",
+      "name": "poison_scorpion",
+      "area": "Desert",
+      "damage": 3,
+      "accuracy": 20,
+      "defence": 10,
+      "magic_defence": 30,
+      "hp": 200,
+      "weakness": "crush",
+      "drops": [
+        {
+          "item": "scorpions_tail",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.demon",
+      "name": "demon",
+      "area": "Sewer",
+      "damage": 20,
+      "accuracy": 28,
+      "defence": 6,
+      "magic_defence": 0,
+      "hp": 100,
+      "weakness": "magic",
+      "drops": [
+        {
+          "item": "demon_bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "unpowered_orb",
+          "min": 1,
+          "max": 10,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "damage_orb_1",
+          "min": 1,
+          "max": 10,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "damage_orb_2",
+          "min": 1,
+          "max": 10,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "damage_orb_3",
+          "min": 1,
+          "max": 10,
+          "rarity_denominator": 100,
+          "unique": false
+        },
+        {
+          "item": "demon_horn_artifact",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 100,
+          "unique": true
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.baby_silkfang",
+      "name": "baby_silkfang",
+      "area": "Sewer",
+      "damage": 10,
+      "accuracy": 100,
+      "defence": 0,
+      "magic_defence": 0,
+      "hp": 3,
+      "weakness": "crush",
+      "drops": [
+        {
+          "item": "silkfang_baby_hide",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 51,
+          "unique": false
+        },
+        {
+          "item": "string",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.spider",
+      "name": "spider",
+      "area": "Sewer",
+      "damage": 1,
+      "accuracy": 0,
+      "defence": 0,
+      "magic_defence": 0,
+      "hp": 3,
+      "weakness": "crush",
+      "drops": [
+        {
+          "item": "string",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.giant_spider",
+      "name": "giant_spider",
+      "area": "Sewer",
+      "damage": 2,
+      "accuracy": 1,
+      "defence": 0,
+      "magic_defence": 0,
+      "hp": 30,
+      "weakness": "crush",
+      "drops": [
+        {
+          "item": "string",
+          "min": 5,
+          "max": 15,
+          "rarity_denominator": 1,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.bully_thief",
+      "name": "bully_thief",
+      "area": "Thieves Hideout",
+      "damage": 2,
+      "accuracy": 1,
+      "defence": 10,
+      "magic_defence": 10,
+      "hp": 300,
+      "weakness": "stab",
+      "drops": [
+        {
+          "item": "giant_bones",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "cake",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 5,
+          "unique": false
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    },
+    {
+      "id": "monster.crab",
+      "name": "crab",
+      "area": "Beach",
+      "damage": 3,
+      "accuracy": 3,
+      "defence": 4,
+      "magic_defence": 4,
+      "hp": 30,
+      "weakness": "stab",
+      "drops": [
+        {
+          "item": "raw_crab_meat",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 1,
+          "unique": false
+        },
+        {
+          "item": "sand",
+          "min": 10,
+          "max": 20,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "seashroom",
+          "min": 1,
+          "max": 5,
+          "rarity_denominator": 10,
+          "unique": false
+        },
+        {
+          "item": "crab_remains_artifact",
+          "min": 1,
+          "max": 1,
+          "rarity_denominator": 500,
+          "unique": true
+        }
+      ],
+      "boss": false,
+      "image_path": null
+    }
+  ]
+}

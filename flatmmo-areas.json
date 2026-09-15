@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "recordCount": 14,
+  "records": [
+    {
+      "id": "area.everbrook",
+      "name": "Everbrook",
+      "type": "starting_town",
+      "requirements": [],
+      "connections": [
+        "Beach",
+        "Sewer",
+        "Thieves Hideout",
+        "Mystic Vale",
+        "Omboko",
+        "Clouds",
+        "Forest Spirit",
+        "Mine"
+      ],
+      "notes": [
+        "Default spawn and respawn point.",
+        "Contains banks, shops, quests, many early-game skills and combat.",
+        "Known beds include Mayor's House, Fisherman's Shop, Cow Farm farmhouse and Chef's House.",
+        "Chicken Pen is east of the West Town Square."
+      ],
+      "source": "https://flatmmo.wiki/index.php/Everbrook"
+    },
+    {
+      "id": "area.ghost_mansion",
+      "name": "Ghost Mansion",
+      "source": "https://flatmmo.wiki/index.php/Ghost_Mansion"
+    },
+    {
+      "id": "area.mystic_vale",
+      "name": "Mystic Vale",
+      "source": "https://flatmmo.wiki/index.php/Mystic_Vale"
+    },
+    {
+      "id": "area.beach",
+      "name": "Beach",
+      "source": "https://flatmmo.wiki/index.php/Beach"
+    },
+    {
+      "id": "area.thieves_hideout",
+      "name": "Thieves Hideout",
+      "notes": [
+        "Normal access includes thief-related requirements; an alternate route exists under a beach.",
+        "Contains thief enemies, shops/rooms and multiple quest stages."
+      ],
+      "source": "https://flatmmo.wiki/index.php/Thieves_Hideout"
+    },
+    {
+      "id": "area.hell",
+      "name": "Hell",
+      "source": "https://flatmmo.wiki/index.php/Hell"
+    },
+    {
+      "id": "area.omboko",
+      "name": "Omboko",
+      "notes": [
+        "Accessible from Everbrook by boat for 25 coins according to the Everbrook page."
+      ],
+      "source": "https://flatmmo.wiki/index.php/Omboko"
+    },
+    {
+      "id": "area.sewer",
+      "name": "Sewer",
+      "notes": [
+        "Everbrook access via the town manhole; contains low-level and boss/advanced enemies."
+      ],
+      "source": "https://flatmmo.wiki/index.php/Sewer"
+    },
+    {
+      "id": "area.pirate_isle",
+      "name": "Pirate Isle",
+      "source": "https://flatmmo.wiki/index.php/Pirate_Isle"
+    },
+    {
+      "id": "area.frostvale",
+      "name": "Frostvale",
+      "source": "https://flatmmo.wiki/index.php/Frostvale"
+    },
+    {
+      "id": "area.desert",
+      "name": "Desert",
+      "source": "https://flatmmo.wiki/index.php/Desert",
+      "status": "page-retrieval-partial"
+    },
+    {
+      "id": "area.volcano",
+      "name": "Volcano",
+      "source": "https://flatmmo.wiki/index.php/Volcano"
+    },
+    {
+      "id": "area.dock_haven",
+      "name": "Dock Haven",
+      "source": "https://flatmmo.wiki/index.php/Dock_Haven"
+    },
+    {
+      "id": "area.atlas",
+      "name": "Atlas",
+      "source": "https://flatmmo.wiki/index.php/Atlas"
+    }
+  ]
+}

@@ -1,0 +1,510 @@
+{
+  "schemaVersion": 1,
+  "status": "bootstrap_normalized",
+  "sources": [
+    "https://flatmmo.wiki/index.php/Melee",
+    "https://flatmmo.wiki/index.php/Archery",
+    "https://flatmmo.wiki/index.php/Magic",
+    "https://flatmmo.wiki/index.php/Swords",
+    "https://flatmmo.wiki/index.php/Arrows",
+    "https://flatmmo.wiki/index.php/Armour",
+    "https://flatmmo.wiki/index.php/Tools",
+    "https://flatmmo.wiki/index.php/Necklaces",
+    "https://flatmmo.wiki/index.php/Hats",
+    "https://flatmmo.wiki/index.php/Treasure_Maps"
+  ],
+  "weaponFamilies": {
+    "swords": [
+      {
+        "name": "Bronze Sword",
+        "damage": 3,
+        "accuracy": 0,
+        "meleeLevel": 1,
+        "forgingLevel": 5,
+        "forgingXp": 375,
+        "materials": {
+          "bronze_bar": 15
+        }
+      },
+      {
+        "name": "Iron Sword",
+        "damage": 4,
+        "accuracy": 1,
+        "meleeLevel": 10,
+        "forgingLevel": 20,
+        "forgingXp": 675,
+        "materials": {
+          "iron_bar": 15
+        }
+      },
+      {
+        "name": "Silver Sword",
+        "damage": 5,
+        "accuracy": 2,
+        "meleeLevel": 20,
+        "forgingLevel": 30,
+        "forgingXp": 1080,
+        "materials": {
+          "silver_bar": 15
+        }
+      },
+      {
+        "name": "Gold Sword",
+        "damage": 6,
+        "accuracy": 3,
+        "meleeLevel": 40,
+        "forgingLevel": 40,
+        "forgingXp": 1605,
+        "materials": {
+          "gold_bar": 15
+        }
+      },
+      {
+        "name": "Promethium Sword",
+        "damage": 8,
+        "accuracy": 5,
+        "meleeLevel": 50,
+        "forgingLevel": 55,
+        "forgingXp": 2760,
+        "materials": {
+          "promethium_bar": 15
+        }
+      },
+      {
+        "name": "Titanium Sword",
+        "damage": 11,
+        "accuracy": 10,
+        "meleeLevel": 70,
+        "forgingLevel": 65,
+        "forgingXp": 5220,
+        "materials": {
+          "titanium_bar": 15
+        }
+      },
+      {
+        "name": "Ancient Sword",
+        "damage": 13,
+        "accuracy": 12,
+        "meleeLevel": 80,
+        "forgingLevel": 80,
+        "forgingXp": 13470,
+        "materials": {
+          "ancient_bar": 15
+        }
+      }
+    ],
+    "scimitars": [
+      {
+        "name": "Bronze Scimitar",
+        "damage": 5,
+        "accuracy": 0,
+        "meleeLevel": 1
+      },
+      {
+        "name": "Iron Scimitar",
+        "damage": 6,
+        "accuracy": 1,
+        "meleeLevel": 10
+      },
+      {
+        "name": "Silver Scimitar",
+        "damage": 7,
+        "accuracy": 2,
+        "meleeLevel": 20
+      },
+      {
+        "name": "Gold Scimitar",
+        "damage": 8,
+        "accuracy": 3,
+        "meleeLevel": 40
+      },
+      {
+        "name": "Promethium Scimitar",
+        "damage": 10,
+        "accuracy": 5,
+        "meleeLevel": 50
+      },
+      {
+        "name": "Titanium Scimitar",
+        "damage": 13,
+        "accuracy": 10,
+        "meleeLevel": 70
+      },
+      {
+        "name": "Ancient Scimitar",
+        "damage": 15,
+        "accuracy": 12,
+        "meleeLevel": 80
+      }
+    ],
+    "bows": [
+      {
+        "name": "Bow",
+        "accuracy": 1,
+        "archeryLevel": 1,
+        "craftingLevel": 3,
+        "craftingXp": 165,
+        "materials": {
+          "string": 5,
+          "logs": 30
+        }
+      },
+      {
+        "name": "Oak Bow",
+        "accuracy": 2,
+        "archeryLevel": 10,
+        "craftingLevel": 10,
+        "craftingXp": 315,
+        "materials": {
+          "string": 5,
+          "oak_logs": 30
+        }
+      },
+      {
+        "name": "Willow Bow",
+        "accuracy": 3,
+        "archeryLevel": 20,
+        "craftingLevel": 20,
+        "craftingXp": 675,
+        "materials": {
+          "string": 5,
+          "willow_logs": 30
+        }
+      },
+      {
+        "name": "Maple Bow",
+        "accuracy": 4,
+        "archeryLevel": 30,
+        "craftingLevel": 30,
+        "craftingXp": 915,
+        "materials": {
+          "string": 5,
+          "maple_logs": 30
+        }
+      },
+      {
+        "name": "Mangrove Bow",
+        "accuracy": 6,
+        "archeryLevel": 40,
+        "craftingLevel": 40,
+        "craftingXp": 1515,
+        "materials": {
+          "string": 5,
+          "mangrove_logs": 30
+        }
+      },
+      {
+        "name": "Haunted Bow",
+        "accuracy": 8,
+        "archeryLevel": 50,
+        "craftingLevel": 50,
+        "craftingXp": 8015,
+        "materials": {
+          "string": 5,
+          "haunted_logs": 30,
+          "silkfang_string": 1
+        }
+      },
+      {
+        "name": "Cactus Bow",
+        "accuracy": 10,
+        "archeryLevel": 70,
+        "craftingLevel": 70,
+        "craftingXp": 12500,
+        "materials": {
+          "haunted_bow": 1,
+          "cactus_logs": 30
+        }
+      },
+      {
+        "name": "Blessed Bow",
+        "accuracy": 10,
+        "archeryLevel": 70,
+        "craftingLevel": 70,
+        "craftingXp": 14000,
+        "materials": {
+          "haunted_bow": 1,
+          "blessed_logs": 30
+        }
+      },
+      {
+        "name": "Magic Bow",
+        "accuracy": 12,
+        "archeryLevel": 70,
+        "craftingLevel": 80,
+        "craftingXp": 14400,
+        "materials": {
+          "cactus_bow": 1,
+          "magic_logs": 30,
+          "valebark": 1
+        }
+      }
+    ],
+    "staves": [
+      {
+        "name": "Staff",
+        "accuracy": 1,
+        "magicLevel": 1
+      },
+      {
+        "name": "Oak Staff",
+        "accuracy": 2,
+        "magicLevel": 10
+      },
+      {
+        "name": "Willow Staff",
+        "accuracy": 3,
+        "magicLevel": 20
+      },
+      {
+        "name": "Maple Staff",
+        "accuracy": 4,
+        "magicLevel": 30
+      },
+      {
+        "name": "Mangrove Staff",
+        "accuracy": 6,
+        "magicLevel": 40
+      },
+      {
+        "name": "Haunted Staff",
+        "accuracy": 8,
+        "magicLevel": 50
+      },
+      {
+        "name": "Cactus Staff",
+        "accuracy": 10,
+        "magicLevel": 70
+      },
+      {
+        "name": "Blessed Staff",
+        "accuracy": 10,
+        "magicLevel": 70
+      },
+      {
+        "name": "Magic Staff",
+        "accuracy": 12,
+        "magicLevel": 70
+      }
+    ],
+    "arrows": [
+      {
+        "name": "Bronze Arrows",
+        "damage": 1,
+        "archeryLevel": 1
+      },
+      {
+        "name": "Iron Arrows",
+        "damage": 2,
+        "archeryLevel": 10
+      },
+      {
+        "name": "Silver Arrows",
+        "damage": 3,
+        "archeryLevel": 20
+      },
+      {
+        "name": "Gold Arrows",
+        "damage": 4,
+        "archeryLevel": 30
+      },
+      {
+        "name": "Promethium Arrows",
+        "damage": 7,
+        "archeryLevel": 50
+      },
+      {
+        "name": "Titanium Arrows",
+        "damage": 10,
+        "archeryLevel": 70
+      },
+      {
+        "name": "Ancient Arrows",
+        "damage": 12,
+        "archeryLevel": 80
+      }
+    ]
+  },
+  "armourSets": [
+    {
+      "name": "Bronze Armour",
+      "style": "melee",
+      "level": 1,
+      "defencePerPiece": 1
+    },
+    {
+      "name": "Iron Armour",
+      "style": "melee",
+      "level": 10,
+      "defencePerPiece": 2
+    },
+    {
+      "name": "Silver Armour",
+      "style": "melee",
+      "level": 20,
+      "defencePerPiece": 3
+    },
+    {
+      "name": "Gold Armour",
+      "style": "melee",
+      "level": 30,
+      "defencePerPiece": 4
+    },
+    {
+      "name": "Promethium Armour",
+      "style": "melee",
+      "level": 50,
+      "defencePerPiece": 6
+    },
+    {
+      "name": "Titanium Armour",
+      "style": "melee",
+      "level": 70,
+      "defencePerPiece": 7
+    },
+    {
+      "name": "Ancient Armour",
+      "style": "melee",
+      "level": 80,
+      "defencePerPiece": 9
+    },
+    {
+      "name": "Snakeskin Armour",
+      "style": "archery",
+      "level": 10,
+      "archeryDamagePerPiece": 1,
+      "magicDefencePerPiece": 1
+    },
+    {
+      "name": "Bear Armour",
+      "style": "archery",
+      "level": 20,
+      "archeryDamagePerPiece": 2,
+      "magicDefencePerPiece": 2,
+      "special": "reduces Frostvale cold damage by 1 per piece"
+    },
+    {
+      "name": "Tiger Armour",
+      "style": "archery",
+      "level": 30,
+      "archeryDamagePerPiece": 3,
+      "magicDefencePerPiece": 3
+    },
+    {
+      "name": "Wolf Fur Armour",
+      "style": "archery",
+      "level": 30,
+      "archeryDamagePerPiece": 4,
+      "magicDefencePerPiece": 4,
+      "special": "reduces Frostvale cold damage by 2 per piece"
+    },
+    {
+      "name": "Crocodile Armour",
+      "style": "archery",
+      "level": 40,
+      "archeryDamagePerPiece": 4,
+      "magicDefencePerPiece": 4
+    },
+    {
+      "name": "Silkfang Armour",
+      "style": "archery",
+      "level": 50,
+      "archeryDamagePerPiece": 5,
+      "magicDefencePerPiece": 5
+    },
+    {
+      "name": "Noctyrix Armour",
+      "style": "archery",
+      "level": 60,
+      "archeryDamagePerPiece": 6,
+      "magicDefencePerPiece": 6
+    },
+    {
+      "name": "Rogue Archer Armour",
+      "style": "archery",
+      "level": 70,
+      "archeryDamagePerPiece": 7,
+      "magicDefencePerPiece": 7,
+      "pieces": 3
+    },
+    {
+      "name": "Blue Mage Armour",
+      "style": "magic",
+      "sourceMethod": "Blue Mage Silk drops"
+    },
+    {
+      "name": "Red Mage Armour",
+      "style": "magic",
+      "sourceMethod": "Red Mage drops"
+    },
+    {
+      "name": "Druid Armour",
+      "style": "magic",
+      "sourceMethod": "Druid drops"
+    },
+    {
+      "name": "Desert Mage Armour",
+      "style": "magic",
+      "sourceMethod": "Desert Mage drops"
+    },
+    {
+      "name": "Rogue Mage Armour",
+      "style": "magic",
+      "sourceMethod": "Rogue Chest drops"
+    }
+  ],
+  "rings": [
+    {
+      "name": "Accuracy Ring",
+      "effect": "+5 Accuracy"
+    },
+    {
+      "name": "Archery Ring",
+      "effect": "+10 Archery Damage"
+    },
+    {
+      "name": "Defence Ring",
+      "effect": "+10 Defence to all combat types"
+    },
+    {
+      "name": "Magic Ring",
+      "effect": "+10 Magic Damage"
+    },
+    {
+      "name": "Melee Ring",
+      "effect": "+10 Melee Damage"
+    }
+  ],
+  "additionalPages": [
+    {
+      "name": "Tools",
+      "source": "https://flatmmo.wiki/index.php/Tools",
+      "normalization": "summary-only"
+    },
+    {
+      "name": "Necklaces",
+      "source": "https://flatmmo.wiki/index.php/Necklaces",
+      "normalization": "summary-only"
+    },
+    {
+      "name": "Hats",
+      "source": "https://flatmmo.wiki/index.php/Hats",
+      "normalization": "summary-only"
+    },
+    {
+      "name": "Shields",
+      "source": "https://flatmmo.wiki/index.php/Shields",
+      "normalization": "pending-live-refresh"
+    },
+    {
+      "name": "Maces",
+      "source": "https://flatmmo.wiki/index.php/Maces",
+      "normalization": "covered partly through Melee; dedicated page pending-live-refresh"
+    },
+    {
+      "name": "Daggers/Knives/Spears",
+      "source": "https://flatmmo.wiki/index.php/Daggers",
+      "normalization": "covered partly through Melee; dedicated page pending-live-refresh"
+    }
+  ]
+}

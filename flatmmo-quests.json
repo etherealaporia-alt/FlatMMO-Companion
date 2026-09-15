@@ -1,0 +1,417 @@
+{
+  "schemaVersion": 1,
+  "reportedTotal": 21,
+  "recordCount": 19,
+  "records": [
+    {
+      "id": "quest.lost_cat",
+      "name": "Lost Cat",
+      "difficulty": "Easy",
+      "locations": [
+        "Everbrook"
+      ],
+      "requirements": [
+        "1 Milk Bucket"
+      ],
+      "rewards": [
+        "10 Coins"
+      ],
+      "procedure": [
+        "Speak to the Crying Lady in Everbrook.",
+        "Find the cat north of the Mayor's House.",
+        "Have a Milk Bucket to lure it back.",
+        "Return the cat to the Crying Lady."
+      ],
+      "source": "https://flatmmo.wiki/index.php/Quests"
+    },
+    {
+      "id": "quest.drain_key",
+      "name": "Drain Key",
+      "difficulty": "Easy",
+      "locations": [
+        "Everbrook",
+        "Sewer"
+      ],
+      "requirements": [
+        "1 Water Bucket"
+      ],
+      "rewards": [
+        "25 Milk Buckets",
+        "Raw Steak"
+      ],
+      "procedure": [
+        "Speak to Mary at the Cow Pen.",
+        "Pour a Water Bucket down the drain and collect the key from the mini-sewer.",
+        "Speak to Bob the Farmer after Mary says it is the wrong key.",
+        "Take the rusty key to the Sewer's Silkfang area and use the acid puddle.",
+        "Return the cleaned key to Mary."
+      ],
+      "source": "https://flatmmo.wiki/index.php/Quests"
+    },
+    {
+      "id": "quest.heating_homes",
+      "name": "Heating Homes",
+      "difficulty": "Easy",
+      "locations": [
+        "Everbrook"
+      ],
+      "requirements": [
+        "1 Normal Log",
+        "1 Coal Ore"
+      ],
+      "rewards": [
+        "Matches",
+        "2 Coins"
+      ],
+      "procedure": [
+        "Speak to Minty in the starting-area house.",
+        "Put 1 Normal Log and 1 Coal Ore into the fireplace."
+      ],
+      "source": "https://flatmmo.wiki/index.php/Quests"
+    },
+    {
+      "id": "quest.chicken_slaughter",
+      "name": "Chicken Slaughter",
+      "difficulty": "Easy",
+      "locations": [
+        "Everbrook"
+      ],
+      "requirements": [
+        "Kill 5 Chickens"
+      ],
+      "rewards": [
+        "3 Cooked Chicken"
+      ],
+      "procedure": [
+        "Speak to the Chicken Farmer.",
+        "Kill 5 Chickens.",
+        "Speak to the Chicken Farmer again."
+      ],
+      "source": "https://flatmmo.wiki/index.php/Quests"
+    },
+    {
+      "id": "quest.shrimp_sandwich",
+      "name": "Shrimp Sandwich",
+      "difficulty": "Easy",
+      "locations": [
+        "Everbrook"
+      ],
+      "requirements": [
+        "Cooking 10",
+        "5 Cooked Shrimp",
+        "1 Bread"
+      ],
+      "rewards": [
+        "Chef Hat",
+        "20 Coins"
+      ],
+      "procedure": [
+        "Speak to the Chef in Everbrook.",
+        "Deliver 5 Cooked Shrimp and 1 Bread."
+      ],
+      "source": "https://flatmmo.wiki/index.php/Quests"
+    },
+    {
+      "id": "quest.sewer_doll",
+      "name": "Sewer Doll",
+      "difficulty": "Easy",
+      "locations": [
+        "Everbrook",
+        "Sewer"
+      ],
+      "requirements": [
+        "Accept quest to make Sewer Doll available"
+      ],
+      "rewards": [
+        "10 Giant Bones"
+      ],
+      "procedure": [
+        "Speak to the Crying Girl in Everbrook Cemetery.",
+        "Find the doll in the Sewer pipe directly above the water.",
+        "Return it to the Crying Girl."
+      ],
+      "source": "https://flatmmo.wiki/index.php/Quests"
+    },
+    {
+      "id": "quest.let_there_be_light_2",
+      "name": "Let There Be Light 2",
+      "difficulty": "Easy",
+      "locations": [
+        "Mystic Vale",
+        "Dock Haven",
+        "Everbrook"
+      ],
+      "requirements": [
+        "1 Beanstalk Seed"
+      ],
+      "rewards": [
+        "20,000 Farming XP",
+        "20,000 Enchantment XP",
+        "Beanstalk access"
+      ],
+      "procedure": [
+        "Bring a Beanstalk Seed to Zapto in Mystic Vale.",
+        "Use the Water Shrine in Dock Haven to make it a Soaked Beanstalk Seed.",
+        "Return to Zapto.",
+        "During cloudy weather, use the soaked seed near the unusual clouds at the Everbrook Cow Farm."
+      ],
+      "source": "https://flatmmo.wiki/index.php/Quests"
+    },
+    {
+      "id": "quest.healing_torches",
+      "name": "Healing Torches",
+      "difficulty": "Easy",
+      "locations": [
+        "Omboko"
+      ],
+      "requirements": [
+        "Crafting 5",
+        "Firemaking 30",
+        "Piece of Paper",
+        "42 Normal Logs for the initial documented route"
+      ],
+      "rewards": [
+        "Bank healing torch system"
+      ],
+      "procedure": [
+        "Speak to the Sick Ent in Omboko.",
+        "Give the Paper-Maker a Piece of Paper to learn the Wooden Heart recipe.",
+        "Craft and return a Wooden Heart.",
+        "Wait for a global bonfire tick to make the heart Sacred.",
+        "Use Matches on the spawned bank torches."
+      ],
+      "source": "https://flatmmo.wiki/index.php/Quests"
+    },
+    {
+      "id": "quest.thieves_hideout_1",
+      "name": "Thieves Hideout",
+      "difficulty": "Medium",
+      "locations": [
+        "Thieves Hideout"
+      ],
+      "requirements": [
+        "Stealing 10",
+        "Bear Head",
+        "Tiger Head"
+      ],
+      "rewards": [
+        "Access to more rooms in Thieves Hideout"
+      ],
+      "procedure": [
+        "Speak to the first Brown Thief.",
+        "Bring a Bear Head.",
+        "Bring a Tiger Head."
+      ],
+      "source": "https://flatmmo.wiki/index.php/Quests"
+    },
+    {
+      "id": "quest.thieves_hideout_2",
+      "name": "Thieves Hideout 2",
+      "difficulty": "Medium",
+      "locations": [
+        "Omboko",
+        "Thieves Hideout"
+      ],
+      "requirements": [
+        "Complete Thieves Hideout",
+        "Be able to kill a Demon"
+      ],
+      "rewards": [
+        "500 Coins",
+        "Maple Bow"
+      ],
+      "procedure": [
+        "Speak to the Mini Thief in Omboko and receive his picture.",
+        "Go to the Thieves Hideout and show the picture to the Mini Thief's father guarding the artifact room.",
+        "Enter and defeat the Demon.",
+        "Take the artifact.",
+        "Return it to the Mini Thief in Omboko."
+      ],
+      "source": "https://flatmmo.wiki/index.php/Quests"
+    },
+    {
+      "id": "quest.thieves_hideout_3",
+      "name": "Thieves Hideout 3",
+      "difficulty": "Medium",
+      "locations": [
+        "Thieves Hideout"
+      ],
+      "requirements": [
+        "Cooking 30",
+        "Cake",
+        "Complete Thieves Hideout 2"
+      ],
+      "rewards": [
+        "Basement access",
+        "5,000 Feathers"
+      ],
+      "procedure": [
+        "Speak to the Bully Thief on the second floor.",
+        "Bake/acquire a Cake and give it to him."
+      ],
+      "source": "https://flatmmo.wiki/index.php/Quests"
+    },
+    {
+      "id": "quest.let_there_be_light",
+      "name": "Let There Be Light",
+      "difficulty": "Medium",
+      "locations": [
+        "Mystic Vale",
+        "Everbrook"
+      ],
+      "requirements": [
+        "Farming 20",
+        "500 Glass",
+        "50 Iron Bars"
+      ],
+      "rewards": [
+        "Mystic Vale Farming Plot access"
+      ],
+      "procedure": [
+        "Speak to Zapto in Mystic Vale.",
+        "Complete the mayor-approval sequence between Mystic Vale and Everbrook.",
+        "Deliver 500 Glass and 50 Iron Bars."
+      ],
+      "source": "https://flatmmo.wiki/index.php/Quests"
+    },
+    {
+      "id": "quest.the_3_gemstones",
+      "name": "The 3 Gemstones",
+      "difficulty": "Medium",
+      "locations": [
+        "Beach",
+        "Omboko",
+        "Mystic Vale"
+      ],
+      "requirements": [
+        "Mining 40",
+        "Forging 40",
+        "Able to kill a Tiger, Red Mage and Crocodile"
+      ],
+      "rewards": [
+        "Gemstone access",
+        "Additional Mine access",
+        "3 Gemstone Fragments"
+      ],
+      "source": "https://flatmmo.wiki/index.php/Quests"
+    },
+    {
+      "id": "quest.saving_marin",
+      "name": "Saving Marin",
+      "difficulty": "Medium",
+      "locations": [
+        "Dock Haven",
+        "Pirate Isle"
+      ],
+      "requirements": [
+        "Mining 20",
+        "Crafting 40"
+      ],
+      "rewards": [
+        "Pirate Isle access"
+      ],
+      "source": "https://flatmmo.wiki/index.php/Quests",
+      "procedureStatus": "summary-only-in-bootstrap"
+    },
+    {
+      "id": "quest.volcano_bridge",
+      "name": "Volcano Bridge",
+      "difficulty": "Medium",
+      "locations": [
+        "Volcano"
+      ],
+      "requirements": [
+        "Crafting 60",
+        "Pyro Gloves",
+        "Saving Marin",
+        "Shrimp Sandwich",
+        "100 Cactus Planks",
+        "Nethergrass"
+      ],
+      "rewards": [
+        "Ancient Ore Node access"
+      ],
+      "source": "https://flatmmo.wiki/index.php/Quests",
+      "procedureStatus": "summary-only-in-bootstrap"
+    },
+    {
+      "id": "quest.mount_frostvale",
+      "name": "Mount Frostvale",
+      "difficulty": "Medium",
+      "locations": [
+        "Frostvale"
+      ],
+      "requirements": [
+        "Desert Temple",
+        "Cooking 60",
+        "Woodcutting 65",
+        "Warm armour recommended"
+      ],
+      "rewards": [
+        "Mount Frostvale access"
+      ],
+      "source": "https://flatmmo.wiki/index.php/Quests",
+      "procedureStatus": "summary-only-in-bootstrap"
+    },
+    {
+      "id": "quest.desert_island",
+      "name": "Desert Island",
+      "difficulty": "Medium",
+      "locations": [
+        "Desert"
+      ],
+      "requirements": [
+        "Agility 40"
+      ],
+      "rewards": [
+        "Rusty Ring",
+        "Ability to find green maps"
+      ],
+      "source": "https://flatmmo.wiki/index.php/Quests",
+      "procedureStatus": "summary-only-in-bootstrap"
+    },
+    {
+      "id": "quest.desert_temple",
+      "name": "Desert Temple",
+      "difficulty": "Hard",
+      "locations": [
+        "Desert"
+      ],
+      "requirements": [
+        "3,500 Coins",
+        "3 Beers",
+        "High combat capability",
+        "Hunting 30",
+        "Stealing 40"
+      ],
+      "rewards": [
+        "Water supply to outpost",
+        "Train access"
+      ],
+      "source": "https://flatmmo.wiki/index.php/Quests",
+      "procedureStatus": "summary-only-in-bootstrap"
+    },
+    {
+      "id": "quest.desert_temple_2",
+      "name": "Desert Temple 2",
+      "difficulty": "Hard",
+      "locations": [
+        "Desert"
+      ],
+      "requirements": [
+        "Stealing 60",
+        "Desert Temple completion"
+      ],
+      "rewards": [
+        "Cactus Seeds",
+        "Stardust (wiki summary uncertain)",
+        "Zebeth boss access",
+        "Rock Enchant Altar access"
+      ],
+      "source": "https://flatmmo.wiki/index.php/Quests",
+      "procedureStatus": "summary-only-in-bootstrap"
+    }
+  ],
+  "source": "https://flatmmo.wiki/index.php/Quests",
+  "status": "bootstrap_partial_due_source_summary_discrepancy"
+}
