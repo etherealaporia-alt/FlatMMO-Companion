@@ -1,0 +1,18 @@
+# FlatMMO Companion
+
+> Public FlatMMO-specific knowledge and AI grounding layer.
+
+Canonical AI page: https://etherealaporia-alt.github.io/FlatMMO-Companion/ai.html
+Canonical JSON context: https://etherealaporia-alt.github.io/FlatMMO-Companion/flatmmo-context.json
+Text fallback: https://etherealaporia-alt.github.io/FlatMMO-Companion/flatmmo-context.txt
+
+Important: FlatMMO is an independent game. Missing facts must not be inferred from RuneScape or other games.
+
+Current domains:
+- monsters: https://etherealaporia-alt.github.io/FlatMMO-Companion/flatmmo-monsters.json
+- quests: https://etherealaporia-alt.github.io/FlatMMO-Companion/flatmmo-quests.json
+- skills: https://etherealaporia-alt.github.io/FlatMMO-Companion/flatmmo-skills.json
+- mechanics: https://etherealaporia-alt.github.io/FlatMMO-Companion/flatmmo-mechanics.json
+- areas: https://etherealaporia-alt.github.io/FlatMMO-Companion/flatmmo-areas.json
+- equipment: https://etherealaporia-alt.github.io/FlatMMO-Companion/flatmmo-equipment.json
+- sources: https://etherealaporia-alt.github.io/FlatMMO-Companion/flatmmo-sources.json
