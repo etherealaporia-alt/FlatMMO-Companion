@@ -64,6 +64,7 @@ dialog pre{white-space:pre-wrap;word-break:break-word;background:var(--panel2);b
   .shell{padding-left:10px;padding-right:10px}.msg{max-width:96%}.badge{display:none}
   .playerbar{grid-template-columns:1fr}.playerbar .btn{width:100%}
 }
+dialog{max-width:620px;width:calc(100% - 48px);max-height:85vh;overflow:auto}#manualSkills label{display:flex;flex-direction:column;gap:4px}#manualSkills input{width:100%;box-sizing:border-box;background:var(--panel2);color:var(--text);border:1px solid var(--line);padding:8px;border-radius:6px}
 </style>
 </head>
 <body>
@@ -88,6 +89,7 @@ dialog pre{white-space:pre-wrap;word-break:break-word;background:var(--panel2);b
     <button id="refreshPlayer" class="btn" type="button" disabled>Refresh</button>
     <button id="copyProfileLink" class="btn" type="button" disabled>Copy portable link</button>
     <button id="openOfficialProfile" class="btn" type="button" disabled>Open official profile</button>
+    <button id="manualPlayer" class="btn" type="button">Enter skill levels</button>
     <button id="clearLocal" class="btn ghost danger" type="button">Clear local session</button>
   </div>
   <div id="playerSummary" class="player-summary" hidden></div>
@@ -105,7 +107,7 @@ dialog pre{white-space:pre-wrap;word-break:break-word;background:var(--panel2);b
   <div class="msg bot">
     <h3>Ask me about FlatMMO</h3>
     <p>I query the Companion's FlatMMO data directly. I don't fill missing facts with mechanics from other games.</p>
-    <p class="muted small">Enter a public FlatMMO username above. This build will try to read the official public profile for skill levels. If the browser blocks that cross-site read, the rest of the Companion still works and the eventual official API can replace only that loader.</p>
+    <p class="muted small">Enter a public FlatMMO username above. This build will try to read the official public profile for skill levels. If it is unavailable, use Enter skill levels for personal checks. Leave unknown skills blank. Browser storage is optional.</p>
   </div>
 </div>
 <div id="loading" class="loader">Loading FlatMMO data…</div>
@@ -118,6 +120,16 @@ dialog pre{white-space:pre-wrap;word-break:break-word;background:var(--panel2);b
   </form>
 </div>
 
+<dialog id="manualDialog">
+  <form id="manualForm">
+    <h3>Enter your skill levels</h3>
+    <p id="manualIdentity"></p>
+    <p class="muted small">Enter only the levels you know. Blank skills stay unknown. Saving replaces the current snapshot with these user-entered levels; XP and other player details stay unknown. A username is optional.</p>
+    <div id="manualSkills" class="skillgrid"></div>
+    <p id="manualError" class="bad" role="alert"></p>
+    <div class="player-actions"><button class="btn primary" type="submit">Use these levels</button><button id="cancelManual" class="btn" type="button">Cancel</button></div>
+  </form>
+</dialog>
 <dialog id="linkDialog">
   <h3>Portable player link</h3>
   <p class="muted small">This link contains only the public player username. Bookmarking it in signed-in Chrome can carry that identity to another synced browser; the Companion will then try to reload fresh public stats.</p>
@@ -150,21 +162,23 @@ const KNOWN_SKILLS=[
 ];
 
 const state = {
-  data:{}, ready:false, lastEntity:null,
+  data:{}, ready:false, lastEntity:null, playerRequest:0,
   player:null, history:[], restoring:false,
   playerProvider:{
     status:"interim-public-profile",
     async fetch(username){
       const url=officialProfileUrl(username);
       let response;
+      const controller=new AbortController();
+      const timer=setTimeout(()=>controller.abort(),15000);
       try{
-        response=await fetch(url,{method:"GET",mode:"cors",credentials:"omit",cache:"no-store",redirect:"follow"});
+        response=await fetch(url,{method:"GET",mode:"cors",credentials:"omit",cache:"no-store",redirect:"follow",signal:controller.signal});
       }catch(err){
-        const e=new Error("Your browser could not read the official FlatMMO profile directly. This is usually a cross-origin browser restriction. The player name is still saved locally, and the official profile can be opened normally.");
+        const e=new Error("Your browser could not read the official FlatMMO profile directly. This is usually a cross-origin browser restriction. You can enter skill levels manually or open the official profile normally.");
         e.code="CORS_OR_NETWORK";
         e.cause=err;
         throw e;
-      }
+      }finally{clearTimeout(timer)}
       if(!response.ok) throw new Error(`Official profile returned HTTP ${response.status}.`);
       const html=await response.text();
       return parseOfficialProfileHtml(username,html,url);
@@ -244,6 +258,12 @@ function findNamed(q,records){
   return bestScore>=50?best:null;
 }
 function rule(id){ return (state.data.rules?.rules||[]).find(x=>x.id===id); }
+const playerKey = name => String(name||"").trim().toLowerCase();
+function playerBasis(){
+  const p=state.player;if(!p)return "";
+  const basis=p.source==="manual"?"User-entered levels; not verified by FlatMMO":p.cached?"Cached public stats":"Public skill snapshot";
+  return `<p class="muted small">${esc(basis)}${p.refreshFailed?" · Refresh failed; using previous levels":""}. Missing skills, XP and other fields remain unknown.</p>`;
+}
 function playerSkill(name){ return state.player?.skills?.[norm(name)] || null; }
 
 function saveLocal(){
@@ -264,6 +284,8 @@ function readLocal(){
   }catch(_){return null}
 }
 function clearLocal(){
+  state.playerRequest++;
+  $("#loadPlayer").disabled=false;
   try{localStorage.removeItem(STORAGE_KEY)}catch(_){}
   state.player=null;state.history=[];state.lastEntity=null;
   $("#username").value="";
@@ -369,40 +391,67 @@ function updatePlayerUi(message){
     $("#playerSummary").hidden=true;
     return;
   }
-  $("#playerDot").className="dot";
+  $("#playerDot").className=p.refreshFailed||p.cached||p.source==="manual"?"dot warn":"dot";
   const d=new Date(p.fetchedAt);
-  $("#playerState").textContent=`${p.username} · ${p.source==="local_cache"?"cached":"public stats loaded"}`;
+  $("#playerState").textContent=message||`${p.username||"Manual session"} · ${p.refreshFailed?"refresh failed — using previous levels":p.source==="manual"?"user-entered levels":p.cached?"cached stats":"public stats loaded"}`;
   const total=p.total;
   const skills=KNOWN_SKILLS.map(n=>({name:n,rec:playerSkill(n)})).filter(x=>x.rec);
   $("#playerSummary").hidden=false;
   $("#playerSummary").innerHTML=`
-    <div><b>${esc(p.username)}</b>${total?` · Total level ${esc(fmtNumber(total.level))} · ${esc(fmtNumber(total.xp))} XP`:""}</div>
+    <div><b>${esc(p.username||"Manual session")}</b>${total?` · Total level ${esc(fmtNumber(total.level))} · ${esc(fmtNumber(total.xp))} XP`:""}</div>
     <div class="muted tiny">Snapshot ${esc(isNaN(d)?p.fetchedAt:d.toLocaleString())}. Source: ${esc(p.source)}.</div>
-    <div class="skillgrid">${skills.map(x=>`<div class="skillpill"><b>${esc(x.name)} ${esc(x.rec.level)}</b><span>${esc(fmtNumber(x.rec.xp))} XP</span></div>`).join("")}</div>
-    <div class="muted tiny" style="margin-top:8px">Current interim loader targets public skill stats only. Bank, inventory, equipment and quest state remain pending the official API.</div>`;
+    <div class="skillgrid">${skills.map(x=>`<div class="skillpill"><b>${esc(x.name)} ${esc(x.rec.level)}</b><span>${x.rec.xp==null?"XP unknown":esc(fmtNumber(x.rec.xp))+" XP"}</span></div>`).join("")}</div>
+    <div class="muted tiny" style="margin-top:8px">${p.source==="manual"?"User-entered levels; not verified by FlatMMO.":"Public skill snapshot."} ${p.refreshFailed?"Refresh failed; these previous levels may be outdated.":""} Bank, inventory, equipment and quest state remain pending the official API.</div>`;
 }
 async function loadPlayer(username,{silent=false}={}){
-  username=String(username||"").trim();
-  if(!username) return;
-  $("#username").value=username;
-  setPortableHash(username);
-  updatePlayerUi("Loading public profile…");
-  $("#loadPlayer").disabled=true;
+  username=String(username||"").trim();if(!username)return;
+  const request=++state.playerRequest;
+  const previous=state.player && playerKey(state.player.username)===playerKey(username)?state.player:null;
+  state.player=previous;
+  $("#username").value=username;setPortableHash(username);
+  updatePlayerUi("Loading public profile…");$("#loadPlayer").disabled=true;
+  saveLocal();
   try{
     const snap=await state.playerProvider.fetch(username);
-    state.player=snap;
-    updatePlayerUi();
-    saveLocal();
-    if(!silent) addMsg("bot",`<h3>Player loaded</h3><p>I read <b>${esc(snap.username)}</b>'s public FlatMMO skill profile and can now use those levels for basic requirement checks.</p><p class="muted small">Player inventory/bank/equipment/quest completion are still unavailable through this interim loader.</p>${chips(["What should I do next?","Can I do Atlas Crown?"])}`);
+    if(request!==state.playerRequest)return;
+    state.player=snap;updatePlayerUi();saveLocal();
+    if(!silent)addMsg("bot",`<h3>Player loaded</h3><p>Loaded <b>${esc(snap.username)}</b>'s skill levels. Inventory, bank, equipment and quest completion remain unknown.</p>${chips(["What should I do next?","Can I do Atlas Crown?"])}`);
   }catch(err){
-    state.player=null;
-    updatePlayerUi(err.message);
-    saveLocal();
-    if(!silent) addMsg("bot",`<h3>Public player load unavailable</h3><p class="warn">${esc(err.message)}</p><p>The username is still stored locally and in the portable link. The Companion itself remains fully usable.</p>${evidence([officialProfileUrl(username)],["This interim method is intentionally allowed to fail cleanly. It will be replaced by the official player API when its endpoint/schema is available."])}`);
+    if(request!==state.playerRequest)return;
+    state.player=previous?{...previous,refreshFailed:true,lastRefreshAttempt:nowIso()}:null;
+    updatePlayerUi(state.player?undefined:"Public profile unavailable — enter skill levels manually");saveLocal();
+    if(!silent)addMsg("bot",`<h3>Public player load unavailable</h3><p class="warn">${esc(err.message)}</p><p>${previous?"Keeping the previous levels for this same player; they may be outdated.":"No player levels are loaded."} Use <b>Enter skill levels</b> to supply levels yourself. Browser saving is optional; the portable link carries only the username.</p>`);
   }finally{
-    $("#loadPlayer").disabled=false;
-    updatePlayerUi(state.player?undefined:$("#playerState").textContent);
+    if(request===state.playerRequest)$("#loadPlayer").disabled=false;
   }
+}
+function changePlayerIdentity(){
+  const u=$("#username").value.trim();
+  state.playerRequest++;$("#loadPlayer").disabled=false;
+  if(state.player && playerKey(state.player.username)!==playerKey(u))state.player=null;
+  setPortableHash(u);updatePlayerUi();saveLocal();
+}
+function openManualPlayer(){
+  const u=$("#username").value.trim();
+  const p=state.player && playerKey(state.player.username)===playerKey(u)?state.player:null;
+  $("#manualIdentity").textContent=u?`Levels for ${u}`:"Levels for this unnamed session";
+  $("#manualSkills").innerHTML=KNOWN_SKILLS.map(n=>`<label>${esc(n)}<input aria-label="${esc(n)} level" data-skill="${esc(norm(n))}" type="number" min="1" step="1" inputmode="numeric" placeholder="Unknown" value="${esc(p?.skills?.[norm(n)]?.level??"")}"></label>`).join("");
+  $("#manualError").textContent="";$("#manualDialog").showModal();
+}
+function saveManualPlayer(){
+  const skills={};
+  for(const input of document.querySelectorAll("#manualSkills input")){
+    const raw=input.value.trim();if(!raw)continue;
+    const level=Number(raw);
+    if(!/^\d+$/.test(raw)||!Number.isSafeInteger(level)||level<1){$("#manualError").textContent="Enter whole-number levels of at least 1, or leave a skill blank.";return;}
+    skills[input.dataset.skill]={level,xp:null};
+  }
+  if(!Object.keys(skills).length){$("#manualError").textContent="Enter at least one skill level.";return;}
+  state.playerRequest++;$("#loadPlayer").disabled=false;
+  const username=$("#username").value.trim();
+  state.player={username,source:"manual",fetchedAt:nowIso(),skills,total:null,completeness:{skillsParsed:Object.keys(skills).length,expectedSkills:KNOWN_SKILLS.length,bank:false,inventory:false,equipment:false,quests:false}};
+  setPortableHash(username);updatePlayerUi();saveLocal();$("#manualDialog").close();
+  addMsg("bot",`<h3>User-entered levels ready</h3><p>Using ${Object.keys(skills).length} skill levels${username?` for ${esc(username)}`:" for this session"}. Blank skills remain unknown. These levels are not verified by FlatMMO and are not included in portable links.</p>${chips(["What should I do next?","Can I do Atlas Crown?"])}`);
 }
 
 function restoreSession(){
@@ -411,8 +460,8 @@ function restoreSession(){
   const username=hashUser || saved?.username || "";
   if(username) $("#username").value=username;
 
-  if(saved?.player && (!hashUser || norm(saved.player.username)===norm(hashUser))){
-    state.player={...saved.player,source:"local_cache"};
+  if(saved?.player && playerKey(saved.player.username)===playerKey(username)){
+    state.player={...saved.player,source:saved.player.source==="local_cache"?"official_public_profile_html":saved.player.source,cached:true};
     updatePlayerUi();
   } else updatePlayerUi();
 
@@ -427,7 +476,7 @@ function restoreSession(){
     state.restoring=false;
   }
 
-  if(hashUser && (!state.player || norm(state.player.username)!==norm(hashUser))){
+  if(hashUser && (!state.player || playerKey(state.player.username)!==playerKey(hashUser))){
     // The synced/bookmarked URL can reconnect a player automatically.
     loadPlayer(hashUser,{silent:true});
   }
@@ -588,11 +637,11 @@ function questAnswer(qst,readiness=false){
     const c=requirementCheck(x.parsed.skill,x.parsed.level);
     return `<li class="${c.status}">${esc(c.text)}</li>`;
   }).join("");
-  return `<h3>${esc(qst.name)}</h3><p><b>Difficulty:</b> ${esc(qst.difficulty||"Unknown")}</p>
+  return `${playerBasis()}<h3>${esc(qst.name)}</h3><p><b>Difficulty:</b> ${esc(qst.difficulty||"Unknown")}</p>
     ${reqs.length?`<p><b>${readiness?"Readiness":"Requirements"}:</b></p><ul>${checkHtml}</ul>`:""}
     ${qst.rewards?.length?`<p><b>Rewards:</b></p><ul>${qst.rewards.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
     ${qst.procedure?.length?`<p><b>Procedure:</b></p><ol>${qst.procedure.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>`:`<p class="warn">Procedure not documented in the current Companion data.</p>`}
-    ${state.player&&readiness?`<p class="muted small">This readiness check currently knows public skill levels only. Item ownership, quest completion and access state are still unknown.</p>`:""}
+    ${state.player&&readiness?`<p class="muted small">This readiness check currently knows skill levels only. Item ownership, quest completion and access state are still unknown.</p>`:""}
     ${evidence([qst.source].filter(Boolean), qst.verificationNote?[qst.verificationNote]:[])}`;
 }
 function areaAnswer(a){
@@ -607,7 +656,7 @@ function areaAnswer(a){
 function skillAnswer(s){
   state.lastEntity={type:"skill",obj:s};
   const mine=playerSkill(s.name);
-  return `<h3>${esc(s.name)}</h3>${mine?`<p><b>Your level:</b> ${esc(mine.level)} · ${esc(fmtNumber(mine.xp))} XP</p>`:""}
+  return `${playerBasis()}<h3>${esc(s.name)}</h3>${mine?`<p><b>Your level:</b> ${esc(mine.level)} · ${mine.xp==null?"XP unknown":esc(fmtNumber(mine.xp))+" XP"}</p>`:""}
     <p>${esc(s.training||"")}</p>${s.keyRules?.length?`<ul>${s.keyRules.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}${evidence([s.source])}`;
 }
 function equipmentAnswer(e,q=""){
@@ -622,7 +671,7 @@ function equipmentAnswer(e,q=""){
     const c=requirementCheck(x.craftSkill,x.craftLevel);
     checks+=`<p class="${c.status}"><b>Craft check:</b> ${esc(c.text)}</p>`;
   }
-  return `<h3>${esc(e.name)}</h3>${x.style?`<p><b>Style:</b> ${esc(title(x.style))}</p>`:""}
+  return `${playerBasis()}<h3>${esc(e.name)}</h3>${x.style?`<p><b>Style:</b> ${esc(title(x.style))}</p>`:""}
     ${x.damage!=null?`<p><b>Damage:</b> ${esc(x.damage)}${x.accuracy!=null?` · <b>Accuracy:</b> ${esc(x.accuracy)}`:""}</p>`:""}
     ${x.equipSkill?`<p><b>Equip:</b> ${esc(x.equipSkill)} ${esc(x.equipLevel??"unknown")}</p>`:""}
     ${x.craftSkill?`<p><b>Make:</b> ${esc(x.craftSkill)} ${esc(x.craftLevel??"unknown")}</p>`:""}
@@ -667,16 +716,16 @@ function skillReadyQuests(){
 }
 function playerAware(){
   if(!state.player){
-    return `<h3>Load a player for personal suggestions</h3><p>The Companion can recommend from your skill levels once a public player profile is loaded.</p>
+    return `<h3>Load a player for personal suggestions</h3><p>The Companion can recommend from your skill levels once a public player profile is loaded or you enter levels using <b>Enter skill levels</b>.</p>
       <p class="muted small">Bank/inventory/equipment/quest-state recommendations will become substantially richer when the official API is connected.</p>`;
   }
   const unlocks=nearestUnlocks()||[],quests=skillReadyQuests();
-  return `<h3>What you could work toward next</h3>
-    <p>This is a <b>stats-only</b> suggestion set for ${esc(state.player.username)}. It deliberately does not pretend to know your bank, inventory, equipment or completed quests yet.</p>
+  return `${playerBasis()}<h3>What you could work toward next</h3>
+    <p>This is a <b>stats-only</b> suggestion set for ${esc(state.player.username||'this session')}. It deliberately does not pretend to know your bank, inventory, equipment or completed quests yet.</p>
     ${unlocks.length?`<p><b>Nearest equipment/crafting level unlocks:</b></p><ul>${unlocks.map(x=>`<li>${esc(x.name)} — ${esc(title(x.kind))}: ${esc(x.skill)} ${esc(x.need)}; you're ${esc(x.have)} (${esc(x.delta)} level${x.delta===1?"":"s"} away)</li>`).join("")}</ul>`:"<p>No nearby structured equipment unlocks were found from the current data.</p>"}
     ${quests.length?`<p><b>Quests whose structured skill requirements you meet:</b></p><ul>${quests.map(q=>`<li>${esc(q.name)}</li>`).join("")}</ul>`:""}
     <p class="muted small">“Skill-ready” is not the same as fully ready: item/access requirements and completion state may still matter.</p>
-    ${evidence([],["This recommendation is deterministic and based only on the loaded public skill snapshot plus Companion requirement data."])}`;
+    ${evidence([],["This recommendation is deterministic and based only on the loaded skill snapshot plus Companion requirement data."])}`;
 }
 function unknown(q){
   const candidates=[];
@@ -748,7 +797,10 @@ $("#askForm").addEventListener("submit",e=>{e.preventDefault();const q=$("#q").v
 $("#loadPlayer").addEventListener("click",()=>loadPlayer($("#username").value));
 $("#refreshPlayer").addEventListener("click",()=>loadPlayer($("#username").value));
 $("#username").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();loadPlayer($("#username").value)}});
-$("#username").addEventListener("change",()=>{const u=$("#username").value.trim();if(u){setPortableHash(u);saveLocal()}updatePlayerUi()});
+$("#username").addEventListener("input",changePlayerIdentity);
+$("#manualPlayer").addEventListener("click",openManualPlayer);
+$("#manualForm").addEventListener("submit",e=>{e.preventDefault();saveManualPlayer()});
+$("#cancelManual").addEventListener("click",()=>$("#manualDialog").close());
 $("#openOfficialProfile").addEventListener("click",()=>{const u=$("#username").value.trim();if(u)window.open(officialProfileUrl(u),"_blank","noopener")});
 $("#copyProfileLink").addEventListener("click",async()=>{
   const u=$("#username").value.trim();if(!u)return;

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 5,
   "generated": "2026-09-19",
-  "release": "pre-api-player-loader-v1.5",
+  "release": "player-resilience-manual-v1.6",
   "layout": "flat-root",
   "branch": "v2-online",
   "counts": {
@@ -31,7 +31,9 @@
     "localStorage": "optional and disposable; stores username, latest public snapshot and recent questions when available",
     "portablePlayerLink": "#player=<username>",
     "interimPlayerLoader": "official public profile HTML; skill level/XP only when browser cross-origin policy permits",
-    "futurePlayerApi": "adapter reserved; endpoint/schema not assumed"
+    "futurePlayerApi": "adapter reserved; endpoint/schema not assumed",
+    "manualSkills": "Optional username; enter known whole-number levels; blanks and XP stay unknown. Clearly labelled user-entered, not verified.",
+    "refreshFailure": "Retain previous same-player snapshot with warning and timestamp; never reuse across different usernames; ignore superseded responses."
   },
   "coverage": {
     "combatStyles": [
@@ -56,8 +58,8 @@
     "resourceNodes": "61 conservative nodes across 44 rooms",
     "bedSemantics": "bedStatus distinguishes documented beds from rooms where a bed is merely not documented",
     "mechanicsRules": "12 explicit rules/readiness records including observed Sleep/Run behavior and calculation blocks",
-    "aiContext": "schema 1.5; merges the 2 observed quest placeholders and embeds the mechanics rules layer",
-    "playerAwareness": "stats-only when the interim public profile loader succeeds; bank/inventory/equipment/quest-completion remain pending official API"
+    "aiContext": "schema 1.6; merges 2 observed quest placeholders and embeds mechanics rules plus player-source and refresh policies",
+    "playerAwareness": "Skill-level checks from public profiles or explicitly labelled manual levels. Inventory, bank, equipment and quest completion remain unknown."
   },
   "calculationReadiness": {
     "safeNow": [
@@ -100,6 +102,6 @@
     "Agility level 1-19 Run-step progression and exact zero-Sleep behavior by activity remain pending observations.",
     "Known source conflicts remain retained in verification notes."
   ],
-  "aiContextSha256": "3b75602ebad818351331508bce5eb2552e2fc5bbc6572d66ef143cfffe860210",
+  "aiContextSha256": "8dda0cf2c98c8213cc00c8f60336f71240d43d27841204f76ff7676208c7f4a6",
   "updatePolicy": "Manually maintained static snapshot. The deployment workflow publishes committed files; it does not refresh game data or player snapshots. AI retrieval is optional/best-effort."
 }

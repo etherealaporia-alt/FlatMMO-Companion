@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generated": "2026-09-19",
-  "release": "pre-api-player-loader-v1.5",
+  "release": "player-resilience-manual-v1.6",
   "purpose": "Calculation-readiness and deterministic-assistant rules. Facts may be official/wiki-sourced, directly observed, derived, partial, or unknown.",
   "authorityOrder": [
     "official",
@@ -261,7 +261,7 @@
     ]
   },
   "playerApiContract": {
-    "status": "interim_public_profile_loader_plus_reserved_official_api_adapter",
+    "status": "interim_public_profile_or_user_entered_skills_plus_reserved_official_api_adapter",
     "principle": "The UI normalizes all player sources into one snapshot shape. v1.5 first tries to read the official public FlatMMO profile page directly from the browser; if browser cross-origin rules block that request, it fails cleanly. The eventual official API replaces only the provider adapter.",
     "normalizedSnapshot": {
       "username": null,
@@ -298,6 +298,26 @@
         "Profile HTML structure may change.",
         "This interim provider does not promise bank, inventory, equipment, quests, collections, or live state."
       ]
-    }
+    },
+    "manualProvider": {
+      "source": "manual",
+      "fields": [
+        "optional username",
+        "skill levels"
+      ],
+      "unknownFields": [
+        "XP",
+        "combat",
+        "equipment",
+        "inventory",
+        "bank",
+        "quests",
+        "collections",
+        "achievements",
+        "minigames"
+      ],
+      "policy": "User-entered levels are unverified. Blank skills stay unknown. Saving replaces the current snapshot; it does not merge public XP with edited levels. Username-only portable links do not include these levels."
+    },
+    "refreshPolicy": "A failed refresh retains only the same username snapshot, preserving its source and timestamp and marking refreshFailed. Changing username clears previous levels. Superseded responses are ignored. Browser persistence is optional."
   }
 }

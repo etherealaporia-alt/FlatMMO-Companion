@@ -1,7 +1,7 @@
 {
   "meta": {
     "id": "flatmmo-companion-ai-context",
-    "schemaVersion": "1.5",
+    "schemaVersion": "1.6",
     "generated": "2026-09-19",
     "game": "FlatMMO",
     "canonicalPage": "https://etherealaporia-alt.github.io/FlatMMO-Companion/ai.html",
@@ -41,10 +41,10 @@
       "entityLinks": "52/82 monsters have exact derived room links; 55/104 quest steps have exact room links",
       "resources": "61 structured resource/activity nodes across 44 rooms",
       "mechanicsRules": "12 explicit rule/readiness records from flatmmo-rules.json",
-      "playerIntegration": "Human UI supports optional/disposable localStorage and an interim public skill-profile loader; the official player API adapter remains pending and no individual player snapshot is embedded in this public context",
-      "humanUi": "Deterministic conversational assistant v1.5 with username loading, portable player link, stats-aware requirement checks, and safe failure when public profile reads are blocked"
+      "playerIntegration": "Optional/disposable browser storage. Manual levels are unverified and may be partial; XP is unknown. Official API remains pending. No individual player snapshot is embedded in this public context.",
+      "humanUi": "Deterministic conversational assistant v1.6 with public skill loading, optional manual levels, same-player refresh-failure retention and username-only portable links."
     },
-    "release": "pre-api-player-loader-v1.5",
+    "release": "player-resilience-manual-v1.6",
     "updatePolicy": "Manually maintained static snapshot. The deployment workflow publishes committed files; it does not refresh game data or player snapshots. AI retrieval is optional/best-effort."
   },
   "instructions": [
@@ -69,7 +69,8 @@
     "Consult mechanicsRules before numerical calculations. If a required formula is partial or unknown, do not invent hit chance, DPS, kill time, survivability, or recommended levels.",
     "Treat observed evidence as FlatMMO-specific evidence, but label it as observed rather than official.",
     "Sleep Points and Run steps are separate systems. Do not use one as a synonym or substitute for the other.",
-    "The public grounding context contains no user's live/private player snapshot. Human-side username loading and future API normalization are product capabilities, not evidence about a specific player."
+    "The public grounding context contains no user's live/private player snapshot. Human-side username loading and future API normalization are product capabilities, not evidence about a specific player.",
+    "Player-aware answers may use user-entered skill levels, explicitly labelled unverified. Missing skills and XP are unknown. Failed refreshes can retain an older same-player snapshot with its original timestamp and a warning; do not treat that as current live data."
   ],
   "authorityOrder": [
     "official",
@@ -10691,7 +10692,7 @@
     "Quest step links are complete at the step level, but exact room coverage is intentionally partial where the world model or procedure wording is not specific.",
     "Resource nodes are conservative joins from room features; missing tool/level/output fields mean not documented in this pass.",
     "The public context has 21 named quests: 19 normalized core quest records plus two observation-backed placeholders. Feeding The Homeless and Atlas Crown still lack fully verified procedures and rewards.",
-    "The human UI can attempt public skill-profile loading by username, but this public AI grounding file intentionally contains no user's live/private character snapshot.",
+    "The human UI can attempt public skill-profile loading by username or accept user-entered skill levels, but this public AI grounding file intentionally contains no user's live/private character snapshot.",
     "The interim public-profile HTML reader may be blocked by browser cross-origin policy and is expected to be replaced by the official player API adapter.",
     "Exact combat hit-chance, damage-resolution, DPS, kill-time, survivability, and generic recommended-level formulas are not yet verified; mechanicsRules blocks those calculations.",
     "Agility Run step progression for levels 1-19 and zero-Sleep behavior by activity type remain partially observed rather than fully specified."
@@ -21675,7 +21676,7 @@
   "mechanicsRules": {
     "schemaVersion": 1,
     "generated": "2026-09-19",
-    "release": "pre-api-player-loader-v1.5",
+    "release": "player-resilience-manual-v1.6",
     "purpose": "Calculation-readiness and deterministic-assistant rules. Facts may be official/wiki-sourced, directly observed, derived, partial, or unknown.",
     "authorityOrder": [
       "official",
@@ -21935,7 +21936,7 @@
       ]
     },
     "playerApiContract": {
-      "status": "interim_public_profile_loader_plus_reserved_official_api_adapter",
+      "status": "interim_public_profile_or_user_entered_skills_plus_reserved_official_api_adapter",
       "principle": "The UI normalizes all player sources into one snapshot shape. v1.5 first tries to read the official public FlatMMO profile page directly from the browser; if browser cross-origin rules block that request, it fails cleanly. The eventual official API replaces only the provider adapter.",
       "normalizedSnapshot": {
         "username": null,
@@ -21972,7 +21973,27 @@
           "Profile HTML structure may change.",
           "This interim provider does not promise bank, inventory, equipment, quests, collections, or live state."
         ]
-      }
+      },
+      "manualProvider": {
+        "source": "manual",
+        "fields": [
+          "optional username",
+          "skill levels"
+        ],
+        "unknownFields": [
+          "XP",
+          "combat",
+          "equipment",
+          "inventory",
+          "bank",
+          "quests",
+          "collections",
+          "achievements",
+          "minigames"
+        ],
+        "policy": "User-entered levels are unverified. Blank skills stay unknown. Saving replaces the current snapshot; it does not merge public XP with edited levels. Username-only portable links do not include these levels."
+      },
+      "refreshPolicy": "A failed refresh retains only the same username snapshot, preserving its source and timestamp and marking refreshFailed. Changing username clears previous levels. Superseded responses are ignored. Browser persistence is optional."
     }
   },
   "overrideMetadata": {

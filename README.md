@@ -15,7 +15,7 @@ https://etherealaporia-alt.github.io/FlatMMO-Companion/flatmmo-context.json
 
 The `v2-online` branch is the active development branch. Project data is deliberately kept at the repository root because the mobile maintenance workflow flattens archive directory structures.
 
-The human UI is a deterministic conversational assistant. It can query the structured FlatMMO knowledge graph, retain recent session state with optional/disposable `localStorage`, create a portable `#player=<username>` link, and perform stats-aware requirement checks when public player skill data can be loaded.
+The human UI is a deterministic conversational assistant. It can query the structured FlatMMO knowledge graph, retain recent session state with optional/disposable `localStorage`, create a portable `#player=<username>` link, and perform stats-aware requirement checks using public skill data or explicitly labelled user-entered levels.
 
 The current public-profile loader is interim and may be blocked by normal browser cross-origin policy. It fails cleanly. The player-provider boundary is already isolated so an official player API can replace the loader without redesigning the assistant.
 
@@ -58,3 +58,11 @@ See `flatmmo-sources.json`, `flatmmo-status.json`, `flatmmo-rules.json` and `fla
 The knowledge files are manually maintained static snapshots. The GitHub Pages workflow publishes committed files; it does not refresh game data. The official player API/schema is still pending. Public AI retrieval is optional and best-effort; the human assistant works without AI.
 
 The JSON, text and HTML grounding copies contain the same context. Compact quest-step and monster-room arrays have explicit field-order schemas in `flatmmo-context.json`. After changing the context, regenerate both copies and update `aiContextSha256` in `flatmmo-status.json`.
+
+## v1.6 player reliability and manual levels
+
+Use **Enter skill levels** to supply known levels, with or without a username. Leave unknown skills blank. Saving replaces the current snapshot and marks it as user-entered; XP is unknown. The current session works when browser storage is unavailable. Portable links carry only a username, never manual levels.
+
+A failed public-profile refresh retains the previous snapshot only for the same username, with its original timestamp and a warning. Editing the username clears a different player's levels immediately. Late requests cannot overwrite a new player, manual entry, or a cleared session. Successful public-profile loads replace manual levels. Cached manual levels retain their unverified source label.
+
+This update changes player handling, not game mechanics. Official player API integration remains pending.
