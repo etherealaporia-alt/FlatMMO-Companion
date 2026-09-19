@@ -1,7 +1,7 @@
 {
   "schemaVersion": 5,
   "generated": "2026-09-19",
-  "release": "player-resilience-manual-v1.6",
+  "release": "visual-polish-v1.6.1",
   "layout": "flat-root",
   "branch": "v2-online",
   "counts": {
@@ -33,7 +33,9 @@
     "interimPlayerLoader": "official public profile HTML; skill level/XP only when browser cross-origin policy permits",
     "futurePlayerApi": "adapter reserved; endpoint/schema not assumed",
     "manualSkills": "Optional username; enter known whole-number levels; blanks and XP stay unknown. Clearly labelled user-entered, not verified.",
-    "refreshFailure": "Retain previous same-player snapshot with warning and timestamp; never reuse across different usernames; ignore superseded responses."
+    "refreshFailure": "Retain previous same-player snapshot with warning and timestamp; never reuse across different usernames; ignore superseded responses.",
+    "visualStyle": "FlatMMO-inspired charcoal panels, brown secondary controls, green primary actions, cream text and monospace headings; no external images/fonts required.",
+    "manualFormLayout": "Bounded dialog with independently scrolling fields and persistent Save/Cancel footer; two skill columns at phone widths."
   },
   "coverage": {
     "combatStyles": [
@@ -102,6 +104,6 @@
     "Agility level 1-19 Run-step progression and exact zero-Sleep behavior by activity remain pending observations.",
     "Known source conflicts remain retained in verification notes."
   ],
-  "aiContextSha256": "8dda0cf2c98c8213cc00c8f60336f71240d43d27841204f76ff7676208c7f4a6",
+  "aiContextSha256": "3d9ec267a3b9511c5608270749fb527d82d8bd4d5d59732bfa258dd1f8e040bb",
   "updatePolicy": "Manually maintained static snapshot. The deployment workflow publishes committed files; it does not refresh game data or player snapshots. AI retrieval is optional/best-effort."
 }

@@ -8,73 +8,48 @@
 <meta name="robots" content="index,follow">
 <link rel="canonical" href="https://etherealaporia-alt.github.io/FlatMMO-Companion/">
 <style>
-:root{
-  color-scheme:dark;
-  --bg:#0d1117;--panel:#151b25;--panel2:#101620;--line:#283448;
-  --text:#eef2f7;--muted:#9ba9bb;--accent:#73b8ff;--good:#69d29b;
-  --warn:#e6bd66;--bad:#ef8585;--chip:#1c2737;
-}
+:root{color-scheme:dark;--bg:#171916;--panel:#252824;--panel2:#1d201c;--line:#454a3e;--text:#f0e6d2;--muted:#b9baa9;--accent:#7acc60;--good:#9cde86;--warn:#edc77a;--bad:#f2a39a;--chip:#343a2e;--wood:#855a52;--mono:"Courier New",Courier,monospace}
 *{box-sizing:border-box}
-html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
-body{min-height:100vh}
-.shell{max-width:980px;margin:0 auto;padding:20px 14px 116px}
-header{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:8px 4px 14px}
-h1{font-size:1.55rem;margin:0 0 4px}.sub{color:var(--muted);font-size:.92rem}
-.badge{padding:6px 9px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:.78rem;white-space:nowrap}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:15px;margin-bottom:12px}
-.status{display:flex;gap:8px;flex-wrap:wrap;font-size:.82rem;color:var(--muted)}
-.dot{width:8px;height:8px;border-radius:50%;display:inline-block;background:var(--good);margin-right:5px}
-.dot.warn{background:var(--warn)}.dot.bad{background:var(--bad)}
-.playerbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:12px}
-.playerbar input,.compose-inner input{background:var(--panel2);border:1px solid var(--line);border-radius:11px;color:var(--text);font:inherit;padding:10px 11px;outline:none}
-.playerbar input:focus,.compose-inner input:focus{border-color:#4d79a6}
-.btn{border:1px solid var(--line);background:var(--chip);color:var(--text);padding:9px 12px;border-radius:11px;font-weight:650;cursor:pointer}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:#081321}
-.btn.ghost{background:transparent}.btn.danger{color:#f4b0b0}
-.btn:disabled{opacity:.55;cursor:default}
-.player-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
-.player-summary{margin-top:10px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:11px}
-.player-summary[hidden]{display:none}
-.chat{display:flex;flex-direction:column;gap:11px;margin-top:12px}
-.msg{max-width:92%;padding:13px 14px;border-radius:15px;line-height:1.45}
-.user{align-self:flex-end;background:#21446b}
-.bot{align-self:flex-start;background:var(--panel);border:1px solid var(--line)}
-.bot h3{margin:0 0 7px;font-size:1rem}.bot p{margin:6px 0}.bot ul,.bot ol{margin:7px 0 4px;padding-left:20px}
-.muted{color:var(--muted)} .good{color:var(--good)} .warn{color:var(--warn)} .bad{color:var(--bad)}
-.evidence{margin-top:10px;border-top:1px solid var(--line);padding-top:9px;font-size:.83rem;color:var(--muted)}
-.evidence details{margin-top:6px}.evidence a{color:var(--accent);word-break:break-word}
-.chips{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0 4px}
-.chip{border:1px solid var(--line);background:var(--chip);color:var(--text);padding:8px 10px;border-radius:999px;font-size:.82rem;cursor:pointer}
-.chip:hover,.btn:hover{border-color:#476485}
-.composer{position:fixed;left:0;right:0;bottom:0;background:linear-gradient(transparent,var(--bg) 22%);padding:24px 12px 12px}
-.compose-inner{max-width:952px;margin:auto;display:flex;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:8px}
-.compose-inner input{flex:1;min-width:0;border:0;background:transparent;padding:9px 8px}
-.loader{color:var(--muted);font-size:.9rem;padding:10px 3px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px;margin:9px 0}
-.stat{background:var(--panel2);border:1px solid var(--line);padding:9px;border-radius:10px}.stat b{display:block;font-size:1.06rem}
-.kicker{font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
-.small{font-size:.84rem}.tiny{font-size:.76rem}.nowrap{white-space:nowrap}
-.skillgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:7px;margin-top:8px}
-.skillpill{background:#121925;border:1px solid var(--line);border-radius:9px;padding:8px}
-.skillpill b{display:block}.skillpill span{color:var(--muted);font-size:.78rem}
-dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:16px;max-width:720px;width:calc(100% - 24px)}
-dialog::backdrop{background:#0009}
-dialog pre{white-space:pre-wrap;word-break:break-word;background:var(--panel2);border:1px solid var(--line);padding:10px;border-radius:10px}
-@media(max-width:560px){
-  .shell{padding-left:10px;padding-right:10px}.msg{max-width:96%}.badge{display:none}
-  .playerbar{grid-template-columns:1fr}.playerbar .btn{width:100%}
-}
-dialog{max-width:620px;width:calc(100% - 48px);max-height:85vh;overflow:auto}#manualSkills label{display:flex;flex-direction:column;gap:4px}#manualSkills input{width:100%;box-sizing:border-box;background:var(--panel2);color:var(--text);border:1px solid var(--line);padding:8px;border-radius:6px}
+html{scroll-padding-bottom:110px}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+body{min-height:100vh;background-image:linear-gradient(#ffffff02 1px,transparent 1px);background-size:100% 32px}
+.shell{max-width:1000px;margin:0 auto;padding:24px 18px 130px}
+header{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:8px 2px 24px;border-bottom:1px solid var(--line);margin-bottom:22px}
+h1{font-family:var(--mono);font-weight:800;letter-spacing:-.06em;font-size:clamp(1.8rem,5vw,2.5rem);line-height:1.1;margin:0 0 8px}.brand-flat{color:#d19b77}.brand-mmo{color:#9be452}.brand-companion{font-size:.54em;letter-spacing:0;color:var(--text);display:block;margin-top:6px}.sub{color:var(--muted);font-size:.85rem;line-height:1.5}
+.badge{padding:8px 10px;border:1px solid #567347;border-radius:4px;color:#bce6a9;background:#273520;font:700 .78rem var(--mono);white-space:nowrap}
+.card{background:var(--panel);border:1px solid var(--line);border-top:3px solid var(--wood);border-radius:8px;padding:18px;margin-bottom:18px;box-shadow:0 3px 0 #0003}
+.section-heading{font:700 .88rem var(--mono);color:var(--text);margin:0 0 12px}.status{display:flex;gap:8px;flex-wrap:wrap;font-size:.8rem;color:var(--muted);line-height:1.5}.dot{width:7px;height:7px;border-radius:2px;display:inline-block;background:var(--good);margin-right:6px}.dot.warn{background:var(--warn)}.dot.bad{background:var(--bad)}
+.playerbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;margin-top:14px}
+.playerbar input,.compose-inner input{min-width:0;background:var(--panel2);border:1px solid var(--line);border-radius:5px;color:var(--text);font:inherit;font-size:16px;padding:12px;outline:none}input::placeholder{color:#a9ad9d;opacity:1}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}.playerbar input:focus,.compose-inner input:focus{border-color:var(--accent);outline:2px solid #7acc6033;outline-offset:0}
+.btn{min-height:44px;border:1px solid #9d756b;background:var(--wood);color:var(--text);padding:10px 13px;border-radius:5px;font:700 .86rem var(--mono);cursor:pointer;box-shadow:inset 0 1px #ffffff0a,0 2px #0003}
+.btn.primary{background:var(--accent);border-color:#92dc79;color:#14200e}.btn.ghost{background:transparent;border-color:var(--line);box-shadow:none}.btn.danger{color:#eeb9af}.btn:disabled{opacity:.45;cursor:default;box-shadow:none}.btn:not(:disabled):hover{filter:brightness(1.13)}.btn:not(:disabled):active{transform:translateY(1px);box-shadow:none}
+.player-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.player-summary{margin-top:16px;background:var(--panel2);border:1px solid var(--line);border-left:3px solid #73975b;border-radius:5px;padding:14px}.player-summary[hidden]{display:none}
+.chat{display:flex;flex-direction:column;gap:16px;margin-top:18px}.msg{max-width:94%;padding:17px 18px;border-radius:7px;line-height:1.6;overflow-wrap:anywhere;scroll-margin-bottom:105px}.user{align-self:flex-end;background:#3a492f;border:1px solid #5d764a;color:#eef4e7}.bot{align-self:flex-start;background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--wood)}
+.bot h3{margin:0 0 10px;font:700 1.08rem/1.4 var(--mono);color:#f3e5c9}.bot p{margin:9px 0}.bot ul,.bot ol{margin:10px 0 6px;padding-left:23px}.bot li{margin:5px 0}.muted{color:var(--muted)}.good{color:var(--good)}.warn{color:var(--warn)}.bad{color:var(--bad)}
+.evidence{margin-top:15px;border-top:1px solid var(--line);padding-top:10px;font-size:.84rem;color:var(--muted)}.evidence details{margin-top:3px}.evidence summary{cursor:pointer;min-height:32px;padding:4px 0}.evidence a{color:#a6db8d;word-break:break-word}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 2px}.chip{min-height:40px;border:1px solid #545d47;background:var(--chip);color:var(--text);padding:9px 12px;border-radius:5px;font-size:.83rem;line-height:1.4;cursor:pointer;text-align:left}.chip:hover{background:#424e36;border-color:#8ca777}
+.composer{position:fixed;z-index:5;left:0;right:0;bottom:0;background:linear-gradient(transparent,var(--bg) 24%);padding:20px 14px max(12px,env(safe-area-inset-bottom))}.compose-inner{max-width:964px;margin:auto;display:flex;align-items:center;gap:9px;background:var(--panel);border:1px solid #63724f;border-radius:7px;padding:8px;box-shadow:0 4px 24px #0006}.compose-inner input{flex:1;min-width:0;border:0;background:transparent;padding:11px 10px}
+.loader{color:var(--muted);font-size:.9rem;padding:10px 3px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:9px;margin:12px 0}.stat{background:var(--panel2);border:1px solid var(--line);padding:11px;border-radius:5px}.stat b{display:block;font:700 1.1rem var(--mono)}.kicker{font:700 .75rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}.small{font-size:.86rem}.tiny{font-size:.78rem;line-height:1.5}.nowrap{white-space:nowrap}
+.skillgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:9px;margin-top:10px}.skillpill{background:#272e22;border:1px solid var(--line);border-radius:5px;padding:10px}.skillpill b{display:block;font-family:var(--mono)}.skillpill span{color:var(--muted);font-size:.8rem}
+dialog{background:var(--panel);color:var(--text);border:1px solid #687258;border-top:3px solid var(--wood);border-radius:8px;width:min(640px,calc(100% - 24px));max-width:none;max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);padding:20px;box-shadow:0 20px 90px #0009}dialog::backdrop{background:#080b08ce}dialog h3{font-family:var(--mono);margin:0 0 10px}dialog pre{white-space:pre-wrap;word-break:break-word;background:var(--panel2);border:1px solid var(--line);padding:12px;border-radius:5px}
+#manualDialog{padding:0;overflow:hidden}#manualForm{display:flex;flex-direction:column;max-height:calc(100vh - 30px);max-height:calc(100dvh - 30px);min-height:0}.manual-header{flex:none;padding:18px 20px 12px;border-bottom:1px solid var(--line)}.manual-header p{margin:4px 0;line-height:1.4}.manual-scroll{min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:14px 20px 20px;scroll-padding:12px}.manual-help{margin:0 0 16px;color:var(--muted);font-size:.85rem;line-height:1.6}
+#manualSkills{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 12px}#manualSkills label{display:flex;flex-direction:column;gap:7px;font-size:.85rem;min-width:0}#manualSkills input{min-width:0;width:100%;min-height:44px;background:var(--panel2);color:var(--text);border:1px solid #606852;padding:10px;border-radius:5px;font:16px var(--mono)}
+.manual-footer{flex:none;background:#2d3229;border-top:1px solid #606852;padding:12px 20px max(12px,env(safe-area-inset-bottom))}.manual-footer .player-actions{margin:0;display:grid;grid-template-columns:1fr auto}.manual-footer .btn{min-height:46px}#manualError{font-size:.85rem;line-height:1.4;margin:0}#manualError:not(:empty){margin-bottom:10px}
+@media(max-width:600px){.shell{padding:16px 12px 128px}header{padding:6px 0 18px;margin-bottom:16px;gap:10px}.badge{font-size:.7rem;padding:6px}.sub{font-size:.79rem}.card{padding:14px}.playerbar{grid-template-columns:1fr}.playerbar .btn{width:100%}.player-actions .btn{flex:1 1 auto}.msg{max-width:100%;padding:14px;line-height:1.55}.chip{min-height:44px}.compose-inner{gap:5px}.compose-inner .btn{padding-left:14px;padding-right:14px}#manualSkills{grid-template-columns:repeat(2,minmax(0,1fr))}.manual-header{padding:15px 16px 11px}.manual-scroll{padding:12px 16px 16px}.manual-footer{padding-left:16px;padding-right:16px}}
+@media(max-width:360px){.badge{display:none}.shell{padding-left:9px;padding-right:9px}}
+@media(max-height:450px){.manual-header{padding-top:10px;padding-bottom:8px}.manual-header h3{font-size:1rem;margin-bottom:4px}.manual-footer{padding-top:8px;padding-bottom:8px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}.btn:not(:disabled):active{transform:none}}
 </style>
 </head>
 <body>
 <div class="shell">
 <header>
-  <div><h1>FlatMMO Companion</h1><div class="sub">Deterministic assistant · player-ready test build</div></div>
-  <div class="badge">No AI model</div>
+  <div><h1 aria-label="FlatMMO Companion"><span class="brand-flat">FLAT</span><span class="brand-mmo">MMO</span><span class="brand-companion">COMPANION</span></h1><div class="sub">Your next step, backed by game data.</div></div>
+  <div class="badge">Community companion</div>
 </header>
 
-<section class="card">
+<section class="card" aria-label="Player and knowledge status">
+  <h2 class="section-heading">YOUR ADVENTURE</h2>
   <div class="status">
     <span><span class="dot"></span><span id="loadState">Loading knowledge…</span></span>
     <span>•</span>
@@ -82,7 +57,7 @@ dialog{max-width:620px;width:calc(100% - 48px);max-height:85vh;overflow:auto}#ma
   </div>
 
   <div class="playerbar">
-    <input id="username" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="FlatMMO username">
+    <input id="username" aria-label="FlatMMO username" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="FlatMMO username">
     <button id="loadPlayer" class="btn primary" type="button">Load player</button>
   </div>
   <div class="player-actions">
@@ -105,8 +80,8 @@ dialog{max-width:620px;width:calc(100% - 48px);max-height:85vh;overflow:auto}#ma
 
 <div id="chat" class="chat">
   <div class="msg bot">
-    <h3>Ask me about FlatMMO</h3>
-    <p>I query the Companion's FlatMMO data directly. I don't fill missing facts with mechanics from other games.</p>
+    <div class="kicker">The field guide</div><h3>What are you working toward?</h3>
+    <p>Ask about a quest, an item or your next unlock. Answers come from the Companion’s FlatMMO data, with evidence and gaps shown along the way.</p>
     <p class="muted small">Enter a public FlatMMO username above. This build will try to read the official public profile for skill levels. If it is unavailable, use Enter skill levels for personal checks. Leave unknown skills blank. Browser storage is optional.</p>
   </div>
 </div>
@@ -120,14 +95,18 @@ dialog{max-width:620px;width:calc(100% - 48px);max-height:85vh;overflow:auto}#ma
   </form>
 </div>
 
-<dialog id="manualDialog">
+<dialog id="manualDialog" aria-labelledby="manualTitle" aria-describedby="manualIdentity">
   <form id="manualForm">
-    <h3>Enter your skill levels</h3>
-    <p id="manualIdentity"></p>
-    <p class="muted small">Enter only the levels you know. Blank skills stay unknown. Saving replaces the current snapshot with these user-entered levels; XP and other player details stay unknown. A username is optional.</p>
+    <div class="manual-header"><h3 id="manualTitle">Enter your skill levels</h3>
+    <p id="manualIdentity" class="muted small"></p></div>
+    <div class="manual-scroll">
+    <p class="manual-help">Enter only the levels you know. Blank skills stay unknown. Saving replaces the current snapshot with these user-entered levels; XP and other player details stay unknown. A username is optional.</p>
     <div id="manualSkills" class="skillgrid"></div>
+    </div>
+    <div class="manual-footer">
     <p id="manualError" class="bad" role="alert"></p>
-    <div class="player-actions"><button class="btn primary" type="submit">Use these levels</button><button id="cancelManual" class="btn" type="button">Cancel</button></div>
+    <div class="player-actions"><button class="btn primary" type="submit">Use these levels</button><button id="cancelManual" class="btn ghost" type="button">Cancel</button></div>
+    </div>
   </form>
 </dialog>
 <dialog id="linkDialog">

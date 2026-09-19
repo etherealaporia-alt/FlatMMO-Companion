@@ -66,3 +66,11 @@ Use **Enter skill levels** to supply known levels, with or without a username. L
 A failed public-profile refresh retains the previous snapshot only for the same username, with its original timestamp and a warning. Editing the username clears a different player's levels immediately. Late requests cannot overwrite a new player, manual entry, or a cleared session. Successful public-profile loads replace manual levels. Cached manual levels retain their unverified source label.
 
 This update changes player handling, not game mechanics. Official player API integration remains pending.
+
+## v1.6.1 visual polish
+
+The Companion takes visual cues from FlatMMO's public website: charcoal panels, warm brown controls, cream text, green primary buttons and monospace headings. Body text remains readable sans-serif. All styling is local CSS and system fonts; no external art or font downloads are required.
+
+The manual-level dialog keeps its header and action footer outside the scrolling field area. Save and Cancel stay visible within the dialog. Phone widths use two columns, larger inputs and touch targets; dynamic viewport height and safe-area padding help on smaller screens. Real-device keyboard behaviour still needs checking.
+
+The assistant JavaScript and game data are unchanged from v1.6. Player-state logic checks pass. The unpublished preview could not be rendered in cloud Chrome because local-file URLs are blocked; check the deployed layout after upload.
