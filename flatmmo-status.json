@@ -28,7 +28,7 @@
   "humanUi": {
     "mode": "deterministic conversational assistant",
     "playerUsername": true,
-    "localStorage": "optional and disposable; stores username, latest public snapshot and recent questions when available",
+    "localStorage": "optional and disposable; stores username, latest normalized player snapshot (public or user-entered) and recent questions when available",
     "portablePlayerLink": "#player=<username>",
     "interimPlayerLoader": "official public profile HTML; skill level/XP only when browser cross-origin policy permits",
     "futurePlayerApi": "adapter reserved; endpoint/schema not assumed",
