@@ -136,9 +136,10 @@ const STORAGE_KEY="flatmmoCompanion.v1";
 const MAX_HISTORY=30;
 const KNOWN_SKILLS=[
   "Health","Melee","Archery","Magic","Worship","Mining","Forging","Crafting",
-  "Enchantment","Fishing","Woodcutting","Firemake","Cooking","Brewing","Farming",
-  "Stealing","Hunting","Agility","Summoning"
+  "Enchantment","Fishing","Woodcutting","Firemaking","Cooking","Brewing","Farming",
+  "Stealing","Hunting","Agility"
 ];
+const SKILL_ALIASES={firemake:"Firemaking"};
 
 const state = {
   data:{}, ready:false, lastEntity:null, playerRequest:0,
@@ -243,7 +244,16 @@ function playerBasis(){
   const basis=p.source==="manual"?"User-entered levels; not verified by FlatMMO":p.cached?"Cached public stats":"Public skill snapshot";
   return `<p class="muted small">${esc(basis)}${p.refreshFailed?" · Refresh failed; using previous levels":""}. Missing skills, XP and other fields remain unknown.</p>`;
 }
-function playerSkill(name){ return state.player?.skills?.[norm(name)] || null; }
+function canonicalSkillName(name){
+  const key=norm(name);
+  return SKILL_ALIASES[key] || KNOWN_SKILLS.find(x=>norm(x)===key) || String(name||"").trim();
+}
+function snapshotSkill(snapshot,name){
+  const key=norm(canonicalSkillName(name));
+  if(!snapshot?.skills) return null;
+  return snapshot.skills[key] || (key==="firemaking" ? snapshot.skills.firemake : null) || null;
+}
+function playerSkill(name){ return snapshotSkill(state.player,name); }
 
 function saveLocal(){
   try{
@@ -414,7 +424,7 @@ function openManualPlayer(){
   const u=$("#username").value.trim();
   const p=state.player && playerKey(state.player.username)===playerKey(u)?state.player:null;
   $("#manualIdentity").textContent=u?`Levels for ${u}`:"Levels for this unnamed session";
-  $("#manualSkills").innerHTML=KNOWN_SKILLS.map(n=>`<label>${esc(n)}<input aria-label="${esc(n)} level" data-skill="${esc(norm(n))}" type="number" min="1" step="1" inputmode="numeric" placeholder="Unknown" value="${esc(p?.skills?.[norm(n)]?.level??"")}"></label>`).join("");
+  $("#manualSkills").innerHTML=KNOWN_SKILLS.map(n=>`<label>${esc(n)}<input aria-label="${esc(n)} level" data-skill="${esc(norm(n))}" type="number" min="1" step="1" inputmode="numeric" placeholder="Unknown" value="${esc(snapshotSkill(p,n)?.level??"")}"></label>`).join("");
   $("#manualError").textContent="";$("#manualDialog").showModal();
 }
 function saveManualPlayer(){
@@ -593,10 +603,12 @@ function itemSources(q){
 
 function parseLevelRequirement(req){
   const s=String(req);
-  let m=s.match(/(?:level\s*)?(\d+)\s+([A-Za-z][A-Za-z ]+)/i);
-  if(m) return {level:Number(m[1]),skill:m[2].trim()};
-  m=s.match(/([A-Za-z][A-Za-z ]+)\s+(?:level\s*)?(\d+)/i);
-  if(m) return {level:Number(m[2]),skill:m[1].trim()};
+  const labels=[...KNOWN_SKILLS,"Firemake"].sort((a,b)=>b.length-a.length);
+  const pattern=labels.map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")).join("|");
+  let m=s.match(new RegExp(`(?:level\\s*)?(\\d+)\\s+(${pattern})\\b`,"i"));
+  if(m) return {level:Number(m[1]),skill:canonicalSkillName(m[2])};
+  m=s.match(new RegExp(`\\b(${pattern})\\s+(?:level\\s*)?(\\d+)\\b`,"i"));
+  if(m) return {level:Number(m[2]),skill:canonicalSkillName(m[1])};
   return null;
 }
 function requirementCheck(skill,level){
