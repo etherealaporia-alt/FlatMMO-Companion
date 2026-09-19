@@ -1,55 +1,768 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>FlatMMO Companion</title>
-  <meta name="description" content="FlatMMO Companion development build and public knowledge layer.">
-  <meta name="robots" content="index,follow">
-  <link rel="canonical" href="https://etherealaporia-alt.github.io/FlatMMO-Companion/">
-  <style>
-    :root { color-scheme: dark; }
-    body { margin:0; font-family:system-ui,-apple-system,Segoe UI,sans-serif; background:#111318; color:#e8e8ea; }
-    main { max-width:900px; margin:auto; padding:36px 20px 64px; }
-    h1 { margin-bottom:.35rem; }
-    .muted { color:#aeb4c0; }
-    .card { background:#191c23; border:1px solid #2a2f39; border-radius:12px; padding:18px; margin-top:18px; }
-    .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; margin-top:14px; }
-    .stat { background:#12151a; border-radius:9px; padding:12px; }
-    .n { font-size:1.45rem; font-weight:700; }
-    a { color:#79c7ff; }
-    code { overflow-wrap:anywhere; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>FlatMMO Companion</title>
+<meta name="description" content="A deterministic, player-aware FlatMMO knowledge and decision assistant.">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://etherealaporia-alt.github.io/FlatMMO-Companion/">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#0d1117;--panel:#151b25;--panel2:#101620;--line:#283448;
+  --text:#eef2f7;--muted:#9ba9bb;--accent:#73b8ff;--good:#69d29b;
+  --warn:#e6bd66;--bad:#ef8585;--chip:#1c2737;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+body{min-height:100vh}
+.shell{max-width:980px;margin:0 auto;padding:20px 14px 116px}
+header{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:8px 4px 14px}
+h1{font-size:1.55rem;margin:0 0 4px}.sub{color:var(--muted);font-size:.92rem}
+.badge{padding:6px 9px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:.78rem;white-space:nowrap}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:15px;margin-bottom:12px}
+.status{display:flex;gap:8px;flex-wrap:wrap;font-size:.82rem;color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;background:var(--good);margin-right:5px}
+.dot.warn{background:var(--warn)}.dot.bad{background:var(--bad)}
+.playerbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:12px}
+.playerbar input,.compose-inner input{background:var(--panel2);border:1px solid var(--line);border-radius:11px;color:var(--text);font:inherit;padding:10px 11px;outline:none}
+.playerbar input:focus,.compose-inner input:focus{border-color:#4d79a6}
+.btn{border:1px solid var(--line);background:var(--chip);color:var(--text);padding:9px 12px;border-radius:11px;font-weight:650;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#081321}
+.btn.ghost{background:transparent}.btn.danger{color:#f4b0b0}
+.btn:disabled{opacity:.55;cursor:default}
+.player-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.player-summary{margin-top:10px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:11px}
+.player-summary[hidden]{display:none}
+.chat{display:flex;flex-direction:column;gap:11px;margin-top:12px}
+.msg{max-width:92%;padding:13px 14px;border-radius:15px;line-height:1.45}
+.user{align-self:flex-end;background:#21446b}
+.bot{align-self:flex-start;background:var(--panel);border:1px solid var(--line)}
+.bot h3{margin:0 0 7px;font-size:1rem}.bot p{margin:6px 0}.bot ul,.bot ol{margin:7px 0 4px;padding-left:20px}
+.muted{color:var(--muted)} .good{color:var(--good)} .warn{color:var(--warn)} .bad{color:var(--bad)}
+.evidence{margin-top:10px;border-top:1px solid var(--line);padding-top:9px;font-size:.83rem;color:var(--muted)}
+.evidence details{margin-top:6px}.evidence a{color:var(--accent);word-break:break-word}
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0 4px}
+.chip{border:1px solid var(--line);background:var(--chip);color:var(--text);padding:8px 10px;border-radius:999px;font-size:.82rem;cursor:pointer}
+.chip:hover,.btn:hover{border-color:#476485}
+.composer{position:fixed;left:0;right:0;bottom:0;background:linear-gradient(transparent,var(--bg) 22%);padding:24px 12px 12px}
+.compose-inner{max-width:952px;margin:auto;display:flex;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:8px}
+.compose-inner input{flex:1;min-width:0;border:0;background:transparent;padding:9px 8px}
+.loader{color:var(--muted);font-size:.9rem;padding:10px 3px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px;margin:9px 0}
+.stat{background:var(--panel2);border:1px solid var(--line);padding:9px;border-radius:10px}.stat b{display:block;font-size:1.06rem}
+.kicker{font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.small{font-size:.84rem}.tiny{font-size:.76rem}.nowrap{white-space:nowrap}
+.skillgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:7px;margin-top:8px}
+.skillpill{background:#121925;border:1px solid var(--line);border-radius:9px;padding:8px}
+.skillpill b{display:block}.skillpill span{color:var(--muted);font-size:.78rem}
+dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:16px;max-width:720px;width:calc(100% - 24px)}
+dialog::backdrop{background:#0009}
+dialog pre{white-space:pre-wrap;word-break:break-word;background:var(--panel2);border:1px solid var(--line);padding:10px;border-radius:10px}
+@media(max-width:560px){
+  .shell{padding-left:10px;padding-right:10px}.msg{max-width:96%}.badge{display:none}
+  .playerbar{grid-template-columns:1fr}.playerbar .btn{width:100%}
+}
+</style>
 </head>
 <body>
-<main>
-  <h1>FlatMMO Companion</h1>
-  <p class="muted">v2 online development build</p>
+<div class="shell">
+<header>
+  <div><h1>FlatMMO Companion</h1><div class="sub">Deterministic assistant · player-ready test build</div></div>
+  <div class="badge">No AI model</div>
+</header>
 
-  <section class="card">
-    <h2>Knowledge layer</h2>
-    <p>The current build is intentionally minimal while the FlatMMO knowledge model and AI grounding layer are being validated.</p>
-    <div class="stats">
-      <div class="stat"><div class="n">82</div><div>monsters</div></div>
-      <div class="stat"><div class="n">19</div><div>quests cached</div></div>
-      <div class="stat"><div class="n">18</div><div>skills</div></div>
-      <div class="stat"><div class="n">20</div><div>mechanics</div></div>
-      <div class="stat"><div class="n">14</div><div>areas</div></div>
-    </div>
-  </section>
+<section class="card">
+  <div class="status">
+    <span><span class="dot"></span><span id="loadState">Loading knowledge…</span></span>
+    <span>•</span>
+    <span><span id="playerDot" class="dot warn"></span><span id="playerState">No player loaded</span></span>
+  </div>
 
-  <section class="card">
-    <h2>AI grounding</h2>
-    <p><a href="ai.html">Open AI-readable context page</a></p>
-    <p><a href="flatmmo-context.json">Open canonical JSON context</a></p>
-    <p><a href="flatmmo-context.txt">Open text fallback</a></p>
-  </section>
+  <div class="playerbar">
+    <input id="username" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="FlatMMO username">
+    <button id="loadPlayer" class="btn primary" type="button">Load player</button>
+  </div>
+  <div class="player-actions">
+    <button id="refreshPlayer" class="btn" type="button" disabled>Refresh</button>
+    <button id="copyProfileLink" class="btn" type="button" disabled>Copy portable link</button>
+    <button id="openOfficialProfile" class="btn" type="button" disabled>Open official profile</button>
+    <button id="clearLocal" class="btn ghost danger" type="button">Clear local session</button>
+  </div>
+  <div id="playerSummary" class="player-summary" hidden></div>
 
-  <section class="card">
-    <h2>Current data status</h2>
-    <p>Wiki material is normalized and paraphrased. Player profiles, market data, and official news/change notes are intentionally excluded from this build.</p>
-    <p>The monster dataset is a bootstrap mirror and remains marked for refresh from the official FlatMMO monster endpoint.</p>
-  </section>
-</main>
+  <div class="chips" id="starterChips">
+    <button class="chip">What does a gorilla drop?</button>
+    <button class="chip">Where can I sleep in Everbrook?</button>
+    <button class="chip">How do I get green leaf?</button>
+    <button class="chip">Tell me about Sleep Points</button>
+    <button class="chip">What should I do next?</button>
+  </div>
+</section>
+
+<div id="chat" class="chat">
+  <div class="msg bot">
+    <h3>Ask me about FlatMMO</h3>
+    <p>I query the Companion's FlatMMO data directly. I don't fill missing facts with mechanics from other games.</p>
+    <p class="muted small">Enter a public FlatMMO username above. This build will try to read the official public profile for skill levels. If the browser blocks that cross-site read, the rest of the Companion still works and the eventual official API can replace only that loader.</p>
+  </div>
+</div>
+<div id="loading" class="loader">Loading FlatMMO data…</div>
+</div>
+
+<div class="composer">
+  <form id="askForm" class="compose-inner">
+    <input id="q" autocomplete="off" placeholder="Ask Flat Companion…" aria-label="Ask Flat Companion">
+    <button class="btn primary" type="submit">Ask</button>
+  </form>
+</div>
+
+<dialog id="linkDialog">
+  <h3>Portable player link</h3>
+  <p class="muted small">This link contains only the public player username. Bookmarking it in signed-in Chrome can carry that identity to another synced browser; the Companion will then try to reload fresh public stats.</p>
+  <pre id="portableLink"></pre>
+  <div class="player-actions">
+    <button id="copyDialogLink" class="btn primary" type="button">Copy</button>
+    <button class="btn" type="button" onclick="document.getElementById('linkDialog').close()">Close</button>
+  </div>
+</dialog>
+
+<script>
+"use strict";
+
+const FILES = {
+  monsters:"flatmmo-monsters.json",
+  quests:"flatmmo-quests.json",
+  skills:"flatmmo-skills.json",
+  areas:"flatmmo-areas.json",
+  equipment:"flatmmo-equipment.json",
+  mechanics:"flatmmo-mechanics.json",
+  rules:"flatmmo-rules.json",
+  overrides:"flatmmo-overrides.json"
+};
+const STORAGE_KEY="flatmmoCompanion.v1";
+const MAX_HISTORY=30;
+const KNOWN_SKILLS=[
+  "Health","Melee","Archery","Magic","Worship","Mining","Forging","Crafting",
+  "Enchantment","Fishing","Woodcutting","Firemake","Cooking","Brewing","Farming",
+  "Stealing","Hunting","Agility","Summoning"
+];
+
+const state = {
+  data:{}, ready:false, lastEntity:null,
+  player:null, history:[], restoring:false,
+  playerProvider:{
+    status:"interim-public-profile",
+    async fetch(username){
+      const url=officialProfileUrl(username);
+      let response;
+      try{
+        response=await fetch(url,{method:"GET",mode:"cors",credentials:"omit",cache:"no-store",redirect:"follow"});
+      }catch(err){
+        const e=new Error("Your browser could not read the official FlatMMO profile directly. This is usually a cross-origin browser restriction. The player name is still saved locally, and the official profile can be opened normally.");
+        e.code="CORS_OR_NETWORK";
+        e.cause=err;
+        throw e;
+      }
+      if(!response.ok) throw new Error(`Official profile returned HTTP ${response.status}.`);
+      const html=await response.text();
+      return parseOfficialProfileHtml(username,html,url);
+    }
+  }
+};
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+const norm = s => String(s ?? "").toLowerCase().replace(/[_-]+/g," ").replace(/[^a-z0-9\s]/g," ").replace(/\s+/g," ").trim();
+const title = s => String(s ?? "").replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase());
+const unique = xs => [...new Set(xs.filter(Boolean))];
+const nowIso = () => new Date().toISOString();
+const officialProfileUrl = username => `https://flatmmo.com/profile/?user=${encodeURIComponent(username)}`;
+
+function srcLink(url,label){
+  if(!url) return "";
+  return `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(label||url)}</a>`;
+}
+function evidence(sources=[], notes=[]){
+  const srcs=unique(sources);
+  if(!srcs.length && !notes.length) return "";
+  return `<div class="evidence"><details><summary>Evidence / limits</summary>${
+    srcs.length?`<div>${srcs.map((s,i)=>srcLink(s,`Source ${i+1}`)).join(" · ")}</div>`:""
+  }${notes.length?`<ul>${notes.map(n=>`<li>${esc(n)}</li>`).join("")}</ul>`:""}</details></div>`;
+}
+function addMsg(kind,html,doScroll=true){
+  const el=document.createElement("div");
+  el.className=`msg ${kind}`;
+  el.innerHTML=html;
+  $("#chat").appendChild(el);
+  if(doScroll) el.scrollIntoView({behavior:"smooth",block:"end"});
+}
+function chips(items=[]){
+  if(!items.length) return "";
+  return `<div class="chips">${items.map(x=>`<button class="chip" data-q="${esc(x)}">${esc(x)}</button>`).join("")}</div>`;
+}
+function fmtDrop(d){
+  const amt=d.min===d.max?d.min:`${d.min}–${d.max}`;
+  const rarity=d.rarity_denominator===1?"Always":`1/${d.rarity_denominator}`;
+  return `${title(d.item)} — ${amt} (${rarity})`;
+}
+function fmtNumber(n){ return Number.isFinite(Number(n)) ? Number(n).toLocaleString() : String(n??""); }
+function flattenEquipment(eq){
+  const out=[];
+  for(const [family,items] of Object.entries(eq.weaponFamilies||{})){
+    for(const x of items||[]) out.push({kind:"weapon",family,name:x.name,obj:x});
+  }
+  for(const [style,sets] of Object.entries(eq.armourSets||{})){
+    for(const set of sets||[]){
+      out.push({kind:"armour-set",style,name:set.name,obj:set});
+      for(const p of set.pieces||[]) out.push({kind:"armour-piece",style,name:p.name,obj:p,parent:set});
+    }
+  }
+  for(const x of eq.enchantmentOrbs||[]) out.push({kind:"orb",name:x.name,obj:x});
+  for(const [kind,items] of Object.entries(eq.productionChains||{})){
+    if(Array.isArray(items)) for(const x of items) out.push({kind:"production",family:kind,name:x.name,obj:x});
+  }
+  return out;
+}
+function entityScore(q,name){
+  q=norm(q); name=norm(name);
+  if(!q||!name) return 0;
+  if(q===name) return 100;
+  if(q.includes(name)) return 80+Math.min(15,name.length/3);
+  if(name.includes(q) && q.length>=3) return 60+Math.min(15,q.length/3);
+  const qt=new Set(q.split(" ")), nt=new Set(name.split(" "));
+  let common=0; for(const t of qt) if(nt.has(t)) common++;
+  return common?20+common*10:0;
+}
+function findNamed(q,records){
+  let best=null,bestScore=0;
+  for(const r of records||[]){
+    const s=entityScore(q,r.name);
+    if(s>bestScore){best=r;bestScore=s}
+  }
+  return bestScore>=50?best:null;
+}
+function rule(id){ return (state.data.rules?.rules||[]).find(x=>x.id===id); }
+function playerSkill(name){ return state.player?.skills?.[norm(name)] || null; }
+
+function saveLocal(){
+  try{
+    localStorage.setItem(STORAGE_KEY,JSON.stringify({
+      version:1,
+      username:$("#username").value.trim()||state.player?.username||"",
+      player:state.player,
+      history:state.history.slice(-MAX_HISTORY),
+      savedAt:nowIso()
+    }));
+  }catch(_){}
+}
+function readLocal(){
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY);
+    return raw?JSON.parse(raw):null;
+  }catch(_){return null}
+}
+function clearLocal(){
+  try{localStorage.removeItem(STORAGE_KEY)}catch(_){}
+  state.player=null;state.history=[];state.lastEntity=null;
+  $("#username").value="";
+  updatePlayerUi();
+  history.replaceState(null,"",location.pathname+location.search);
+  const keep=$("#chat").firstElementChild;
+  $("#chat").innerHTML="";
+  if(keep) $("#chat").appendChild(keep);
+  addMsg("bot","<p>Local Companion state cleared. The FlatMMO knowledge files themselves were not affected.</p>");
+}
+function parseHashPlayer(){
+  const raw=location.hash.replace(/^#/,"");
+  const params=new URLSearchParams(raw);
+  return (params.get("player")||"").trim();
+}
+function setPortableHash(username){
+  const url=new URL(location.href);
+  url.hash=username?`player=${encodeURIComponent(username)}`:"";
+  history.replaceState(null,"",url.pathname+url.search+url.hash);
+}
+function portableUrl(username){
+  const url=new URL(location.href);
+  url.hash=`player=${encodeURIComponent(username)}`;
+  return url.toString();
+}
+async function copyText(text){
+  if(navigator.clipboard?.writeText){
+    await navigator.clipboard.writeText(text); return true;
+  }
+  const ta=document.createElement("textarea");ta.value=text;document.body.appendChild(ta);ta.select();
+  const ok=document.execCommand("copy");ta.remove();return ok;
+}
+
+function parseOfficialProfileHtml(username,html,url){
+  const doc=new DOMParser().parseFromString(html,"text/html");
+  const text=(doc.body?.innerText||"").replace(/\u00a0/g," ").replace(/\r/g,"");
+  if(/Player\s+Not\s+Found/i.test(text)) {
+    const e=new Error(`No public FlatMMO player named "${username}" was found.`);
+    e.code="NOT_FOUND"; throw e;
+  }
+  const skills={};
+  const names=["Total",...KNOWN_SKILLS];
+  for(const name of names){
+    const escaped=name.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+    const rx=new RegExp(`(?:^|\\n|\\s)${escaped}\\s+(?:LEVEL\\s+)?([0-9,]+)\\s+([0-9,]+)\\s*XP`,"i");
+    const m=text.match(rx);
+    if(m){
+      const rec={level:Number(m[1].replace(/,/g,"")),xp:Number(m[2].replace(/,/g,""))};
+      if(name==="Total") skills.total=rec; else skills[norm(name)]=rec;
+    }
+  }
+
+  // Fallback: inspect compact DOM blocks when page text formatting changes.
+  if(Object.keys(skills).length<4){
+    const blocks=[...doc.querySelectorAll("tr,li,.card,.stat,.skill,.row,div")];
+    for(const name of names){
+      if(name!=="Total" && skills[norm(name)]) continue;
+      const reName=new RegExp(`\\b${name.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")}\\b`,"i");
+      for(const el of blocks){
+        const t=(el.innerText||"").replace(/\s+/g," ").trim();
+        if(!reName.test(t) || t.length>180) continue;
+        const m=t.match(/LEVEL\s*([0-9,]+).*?([0-9,]+)\s*XP/i);
+        if(m){
+          const rec={level:Number(m[1].replace(/,/g,"")),xp:Number(m[2].replace(/,/g,""))};
+          if(name==="Total") skills.total=rec; else skills[norm(name)]=rec;
+          break;
+        }
+      }
+    }
+  }
+
+  const count=Object.keys(skills).length;
+  if(count<4){
+    const e=new Error("The official profile page loaded, but its current HTML could not be parsed reliably for skill data. The parser will need updating or the official API.");
+    e.code="PARSE_FAILED"; throw e;
+  }
+
+  return {
+    source:"official_public_profile_html",
+    sourceUrl:url,
+    username,
+    fetchedAt:nowIso(),
+    total:skills.total||null,
+    skills:Object.fromEntries(Object.entries(skills).filter(([k])=>k!=="total")),
+    completeness:{
+      skillsParsed:Object.keys(skills).filter(k=>k!=="total").length,
+      expectedSkills:KNOWN_SKILLS.length,
+      bank:false,inventory:false,equipment:false,quests:false
+    }
+  };
+}
+
+function updatePlayerUi(message){
+  const p=state.player;
+  const user=$("#username").value.trim()||p?.username||"";
+  $("#refreshPlayer").disabled=!user;
+  $("#copyProfileLink").disabled=!user;
+  $("#openOfficialProfile").disabled=!user;
+
+  if(!p){
+    $("#playerDot").className="dot warn";
+    $("#playerState").textContent=message||"No player loaded";
+    $("#playerSummary").hidden=true;
+    return;
+  }
+  $("#playerDot").className="dot";
+  const d=new Date(p.fetchedAt);
+  $("#playerState").textContent=`${p.username} · ${p.source==="local_cache"?"cached":"public stats loaded"}`;
+  const total=p.total;
+  const skills=KNOWN_SKILLS.map(n=>({name:n,rec:playerSkill(n)})).filter(x=>x.rec);
+  $("#playerSummary").hidden=false;
+  $("#playerSummary").innerHTML=`
+    <div><b>${esc(p.username)}</b>${total?` · Total level ${esc(fmtNumber(total.level))} · ${esc(fmtNumber(total.xp))} XP`:""}</div>
+    <div class="muted tiny">Snapshot ${esc(isNaN(d)?p.fetchedAt:d.toLocaleString())}. Source: ${esc(p.source)}.</div>
+    <div class="skillgrid">${skills.map(x=>`<div class="skillpill"><b>${esc(x.name)} ${esc(x.rec.level)}</b><span>${esc(fmtNumber(x.rec.xp))} XP</span></div>`).join("")}</div>
+    <div class="muted tiny" style="margin-top:8px">Current interim loader targets public skill stats only. Bank, inventory, equipment and quest state remain pending the official API.</div>`;
+}
+async function loadPlayer(username,{silent=false}={}){
+  username=String(username||"").trim();
+  if(!username) return;
+  $("#username").value=username;
+  setPortableHash(username);
+  updatePlayerUi("Loading public profile…");
+  $("#loadPlayer").disabled=true;
+  try{
+    const snap=await state.playerProvider.fetch(username);
+    state.player=snap;
+    updatePlayerUi();
+    saveLocal();
+    if(!silent) addMsg("bot",`<h3>Player loaded</h3><p>I read <b>${esc(snap.username)}</b>'s public FlatMMO skill profile and can now use those levels for basic requirement checks.</p><p class="muted small">Player inventory/bank/equipment/quest completion are still unavailable through this interim loader.</p>${chips(["What should I do next?","Can I do Atlas Crown?"])}`);
+  }catch(err){
+    state.player=null;
+    updatePlayerUi(err.message);
+    saveLocal();
+    if(!silent) addMsg("bot",`<h3>Public player load unavailable</h3><p class="warn">${esc(err.message)}</p><p>The username is still stored locally and in the portable link. The Companion itself remains fully usable.</p>${evidence([officialProfileUrl(username)],["This interim method is intentionally allowed to fail cleanly. It will be replaced by the official player API when its endpoint/schema is available."])}`);
+  }finally{
+    $("#loadPlayer").disabled=false;
+    updatePlayerUi(state.player?undefined:$("#playerState").textContent);
+  }
+}
+
+function restoreSession(){
+  const hashUser=parseHashPlayer();
+  const saved=readLocal();
+  const username=hashUser || saved?.username || "";
+  if(username) $("#username").value=username;
+
+  if(saved?.player && (!hashUser || norm(saved.player.username)===norm(hashUser))){
+    state.player={...saved.player,source:"local_cache"};
+    updatePlayerUi();
+  } else updatePlayerUi();
+
+  const historyItems=Array.isArray(saved?.history)?saved.history.slice(-MAX_HISTORY):[];
+  if(historyItems.length){
+    state.restoring=true;
+    for(const q of historyItems){
+      addMsg("user",esc(q),false);
+      addMsg("bot",answer(q),false);
+    }
+    state.history=historyItems;
+    state.restoring=false;
+  }
+
+  if(hashUser && (!state.player || norm(state.player.username)!==norm(hashUser))){
+    // The synced/bookmarked URL can reconnect a player automatically.
+    loadPlayer(hashUser,{silent:true});
+  }
+}
+
+async function loadAll(){
+  const entries=await Promise.all(Object.entries(FILES).map(async([k,url])=>{
+    const r=await fetch(url,{cache:"no-store"}); if(!r.ok) throw new Error(`${url}: HTTP ${r.status}`);
+    return [k,await r.json()];
+  }));
+  state.data=Object.fromEntries(entries);
+  if(state.data.overrides?.quests?.length){
+    const existing=new Set((state.data.quests.records||[]).map(x=>norm(x.name)));
+    for(const q of state.data.overrides.quests) if(!existing.has(norm(q.name))) state.data.quests.records.push(q);
+  }
+  state.data.equipmentFlat=flattenEquipment(state.data.equipment);
+  buildIndexes();
+  state.ready=true;
+  $("#loading").style.display="none";
+  $("#loadState").textContent=`Knowledge loaded: ${state.data.monsters.records.length} monsters, ${state.data.quests.records.length} quests, ${state.data.areas.records.length} areas`;
+  restoreSession();
+}
+function buildIndexes(){
+  const dropMap=new Map();
+  for(const m of state.data.monsters.records||[]){
+    for(const d of m.drops||[]){
+      const k=norm(d.item);
+      if(!dropMap.has(k)) dropMap.set(k,[]);
+      dropMap.get(k).push({monster:m,drop:d});
+    }
+  }
+  state.dropMap=dropMap;
+}
+
+function getMonster(q){
+  let m=findNamed(q,state.data.monsters.records);
+  if(!m && state.lastEntity?.type==="monster" && /\b(it|itself|them|that|this|weak|drop|where|fight|combat)\b/i.test(q)) m=state.lastEntity.obj;
+  return m;
+}
+function getQuest(q){
+  let x=findNamed(q,state.data.quests.records);
+  if(!x && state.lastEntity?.type==="quest" && /\b(it|that|this|requirements?|reward|steps?|where|do)\b/i.test(q)) x=state.lastEntity.obj;
+  return x;
+}
+function getArea(q){
+  let x=findNamed(q,state.data.areas.records);
+  if(!x && state.lastEntity?.type==="area" && /\b(it|there|that|this|rooms?|bed|where)\b/i.test(q)) x=state.lastEntity.obj;
+  return x;
+}
+function getSkill(q){ return findNamed(q,state.data.skills.records); }
+function getEquipment(q){
+  let best=null,bestScore=0;
+  for(const x of state.data.equipmentFlat){
+    const s=entityScore(q,x.name);
+    if(s>bestScore){best=x;bestScore=s}
+  }
+  return bestScore>=50?best:null;
+}
+
+function monsterProfile(m){
+  state.lastEntity={type:"monster",obj:m};
+  const stats=[["HP",m.hp],["Damage",m.damage],["Accuracy",m.accuracy],["Defence",m.defence],["Magic Defence",m.magic_defence],["Weakness",m.weakness||"None recorded"]];
+  const drops=(m.drops||[]).slice(0,8);
+  return `<h3>${esc(title(m.name))}</h3>
+    <div class="grid">${stats.map(([a,b])=>`<div class="stat"><span class="kicker">${esc(a)}</span><b>${esc(b)}</b></div>`).join("")}</div>
+    <p><b>Area:</b> ${esc(m.area||"Unknown")}</p>
+    ${drops.length?`<p><b>Drops:</b></p><ul>${drops.map(d=>`<li>${esc(fmtDrop(d))}</li>`).join("")}</ul>`:""}
+    ${chips([`What is ${title(m.name)} weak to?`,`Where is ${title(m.name)}?`,`What combat style should I use against ${title(m.name)}?`])}
+    ${evidence(["https://flatmmo.wiki/index.php/Monsters"],["Monster bootstrap data is still marked for an official-endpoint refresh."])}`;
+}
+function monsterDrops(m){
+  state.lastEntity={type:"monster",obj:m};
+  return `<h3>${esc(title(m.name))} drops</h3><ul>${(m.drops||[]).map(d=>`<li>${esc(fmtDrop(d))}${d.unique?" <span class='muted'>(unique)</span>":""}</li>`).join("")}</ul>
+    ${chips([`Where is ${title(m.name)}?`,`Tell me about ${title(m.name)}`])}${evidence(["https://flatmmo.wiki/index.php/Monsters"])}`;
+}
+function monsterWhere(m){
+  state.lastEntity={type:"monster",obj:m};
+  const rooms=(m.roomRefs||[]).map(r=>{
+    for(const a of state.data.areas.records||[]){const room=(a.rooms||[]).find(x=>x.id===r.roomId);if(room)return `${a.name} → ${room.name}`;}
+    return r.roomId;
+  });
+  return `<h3>Where to find ${esc(title(m.name))}</h3><p><b>Area:</b> ${esc(m.area||"Unknown")}</p>
+    ${rooms.length?`<p><b>Linked rooms:</b></p><ul>${unique(rooms).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:`<p class="warn">The Companion has no exact room link for this monster yet.</p>`}
+    ${chips([`What does ${title(m.name)} drop?`,`Tell me about ${title(m.name)}`])}
+    ${evidence([], [m.roomLinkStatus==="linked"?"Exact room links are structured Companion relationships.":"Location coverage is incomplete."])}`;
+}
+function monsterCombat(m){
+  state.lastEntity={type:"monster",obj:m};
+  const formulas=rule("combat.formulas");
+  let statements=[];
+  if(m.weakness) statements.push(`<p><b>Listed weakness:</b> ${esc(title(m.weakness))}. Using a listed weakness is documented to increase hit chance and damage.</p>`);
+  else statements.push(`<p><b>Weakness:</b> none recorded.</p>`);
+  statements.push(`<p><b>Defence:</b> ${esc(m.defence)} against physical Melee/Archery attacks.<br><b>Magic Defence:</b> ${esc(m.magic_defence)} against Magic.</p>`);
+  if(!m.weakness && Number(m.magic_defence)<Number(m.defence)){
+    statements.push(`<p>Magic faces the lower listed defensive stat here (${esc(m.magic_defence)} vs ${esc(m.defence)}). That is a <b>defence-stat advantage</b>, not a recorded weakness.</p>`);
+  } else if(!m.weakness && Number(m.defence)<Number(m.magic_defence)){
+    statements.push(`<p>Melee/Archery face the lower listed defensive stat here (${esc(m.defence)} vs ${esc(m.magic_defence)}). The Companion cannot yet choose between Melee and Archery from defence alone.</p>`);
+  }
+  if(state.player){
+    const levels=["Melee","Archery","Magic"].map(n=>[n,playerSkill(n)?.level]).filter(x=>x[1]!=null);
+    if(levels.length) statements.push(`<p><b>${esc(state.player.username)}'s combat skill levels:</b> ${levels.map(([n,l])=>`${esc(n)} ${esc(l)}`).join(" · ")}</p>`);
+  }
+  statements.push(`<p class="warn"><b>Recommended level:</b> not currently calculable. Exact hit/damage formulas and a recommendation threshold are not yet verified.</p>`);
+  return `<h3>Combat against ${esc(title(m.name))}</h3>${statements.join("")}
+    ${chips([`Tell me about ${title(m.name)}`,`What does ${title(m.name)} drop?`])}
+    ${evidence(["https://flatmmo.wiki/index.php/Monsters"],["The assistant will not invent exact hit chance, DPS, kill time or a recommended level while combat formulas remain unresolved.",...(formulas?.unknowns||[])])}`;
+}
+
+function bedsAnswer(area){
+  const areas=area?[area]:state.data.areas.records,hits=[];
+  for(const a of areas||[]) for(const r of a.rooms||[]) if((r.bedCount||0)>0 || r.bedStatus==="documented_present") hits.push({area:a.name,room:r.name,count:r.bedCount});
+  if(area) state.lastEntity={type:"area",obj:area};
+  if(!hits.length) return `<h3>Bed locations</h3><p class="warn">No documented bed was found for ${esc(area?.name||"that location")}. “Not documented” is not treated as proof that no bed exists.</p>`;
+  return `<h3>${area?`Beds in ${esc(area.name)}`:"Documented beds"}</h3><ul>${hits.map(x=>`<li>${esc(x.area)} → ${esc(x.room)}${x.count?` (${x.count})`:""}</li>`).join("")}</ul>${evidence([],["Only rooms with an explicitly documented bed are included."])}`;
+}
+function ruleAnswer(r){
+  state.lastEntity={type:"rule",obj:r};
+  return `<h3>${esc(r.name)}</h3>${(r.facts||[]).map(x=>`<p>${esc(x)}</p>`).join("")}
+    ${r.known?`<p><b>Known:</b></p><ul>${r.known.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+    ${r.observations?`<p><b>Direct observations:</b></p><ul>${r.observations.map(x=>`<li>${esc(x.fact)}</li>`).join("")}</ul>`:""}
+    ${r.unknowns?`<p class="warn"><b>Still unresolved:</b></p><ul>${r.unknowns.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+    ${evidence(r.sources||[], r.policy?[r.policy]:[])}`;
+}
+function itemSources(q){
+  let cleaned=norm(q).replace(/\b(what|which|where|how|does|do|can|i|get|find|drops?|drop|source|sources|of|the|a|an|me|tell|about|from)\b/g," ").replace(/\s+/g," ").trim();
+  let bestKey=null,bestScore=0;
+  for(const k of state.dropMap.keys()){const s=entityScore(cleaned,k);if(s>bestScore){bestKey=k;bestScore=s}}
+  if(bestScore<50) return null;
+  const hits=state.dropMap.get(bestKey)||[],item=title(bestKey);
+  return {item,hits,html:`<h3>Sources for ${esc(item)}</h3>
+    ${hits.length?`<p>Known monster drops:</p><ul>${hits.map(h=>`<li><b>${esc(title(h.monster.name))}</b> — ${esc(fmtDrop(h.drop))}</li>`).join("")}</ul>`:`<p class="warn">No monster drop source is recorded.</p>`}
+    ${chips(hits.slice(0,3).map(h=>`Where is ${title(h.monster.name)}?`))}
+    ${evidence(["https://flatmmo.wiki/index.php/Monsters"],["This lookup currently covers normalized monster drops. Shop/resource/crafting sources are handled by their own records when identifiable."])}`};
+}
+
+function parseLevelRequirement(req){
+  const s=String(req);
+  let m=s.match(/(?:level\s*)?(\d+)\s+([A-Za-z][A-Za-z ]+)/i);
+  if(m) return {level:Number(m[1]),skill:m[2].trim()};
+  m=s.match(/([A-Za-z][A-Za-z ]+)\s+(?:level\s*)?(\d+)/i);
+  if(m) return {level:Number(m[2]),skill:m[1].trim()};
+  return null;
+}
+function requirementCheck(skill,level){
+  const rec=playerSkill(skill);
+  if(!state.player) return {status:"unknown",text:`${skill} ${level} — load a player to check`};
+  if(!rec) return {status:"unknown",text:`${skill} ${level} — player field unavailable`};
+  return rec.level>=level
+    ? {status:"good",text:`${skill} ${level} — your level ${rec.level} ✓`}
+    : {status:"bad",text:`${skill} ${level} — your level ${rec.level}; need ${level-rec.level} more`};
+}
+function questAnswer(qst,readiness=false){
+  state.lastEntity={type:"quest",obj:qst};
+  const reqs=qst.requirements||[];
+  const checks=reqs.map(r=>({raw:r,parsed:parseLevelRequirement(r)}));
+  const checkHtml=checks.map(x=>{
+    if(!x.parsed) return `<li>${esc(x.raw)}${state.player?" <span class='muted'>— ownership/access not available from the current player loader</span>":""}</li>`;
+    const c=requirementCheck(x.parsed.skill,x.parsed.level);
+    return `<li class="${c.status}">${esc(c.text)}</li>`;
+  }).join("");
+  return `<h3>${esc(qst.name)}</h3><p><b>Difficulty:</b> ${esc(qst.difficulty||"Unknown")}</p>
+    ${reqs.length?`<p><b>${readiness?"Readiness":"Requirements"}:</b></p><ul>${checkHtml}</ul>`:""}
+    ${qst.rewards?.length?`<p><b>Rewards:</b></p><ul>${qst.rewards.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+    ${qst.procedure?.length?`<p><b>Procedure:</b></p><ol>${qst.procedure.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>`:`<p class="warn">Procedure not documented in the current Companion data.</p>`}
+    ${state.player&&readiness?`<p class="muted small">This readiness check currently knows public skill levels only. Item ownership, quest completion and access state are still unknown.</p>`:""}
+    ${evidence([qst.source].filter(Boolean), qst.verificationNote?[qst.verificationNote]:[])}`;
+}
+function areaAnswer(a){
+  state.lastEntity={type:"area",obj:a};
+  const services=unique((a.rooms||[]).flatMap(r=>r.services||[]));
+  return `<h3>${esc(a.name)}</h3>${a.gettingThere?`<p><b>Getting there:</b> ${esc(a.gettingThere)}</p>`:""}
+    ${a.requirements?.length?`<p><b>Requirements:</b> ${esc(a.requirements.join("; "))}</p>`:""}
+    <p><b>Documented rooms/sub-locations:</b> ${(a.rooms||[]).length}</p>
+    ${services.length?`<p><b>Services/features:</b> ${esc(services.slice(0,12).map(title).join(", "))}${services.length>12?"…":""}</p>`:""}
+    ${chips([`Where can I sleep in ${a.name}?`,`What monsters are in ${a.name}?`])}${evidence([a.source], a.coverage==="partial"?["Area coverage is partial."]:[])}`;
+}
+function skillAnswer(s){
+  state.lastEntity={type:"skill",obj:s};
+  const mine=playerSkill(s.name);
+  return `<h3>${esc(s.name)}</h3>${mine?`<p><b>Your level:</b> ${esc(mine.level)} · ${esc(fmtNumber(mine.xp))} XP</p>`:""}
+    <p>${esc(s.training||"")}</p>${s.keyRules?.length?`<ul>${s.keyRules.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}${evidence([s.source])}`;
+}
+function equipmentAnswer(e,q=""){
+  state.lastEntity={type:"equipment",obj:e};
+  const x=e.obj,mats=x.materials||x.setMaterialTotals;
+  let checks="";
+  if(x.equipSkill && x.equipLevel!=null){
+    const c=requirementCheck(x.equipSkill,x.equipLevel);
+    checks+=`<p class="${c.status}"><b>Equip check:</b> ${esc(c.text)}</p>`;
+  }
+  if(x.craftSkill && x.craftLevel!=null){
+    const c=requirementCheck(x.craftSkill,x.craftLevel);
+    checks+=`<p class="${c.status}"><b>Craft check:</b> ${esc(c.text)}</p>`;
+  }
+  return `<h3>${esc(e.name)}</h3>${x.style?`<p><b>Style:</b> ${esc(title(x.style))}</p>`:""}
+    ${x.damage!=null?`<p><b>Damage:</b> ${esc(x.damage)}${x.accuracy!=null?` · <b>Accuracy:</b> ${esc(x.accuracy)}`:""}</p>`:""}
+    ${x.equipSkill?`<p><b>Equip:</b> ${esc(x.equipSkill)} ${esc(x.equipLevel??"unknown")}</p>`:""}
+    ${x.craftSkill?`<p><b>Make:</b> ${esc(x.craftSkill)} ${esc(x.craftLevel??"unknown")}</p>`:""}
+    ${checks}
+    ${mats?`<p><b>Materials:</b></p><ul>${Object.entries(mats).map(([k,v])=>`<li>${esc(title(k))}: ${esc(v)}</li>`).join("")}</ul>`:""}
+    ${state.player&&mats?`<p class="muted small">Material ownership cannot be checked until bank/inventory data is available from the player API.</p>`:""}
+    ${evidence(x.sources||[x.source].filter(Boolean), x.note?[x.note]:[])}`;
+}
+function monstersInArea(a){
+  state.lastEntity={type:"area",obj:a};
+  const names=unique((a.rooms||[]).flatMap(r=>(r.monsterRefs||[]).map(x=>{
+    const id=(x && typeof x==="object") ? x.monsterId : x;
+    return title(String(id||"").replace(/^monster\./,""));
+  })));
+  return `<h3>Monsters in ${esc(a.name)}</h3>${names.length?`<ul>${names.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:`<p class="warn">No exact room-linked monsters are recorded for this area.</p>`}
+  ${evidence([],["This uses exact room relationships, so it may omit monsters whose precise room is not yet linked."])}`;
+}
+
+function nearestUnlocks(){
+  if(!state.player) return null;
+  const choices=[];
+  for(const e of state.data.equipmentFlat){
+    const x=e.obj;
+    for(const [kind,skill,level] of [["equip",x.equipSkill,x.equipLevel],["craft",x.craftSkill,x.craftLevel]]){
+      if(!skill || level==null) continue;
+      const rec=playerSkill(skill); if(!rec || rec.level>=level) continue;
+      choices.push({delta:level-rec.level,name:e.name,kind,skill,need:level,have:rec.level});
+    }
+  }
+  choices.sort((a,b)=>a.delta-b.delta || a.need-b.need || a.name.localeCompare(b.name));
+  return choices.slice(0,6);
+}
+function skillReadyQuests(){
+  if(!state.player) return [];
+  const out=[];
+  for(const q of state.data.quests.records||[]){
+    const parsed=(q.requirements||[]).map(parseLevelRequirement).filter(Boolean);
+    if(!parsed.length) continue;
+    if(parsed.every(r=>playerSkill(r.skill)?.level>=r.level)) out.push(q);
+  }
+  return out.slice(0,6);
+}
+function playerAware(){
+  if(!state.player){
+    return `<h3>Load a player for personal suggestions</h3><p>The Companion can recommend from your skill levels once a public player profile is loaded.</p>
+      <p class="muted small">Bank/inventory/equipment/quest-state recommendations will become substantially richer when the official API is connected.</p>`;
+  }
+  const unlocks=nearestUnlocks()||[],quests=skillReadyQuests();
+  return `<h3>What you could work toward next</h3>
+    <p>This is a <b>stats-only</b> suggestion set for ${esc(state.player.username)}. It deliberately does not pretend to know your bank, inventory, equipment or completed quests yet.</p>
+    ${unlocks.length?`<p><b>Nearest equipment/crafting level unlocks:</b></p><ul>${unlocks.map(x=>`<li>${esc(x.name)} — ${esc(title(x.kind))}: ${esc(x.skill)} ${esc(x.need)}; you're ${esc(x.have)} (${esc(x.delta)} level${x.delta===1?"":"s"} away)</li>`).join("")}</ul>`:"<p>No nearby structured equipment unlocks were found from the current data.</p>"}
+    ${quests.length?`<p><b>Quests whose structured skill requirements you meet:</b></p><ul>${quests.map(q=>`<li>${esc(q.name)}</li>`).join("")}</ul>`:""}
+    <p class="muted small">“Skill-ready” is not the same as fully ready: item/access requirements and completion state may still matter.</p>
+    ${evidence([],["This recommendation is deterministic and based only on the loaded public skill snapshot plus Companion requirement data."])}`;
+}
+function unknown(q){
+  const candidates=[];
+  for(const [type,records] of [["monster",state.data.monsters.records],["quest",state.data.quests.records],["area",state.data.areas.records],["skill",state.data.skills.records]]){
+    for(const r of records||[]){const s=entityScore(q,r.name);if(s>=30)candidates.push({s,type,name:r.name})}
+  }
+  candidates.sort((a,b)=>b.s-a.s);
+  return `<h3>I couldn't resolve that safely</h3><p>I don't have a supported interpretation of that question yet, so I won't fill the gap with guesses from another game.</p>
+    ${candidates.length?`<p>Possible matches:</p>${chips(candidates.slice(0,4).map(x=>`Tell me about ${x.name}`))}`:""}
+    <p class="muted small">Try an entity name plus an action, e.g. “gorilla drops”, “where is Giant Spider?”, “Saving Marin requirements”, or “beds in Everbrook”.</p>`;
+}
+
+function answer(raw){
+  const q=norm(raw);
+  if(!state.ready) return `<p class="warn">Knowledge is still loading.</p>`;
+  if(/\b(what should i do next|what do i do next|what should i work on|suggest.*next|recommend.*next)\b/.test(q)) return playerAware();
+
+  if(/\b(sleep points?|sleep point|sleep)\b/.test(q) && !/\bbed|where\b/.test(q)) return ruleAnswer(rule("sleep.core"));
+  if(/\b(run|running|run energy|steps)\b/.test(q) && !getMonster(q)) return ruleAnswer(rule("agility.run"));
+  if(/\bdodge\b/.test(q)) return ruleAnswer(rule("agility.dodge"));
+  if(/\b(defence|defense|magic defence|magic defense)\b/.test(q) && /\b(melee|archery|magic|combat)\b/.test(q) && !getMonster(q)) return ruleAnswer(rule("combat.defence"));
+
+  const area=getArea(q);
+  if(/\b(bed|beds|sleep)\b/.test(q) && (area || /\bwhere\b/.test(q))) return bedsAnswer(area);
+  if(area && /\b(monster|monsters|enemy|enemies)\b/.test(q)) return monstersInArea(area);
+
+  const m=getMonster(q);
+  if(m){
+    if(/\b(drop|drops|loot)\b/.test(q)) return monsterDrops(m);
+    if(/\b(where|location|find)\b/.test(q)) return monsterWhere(m);
+    if(/\b(best|combat|fight|style|weak|weakness|recommended|level)\b/.test(q)) return monsterCombat(m);
+    return monsterProfile(m);
+  }
+
+  if(/\b(drop|drops|source|sources|where|get|find|how)\b/.test(q)){
+    const s=itemSources(q); if(s) return s.html;
+  }
+
+  const quest=getQuest(q);
+  if(quest) return questAnswer(quest,/\b(can i|ready|requirements?|do)\b/.test(q));
+
+  if(area) return areaAnswer(area);
+
+  const skill=getSkill(q);
+  if(skill) return skillAnswer(skill);
+
+  const eq=getEquipment(q);
+  if(eq) return equipmentAnswer(eq,q);
+
+  return unknown(q);
+}
+
+function submitQuestion(text,{record=true}={}){
+  const raw=String(text||"").trim(); if(!raw) return;
+  addMsg("user",esc(raw),record);
+  let html;
+  try{html=answer(raw)}catch(e){html=`<p class="bad">The deterministic query engine hit an error: ${esc(e.message)}</p>`;console.error(e)}
+  addMsg("bot",html,record);
+  if(record && !state.restoring){
+    state.history.push(raw);state.history=state.history.slice(-MAX_HISTORY);saveLocal();
+  }
+}
+
+document.addEventListener("click",e=>{
+  const b=e.target.closest(".chip");if(!b)return;
+  const q=b.dataset.q||b.textContent;$("#q").value="";submitQuestion(q);
+});
+$("#askForm").addEventListener("submit",e=>{e.preventDefault();const q=$("#q").value;$("#q").value="";submitQuestion(q)});
+$("#loadPlayer").addEventListener("click",()=>loadPlayer($("#username").value));
+$("#refreshPlayer").addEventListener("click",()=>loadPlayer($("#username").value));
+$("#username").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();loadPlayer($("#username").value)}});
+$("#username").addEventListener("change",()=>{const u=$("#username").value.trim();if(u){setPortableHash(u);saveLocal()}updatePlayerUi()});
+$("#openOfficialProfile").addEventListener("click",()=>{const u=$("#username").value.trim();if(u)window.open(officialProfileUrl(u),"_blank","noopener")});
+$("#copyProfileLink").addEventListener("click",async()=>{
+  const u=$("#username").value.trim();if(!u)return;
+  const link=portableUrl(u);$("#portableLink").textContent=link;$("#linkDialog").showModal();
+  try{await copyText(link)}catch(_){}
+});
+$("#copyDialogLink").addEventListener("click",async()=>{try{await copyText($("#portableLink").textContent);$("#copyDialogLink").textContent="Copied"}catch(_){}});
+$("#clearLocal").addEventListener("click",clearLocal);
+
+loadAll().catch(err=>{
+  $("#loading").textContent="Could not load one or more Companion data files.";
+  $("#loadState").textContent="Knowledge load failed";
+  addMsg("bot",`<h3>Data load failed</h3><p class="bad">${esc(err.message)}</p><p>Make sure this index.html is deployed beside the FlatMMO JSON files on GitHub Pages.</p>`);
+});
+</script>
 </body>
 </html>
