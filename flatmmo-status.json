@@ -1,14 +1,17 @@
 {
-  "schemaVersion": 4,
-  "generated": "2026-09-16",
-  "release": "entity-links-v1.3",
+  "schemaVersion": 5,
+  "generated": "2026-09-19",
+  "release": "pre-api-player-loader-v1.5",
   "layout": "flat-root",
   "branch": "v2-online",
   "counts": {
     "monsters": 82,
-    "quests": 19,
+    "questsCore": 19,
+    "questOverrides": 2,
+    "questsAvailableInContext": 21,
     "skills": 18,
     "mechanics": 20,
+    "mechanicsRules": 12,
     "areas": 14,
     "rooms": 193,
     "documentedBeds": 12,
@@ -22,6 +25,14 @@
     "resourceNodes": 61,
     "roomsWithResourceNodes": 44
   },
+  "humanUi": {
+    "mode": "deterministic conversational assistant",
+    "playerUsername": true,
+    "localStorage": "optional and disposable; stores username, latest public snapshot and recent questions when available",
+    "portablePlayerLink": "#player=<username>",
+    "interimPlayerLoader": "official public profile HTML; skill level/XP only when browser cross-origin policy permits",
+    "futurePlayerApi": "adapter reserved; endpoint/schema not assumed"
+  },
   "coverage": {
     "combatStyles": [
       "melee",
@@ -29,7 +40,7 @@
       "magic"
     ],
     "armourResourceCosts": "deep-normalized for smithable melee, craftable archery, and enchantable mage armour",
-    "questProcedures": "19 records; documented later quests enriched",
+    "questProcedures": "19 normalized core quest records; 2 additional observation-backed quest placeholders have incomplete procedures/rewards",
     "skillsExplicit": [
       "Enchantment",
       "Farming",
@@ -43,16 +54,51 @@
     "monsterRoomLinks": "52/82 monster records linked to 82 exact room/access references",
     "questRoomLinks": "55/104 quest steps have one or more exact room IDs; all 104 carry structured area/room link state",
     "resourceNodes": "61 conservative nodes across 44 rooms",
-    "bedSemantics": "bedStatus distinguishes documented beds from rooms where a bed is merely not documented"
+    "bedSemantics": "bedStatus distinguishes documented beds from rooms where a bed is merely not documented",
+    "mechanicsRules": "12 explicit rules/readiness records including observed Sleep/Run behavior and calculation blocks",
+    "aiContext": "schema 1.5; merges the 2 observed quest placeholders and embeds the mechanics rules layer",
+    "playerAwareness": "stats-only when the interim public profile loader succeeds; bank/inventory/equipment/quest-completion remain pending official API"
+  },
+  "calculationReadiness": {
+    "safeNow": [
+      "recipe material totals already represented in structured equipment data",
+      "equip/craft level requirement checks",
+      "drop-source lookup",
+      "monster stat comparison",
+      "room/location lookup",
+      "quest requirement/procedure lookup",
+      "known deterministic progression rules"
+    ],
+    "blockedPendingMechanics": [
+      "exact combat hit chance",
+      "exact combat DPS/kill time",
+      "exact survivability estimates",
+      "generic recommended combat levels"
+    ],
+    "pendingUserObservation": [
+      "Agility level 1-19 maximum Run steps",
+      "Sleep Point costs and zero-Sleep behaviour by activity type"
+    ],
+    "pendingPlayerApi": [
+      "automatic player skills/XP",
+      "automatic equipped gear",
+      "automatic inventory quantities",
+      "automatic bank quantities",
+      "automatic quest completion",
+      "other player snapshot fields exposed by the official API"
+    ]
   },
   "knownIssues": [
     "Desert internal-room coverage remains partial; Desert quest steps are intentionally mostly area-only.",
-    "30 monster records have no exact room link in v1.3.",
-    "Some bootstrap monster area labels conflict with current room-page evidence; v1.3 retains both instead of overwriting either.",
+    "30 monster records have no exact room link.",
+    "Some bootstrap monster area labels conflict with current room-page evidence; both are retained rather than silently overwritten.",
     "Room adjacency remains incomplete where the wiki does not explicitly state a route.",
     "Monster bootstrap mirror still awaits official refresh.",
-    "Wiki says 21 quests but only 19 named quest records are identified.",
+    "Feeding The Homeless and Atlas Crown are now named observation-backed records, but their full procedures/rewards remain incomplete.",
+    "The interim public-profile loader can be blocked by browser cross-origin policy; official player API integration is pending.",
+    "Exact combat hit/damage formulas remain unresolved, so exact DPS, kill time, survivability and recommended combat levels are intentionally blocked.",
+    "Agility level 1-19 Run-step progression and exact zero-Sleep behavior by activity remain pending observations.",
     "Known source conflicts remain retained in verification notes."
   ],
-  "aiContextSha256": "062c7be1ed97dd43c76781fe44ff0a26f49d2de099f9aac21cd386587d10798c"
+  "aiContextSha256": "9aab3446a97466e6d931d7a9c3498c7b7b9538c13b6114511df947b4ba8b2ddb"
 }

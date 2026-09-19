@@ -5,19 +5,21 @@
 <meta name="description" content="Public FlatMMO-specific grounding context for AI systems.">
 <meta name="robots" content="index,follow">
 <link rel="canonical" href="https://etherealaporia-alt.github.io/FlatMMO-Companion/ai.html">
-<link rel="alternate" type="application/json" href="https://etherealaporia-alt.github.io/FlatMMO-Companion/flatmmo-context.json" title="FlatMMO AI Context JSON">
-<link rel="alternate" type="text/plain" href="https://etherealaporia-alt.github.io/FlatMMO-Companion/flatmmo-context.txt" title="FlatMMO AI Context Text">
-<style>body{margin:0;padding:1rem;font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:#111;color:#ddd}a{color:#9cf}pre{white-space:pre-wrap;overflow-wrap:anywhere}.meta{max-width:1000px;margin-bottom:1.25rem}</style>
+<style>:root{color-scheme:dark}body{margin:0;background:#0d1117;color:#eef2f7;font-family:system-ui,-apple-system,Segoe UI,sans-serif}main{max-width:1100px;margin:auto;padding:28px 18px 64px}h1{margin-bottom:.3rem}.muted{color:#9ba9bb}.card{background:#151b25;border:1px solid #283448;border-radius:14px;padding:16px;margin:14px 0}a{color:#73b8ff}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#101620;border:1px solid #283448;border-radius:12px;padding:16px;font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}</style>
 </head><body><main>
-<section class="meta"><h1>FlatMMO Companion — AI Grounding Context v1.3</h1>
-<p>This public page exposes the current FlatMMO Companion grounding dataset for AI retrieval.</p>
-<p><strong>Critical rules:</strong> FlatMMO is independent. Do not infer missing rules from RuneScape or other games. Derived entity links preserve confidence/conflict status and must not be treated as stronger than their underlying source facts.</p>
-<p><a href="flatmmo-context.json">Canonical JSON</a> · <a href="flatmmo-context.txt">Text fallback</a></p></section>
-<pre id="flatmmo-context">{
+<h1>FlatMMO Companion AI Context</h1><p class="muted">v1.5 · deterministic knowledge layer · generated 2026-09-19</p>
+<section class="card">
+<p><strong>Critical rule:</strong> FlatMMO is independent. Missing facts must not be filled with RuneScape or other-game mechanics.</p>
+<p><strong>Calculation rule:</strong> use the mechanics-rule status before calculating. Partial or unknown combat formulas do not support exact hit chance, DPS, kill time, survivability, or recommended levels.</p>
+<p><strong>Resource rule:</strong> Sleep Points and Run steps are separate systems.</p>
+<p><strong>Quest coverage:</strong> 21 named quests: 19 normalized core records plus 2 conservative observation-backed placeholders.</p>
+<p><strong>Player data:</strong> the human Companion may load public skill stats by username, but this public grounding page contains no individual player's live/private snapshot.</p>
+<p><a href="flatmmo-context.json">Canonical JSON</a> · <a href="flatmmo-context.txt">Text fallback</a> · <a href="flatmmo-rules.json">Mechanics rules</a> · <a href="flatmmo-overrides.json">Observed overrides</a></p>
+</section><pre>{
   &quot;meta&quot;: {
     &quot;id&quot;: &quot;flatmmo-companion-ai-context&quot;,
-    &quot;schemaVersion&quot;: &quot;1.3&quot;,
-    &quot;generated&quot;: &quot;2026-09-16&quot;,
+    &quot;schemaVersion&quot;: &quot;1.5&quot;,
+    &quot;generated&quot;: &quot;2026-09-19&quot;,
     &quot;game&quot;: &quot;FlatMMO&quot;,
     &quot;canonicalPage&quot;: &quot;https://etherealaporia-alt.github.io/FlatMMO-Companion/ai.html&quot;,
     &quot;canonicalJson&quot;: &quot;https://etherealaporia-alt.github.io/FlatMMO-Companion/flatmmo-context.json&quot;,
@@ -36,22 +38,30 @@
       &quot;monster_room_links&quot;,
       &quot;equipment_and_weapons&quot;,
       &quot;combat_style_progression&quot;,
-      &quot;crafting_resource_costs&quot;
+      &quot;crafting_resource_costs&quot;,
+      &quot;calculation_readiness_rules&quot;,
+      &quot;observed_mechanics&quot;,
+      &quot;player_adapter_contract&quot;
     ],
     &quot;excludedForNow&quot;: [
       &quot;official_news_change_notes&quot;,
-      &quot;player_profiles_and_live_character_state&quot;,
-      &quot;market_data&quot;
+      &quot;private_or_live_player_snapshots_in_public_ai_context&quot;,
+      &quot;market_data&quot;,
+      &quot;unverified_exact_combat_formulas&quot;
     ],
     &quot;dataStatus&quot;: {
       &quot;monsters&quot;: &quot;bootstrap_mirror_needs_official_refresh&quot;,
-      &quot;quests&quot;: &quot;19 named quest records; full procedures added where documented; wiki page reports 21 total&quot;,
+      &quot;quests&quot;: &quot;21 named quests in this context: 19 normalized core records plus 2 observation-backed placeholders; procedures/rewards for the two placeholders remain incomplete&quot;,
       &quot;equipment&quot;: &quot;deep-normalized equip levels, craft levels, materials, armour costs and combat-style relationships&quot;,
       &quot;skills&quot;: &quot;18 skills including Enchantment, Farming and Brewing&quot;,
       &quot;areas&quot;: &quot;14 area records with structured room/sub-location graph; Desert partial&quot;,
       &quot;entityLinks&quot;: &quot;52/82 monsters have exact derived room links; 55/104 quest steps have exact room links&quot;,
-      &quot;resources&quot;: &quot;61 structured resource/activity nodes across 44 rooms&quot;
-    }
+      &quot;resources&quot;: &quot;61 structured resource/activity nodes across 44 rooms&quot;,
+      &quot;mechanicsRules&quot;: &quot;12 explicit rule/readiness records from flatmmo-rules.json&quot;,
+      &quot;playerIntegration&quot;: &quot;Human UI supports optional/disposable localStorage and an interim public skill-profile loader; the official player API adapter remains pending and no individual player snapshot is embedded in this public context&quot;,
+      &quot;humanUi&quot;: &quot;Deterministic conversational assistant v1.5 with username loading, portable player link, stats-aware requirement checks, and safe failure when public profile reads are blocked&quot;
+    },
+    &quot;release&quot;: &quot;pre-api-player-loader-v1.5&quot;
   },
   &quot;instructions&quot;: [
     &quot;FlatMMO is an independent game. Never infer mechanics, controls, locations, progression, item behaviour, or procedures from RuneScape or another game.&quot;,
@@ -71,11 +81,16 @@
     &quot;For quest walkthroughs, use procedureGraph room/NPC links when present; keep area-only or conflict-marked steps explicitly uncertain.&quot;,
     &quot;For monster-location questions, prefer roomRefs. If roomLinkStatus is unlinked, report the broad source area only and do not invent a room.&quot;,
     &quot;For resource-location questions, use world.indexes.resources and preserve unknown output/tool/level fields rather than filling them from another game.&quot;,
-    &quot;Treat bedStatus=not_documented as unknown absence, not proof that no bed exists.&quot;
+    &quot;Treat bedStatus=not_documented as unknown absence, not proof that no bed exists.&quot;,
+    &quot;Consult mechanicsRules before numerical calculations. If a required formula is partial or unknown, do not invent hit chance, DPS, kill time, survivability, or recommended levels.&quot;,
+    &quot;Treat observed evidence as FlatMMO-specific evidence, but label it as observed rather than official.&quot;,
+    &quot;Sleep Points and Run steps are separate systems. Do not use one as a synonym or substitute for the other.&quot;,
+    &quot;The public grounding context contains no user&#x27;s live/private player snapshot. Human-side username loading and future API normalization are product capabilities, not evidence about a specific player.&quot;
   ],
   &quot;authorityOrder&quot;: [
     &quot;official&quot;,
     &quot;community_verified&quot;,
+    &quot;observed&quot;,
     &quot;community_estimate&quot;,
     &quot;derived&quot;,
     &quot;unknown&quot;
@@ -138,17 +153,40 @@
       &quot;monsterRoomRef&quot;: &quot;roomId,relation,authority,confidence,evidenceFeature,roomArea,matchesBootstrapArea,note&quot;,
       &quot;questStep&quot;: &quot;step,text,areaIds,roomIds,npcIds,monsterIds,authority,confidence,note&quot;,
       &quot;resourceNode&quot;: &quot;resource,nodeType,skill/activity,tool,bait,level,authority,evidenceFeature,note&quot;
-    }
+    },
+    &quot;mechanicsRule&quot;: {
+      &quot;fields&quot;: [
+        &quot;id&quot;,
+        &quot;name&quot;,
+        &quot;status&quot;,
+        &quot;facts&quot;,
+        &quot;known&quot;,
+        &quot;observations&quot;,
+        &quot;unknowns&quot;,
+        &quot;sources&quot;,
+        &quot;policy&quot;
+      ],
+      &quot;statuses&quot;: [
+        &quot;verified_formula&quot;,
+        &quot;verified_rule&quot;,
+        &quot;partial&quot;,
+        &quot;unknown&quot;,
+        &quot;verified_rule_with_source_conflict&quot;
+      ]
+    },
+    &quot;playerSnapshot&quot;: &quot;Normalized future adapter shape is defined in mechanicsRules.playerApiContract; public AI context does not contain a user&#x27;s snapshot.&quot;
   },
   &quot;reasoningGuide&quot;: {
     &quot;understand&quot;: &quot;Explain FlatMMO mechanics from recorded facts and distinguish similarly named resources/mechanics.&quot;,
     &quot;do&quot;: &quot;Construct how-to steps only from explicit procedures and supporting area/equipment/skill records.&quot;,
-    &quot;decide&quot;: &quot;Combine progression requirements and available facts; identify missing evidence before recommending.&quot;,
-    &quot;calculate&quot;: &quot;Expand material chains only from explicit recipes; mark totals as derived and show assumptions.&quot;,
+    &quot;decide&quot;: &quot;Combine explicit progression requirements, verified mechanics, and available player fields. Distinguish stats-only readiness from full readiness when bank, inventory, equipment, access, or quest-completion state is unavailable.&quot;,
+    &quot;calculate&quot;: &quot;Use explicit recipes and verified formulas only. Consult mechanicsRules.calculationReadiness; if a required numerical rule is partial or unknown, state the limitation instead of inventing a formula.&quot;,
     &quot;navigate&quot;: &quot;Resolve the target area, then the internal room/sub-location, then services/NPCs/access requirements. Use explicit room links and travel NPCs; do not invent shortest paths or adjacency.&quot;,
     &quot;questWalkthrough&quot;: &quot;Walk procedureGraph in step order. Use exact room/NPC/monster IDs only where provided. If a step is area-only, say the exact internal room is not currently established.&quot;,
     &quot;findMonster&quot;: &quot;Use monster roomRefs for exact rooms. Preserve conflicts between bootstrap area labels and current room-page evidence instead of silently choosing one.&quot;,
-    &quot;findResource&quot;: &quot;Search world.indexes.resources by resource/skill/activity, then report area and room plus only documented tool/level requirements.&quot;
+    &quot;findResource&quot;: &quot;Search world.indexes.resources by resource/skill/activity, then report area and room plus only documented tool/level requirements.&quot;,
+    &quot;playerAware&quot;: &quot;When a normalized player snapshot is available to the human assistant, use only fields actually present. Never infer missing bank, inventory, equipment, quest completion, or live state.&quot;,
+    &quot;combat&quot;: &quot;Compare recorded monster Defence/Magic Defence/weakness and player fields only. Exact hit chance, DPS, kill time, survivability, and recommended levels remain blocked until their formulas are verified.&quot;
   },
   &quot;sources&quot;: {
     &quot;s1&quot;: &quot;https://flatmmo.com/data/monsters.json&quot;,
@@ -162,7 +200,8 @@
     &quot;s9&quot;: &quot;https://flatmmo.wiki/index.php/Quests&quot;,
     &quot;s10&quot;: &quot;https://flatmmo.wiki/index.php/Farming&quot;,
     &quot;s11&quot;: &quot;https://flatmmo.wiki/index.php/Brewing&quot;,
-    &quot;s12&quot;: &quot;https://flatmmo.wiki/index.php/Fermenting&quot;
+    &quot;s12&quot;: &quot;https://flatmmo.wiki/index.php/Fermenting&quot;,
+    &quot;s13&quot;: &quot;Direct in-game observations supplied to FlatMMO Companion on 2026-09-19; observation evidence, not a URL&quot;
   },
   &quot;monsters&quot;: [
     [
@@ -6730,6 +6769,51 @@
         &quot;steps&quot;: 10,
         &quot;areaOnlySteps&quot;: 10
       }
+    ],
+    [
+      &quot;quest.feeding_the_homeless&quot;,
+      &quot;Feeding The Homeless&quot;,
+      &quot;Easy&quot;,
+      [],
+      [
+        &quot;No skill level requirements&quot;
+      ],
+      [],
+      [],
+      &quot;pending-player-mapping&quot;,
+      &quot;s13&quot;,
+      &quot;Live game UI confirms the quest exists and states that it has no skill level requirements. Homeless Ted was directly observed beside a furnace. Remembered bread/reward details remain intentionally unstructured until replayed and verified.&quot;,
+      [],
+      {
+        &quot;steps&quot;: 0,
+        &quot;roomLinkedSteps&quot;: 0,
+        &quot;npcLinkedSteps&quot;: 0,
+        &quot;areaOnlySteps&quot;: 0
+      }
+    ],
+    [
+      &quot;quest.atlas_crown&quot;,
+      &quot;Atlas Crown&quot;,
+      &quot;Medium&quot;,
+      [
+        &quot;Atlas&quot;
+      ],
+      [
+        &quot;Level 40 Mining&quot;,
+        &quot;Level 50 Crafting&quot;
+      ],
+      [],
+      [],
+      &quot;pending-player-mapping&quot;,
+      &quot;s13&quot;,
+      &quot;Live game UI confirms Mining 40 and Crafting 50 requirements. King Atlas was shown at the quest location. Procedure and reward are not yet documented.&quot;,
+      [],
+      {
+        &quot;steps&quot;: 0,
+        &quot;roomLinkedSteps&quot;: 0,
+        &quot;npcLinkedSteps&quot;: 0,
+        &quot;areaOnlySteps&quot;: 0
+      }
     ]
   ],
   &quot;skills&quot;: [
@@ -10595,10 +10679,8 @@
   },
   &quot;knownLimitations&quot;: [
     &quot;Monster data remains a bootstrap mirror until refreshed from the official monsters endpoint.&quot;,
-    &quot;The Quests page reports 21 total quests but this pass can identify only 19 named quest records; two are deliberately not invented.&quot;,
     &quot;Some source pages contain conflicting or uncertain values; structured verification notes preserve known conflicts.&quot;,
     &quot;This v1.1 deep pass used rendered wiki pages available to the build environment; it did not execute the planned MediaWiki API updater.&quot;,
-    &quot;Player state, market data, and news/change logs remain excluded by design.&quot;,
     &quot;Room adjacency is recorded only where the wiki gives an explicit directional/access relationship; missing links must not be invented.&quot;,
     &quot;A bed is recorded only where a source explicitly documents one.&quot;,
     &quot;Desert internal-room coverage is partial because the rendered Desert page was blocked by an interstitial during this pass.&quot;,
@@ -10607,7 +10689,12 @@
     &quot;Monster-room links in v1.3 are derived joins, not a replacement for the official monster endpoint; 30 monster records still have no exact room link.&quot;,
     &quot;Some monster bootstrap area labels conflict with exact room-page evidence; both facts are retained.&quot;,
     &quot;Quest step links are complete at the step level, but exact room coverage is intentionally partial where the world model or procedure wording is not specific.&quot;,
-    &quot;Resource nodes are conservative joins from room features; missing tool/level/output fields mean not documented in this pass.&quot;
+    &quot;Resource nodes are conservative joins from room features; missing tool/level/output fields mean not documented in this pass.&quot;,
+    &quot;The public context has 21 named quests: 19 normalized core quest records plus two observation-backed placeholders. Feeding The Homeless and Atlas Crown still lack fully verified procedures and rewards.&quot;,
+    &quot;The human UI can attempt public skill-profile loading by username, but this public AI grounding file intentionally contains no user&#x27;s live/private character snapshot.&quot;,
+    &quot;The interim public-profile HTML reader may be blocked by browser cross-origin policy and is expected to be replaced by the official player API adapter.&quot;,
+    &quot;Exact combat hit-chance, damage-resolution, DPS, kill-time, survivability, and generic recommended-level formulas are not yet verified; mechanicsRules blocks those calculations.&quot;,
+    &quot;Agility Run step progression for levels 1-19 and zero-Sleep behavior by activity type remain partially observed rather than fully specified.&quot;
   ],
   &quot;sanityChecks&quot;: [
     &quot;Chicken has 3 HP.&quot;,
@@ -10630,7 +10717,14 @@
     &quot;Giant Spider has an exact room link to sewer.giant_spiders.&quot;,
     &quot;Seagull has exact current-room evidence at dock_haven.seagulls even though the bootstrap monster area label is Beach; the conflict must be disclosed.&quot;,
     &quot;Graphite is indexed at volcano.graphite with Mining 70 from the room access requirement.&quot;,
-    &quot;A room with bedCount 0 has bedStatus not_documented, not documented_absent.&quot;
+    &quot;A room with bedCount 0 has bedStatus not_documented, not documented_absent.&quot;,
+    &quot;Sleep Points and Run steps are distinct systems and must never be conflated.&quot;,
+    &quot;A fresh account was directly observed at 10/10 HP.&quot;,
+    &quot;A fresh account was directly observed with 25/25 Sleep Points.&quot;,
+    &quot;A fresh low-level account was directly observed with Run at 200/200 steps; the exact level-by-level formula remains pending.&quot;,
+    &quot;Agility 20 has been directly observed to give unlimited running outside combat while combat still cancels Run.&quot;,
+    &quot;Atlas Crown is observation-backed with Mining 40 and Crafting 50 requirements; procedure/reward remain pending.&quot;,
+    &quot;Feeding The Homeless is observation-backed as an Easy quest with no skill-level requirement; procedure/reward remain pending.&quot;
   ],
   &quot;world&quot;: {
     &quot;schemaVersion&quot;: 3,
@@ -21577,7 +21671,315 @@
     &quot;basis&quot;: &quot;v1.3 cross-links are deterministic joins across the already sourced v1.2 world model, quest procedures, and monster records.&quot;,
     &quot;noNewExternalFactClaim&quot;: &quot;A relationship marked derived does not claim a new independently sourced game fact; it points between existing sourced records.&quot;,
     &quot;conflictHandling&quot;: &quot;Broad monster-area labels and more specific room-page evidence are both preserved when they disagree.&quot;
+  },
+  &quot;mechanicsRules&quot;: {
+    &quot;schemaVersion&quot;: 1,
+    &quot;generated&quot;: &quot;2026-09-19&quot;,
+    &quot;release&quot;: &quot;pre-api-player-loader-v1.5&quot;,
+    &quot;purpose&quot;: &quot;Calculation-readiness and deterministic-assistant rules. Facts may be official/wiki-sourced, directly observed, derived, partial, or unknown.&quot;,
+    &quot;authorityOrder&quot;: [
+      &quot;official&quot;,
+      &quot;community_verified&quot;,
+      &quot;observed&quot;,
+      &quot;derived&quot;,
+      &quot;partial&quot;,
+      &quot;unknown&quot;
+    ],
+    &quot;rules&quot;: [
+      {
+        &quot;id&quot;: &quot;combat.defence&quot;,
+        &quot;name&quot;: &quot;Combat defence routing&quot;,
+        &quot;status&quot;: &quot;verified_rule&quot;,
+        &quot;facts&quot;: [
+          &quot;Monster Defence reduces incoming physical damage from Melee and Archery attacks.&quot;,
+          &quot;Monster Magic Defence reduces incoming damage from Magic attacks.&quot;,
+          &quot;There is no separate monster Archery Defence field in the current monster model.&quot;
+        ],
+        &quot;sources&quot;: [
+          &quot;https://flatmmo.wiki/index.php/Monsters&quot;,
+          &quot;https://flatmmo.wiki/index.php/Armour&quot;
+        ],
+        &quot;notes&quot;: [
+          &quot;Player equipment may describe bonuses in style-specific wording, but monster records use Defence and Magic Defence.&quot;
+        ]
+      },
+      {
+        &quot;id&quot;: &quot;combat.weakness&quot;,
+        &quot;name&quot;: &quot;Monster weaknesses&quot;,
+        &quot;status&quot;: &quot;verified_rule&quot;,
+        &quot;facts&quot;: [
+          &quot;Attacking a monster with its listed weakness increases the player&#x27;s hit chance and damage.&quot;,
+          &quot;A monster with no listed weakness takes normal damage from all sources.&quot;
+        ],
+        &quot;unknowns&quot;: [
+          &quot;Exact hit-chance bonus from weakness is not yet established in the Companion mechanics model.&quot;,
+          &quot;The complete numerical damage modifier for every weakness subtype is not yet normalized.&quot;
+        ],
+        &quot;sources&quot;: [
+          &quot;https://flatmmo.wiki/index.php/Monsters&quot;
+        ]
+      },
+      {
+        &quot;id&quot;: &quot;combat.progression&quot;,
+        &quot;name&quot;: &quot;Combat skill progression&quot;,
+        &quot;status&quot;: &quot;verified_rule&quot;,
+        &quot;facts&quot;: [
+          &quot;Melee, Archery and Magic grant 8 skill XP per point of damage dealt.&quot;,
+          &quot;Each of Melee, Archery and Magic gains +1 style damage per 10 skill levels.&quot;
+        ],
+        &quot;sources&quot;: [
+          &quot;https://flatmmo.wiki/index.php/Melee&quot;,
+          &quot;https://flatmmo.wiki/index.php/Archery&quot;,
+          &quot;https://flatmmo.wiki/index.php/Magic&quot;
+        ]
+      },
+      {
+        &quot;id&quot;: &quot;combat.formulas&quot;,
+        &quot;name&quot;: &quot;Combat numerical formulas&quot;,
+        &quot;status&quot;: &quot;partial&quot;,
+        &quot;known&quot;: [
+          &quot;Monster records expose HP, Damage, Accuracy, Defence, Magic Defence and Weakness.&quot;,
+          &quot;Player state visible through FlatStats includes current/max HP, Accuracy, style damage, Defence, Magic Defence and equipped items.&quot;
+        ],
+        &quot;unknowns&quot;: [
+          &quot;Exact player hit-chance formula.&quot;,
+          &quot;Exact enemy hit-chance formula.&quot;,
+          &quot;Exact damage roll/resolution formula.&quot;,
+          &quot;A defensible generic recommended combat-level formula.&quot;
+        ],
+        &quot;policy&quot;: &quot;Do not invent exact hit chance, DPS, kill time, survivability, or recommended combat level until the required formulas are verified.&quot;
+      },
+      {
+        &quot;id&quot;: &quot;health.core&quot;,
+        &quot;name&quot;: &quot;Health and death&quot;,
+        &quot;status&quot;: &quot;verified_rule&quot;,
+        &quot;facts&quot;: [
+          &quot;A fresh account has been directly observed at 10/10 HP.&quot;,
+          &quot;Health increases maximum HP by 1 per Health level.&quot;,
+          &quot;The documented normal maximum is 109 HP at Health level 100.&quot;,
+          &quot;Normal death respawns the player in Everbrook without item loss.&quot;
+        ],
+        &quot;sources&quot;: [
+          &quot;https://flatmmo.wiki/index.php/Health&quot;,
+          &quot;https://flatmmo.wiki/index.php/New_Player_Guide&quot;
+        ],
+        &quot;observations&quot;: [
+          {
+            &quot;date&quot;: &quot;2026-09-19&quot;,
+            &quot;fact&quot;: &quot;Fresh account screenshot showed 10/10 HP.&quot;,
+            &quot;authority&quot;: &quot;observed&quot;
+          }
+        ]
+      },
+      {
+        &quot;id&quot;: &quot;agility.run&quot;,
+        &quot;name&quot;: &quot;Run&quot;,
+        &quot;status&quot;: &quot;partial&quot;,
+        &quot;facts&quot;: [
+          &quot;Run is an Agility active ability measured in steps.&quot;,
+          &quot;Higher Agility increases maximum Run steps before level 20.&quot;,
+          &quot;At Agility level 20, running is unlimited outside combat.&quot;,
+          &quot;At Agility level 40, running is allowed during combat.&quot;
+        ],
+        &quot;observations&quot;: [
+          {
+            &quot;date&quot;: &quot;2026-09-19&quot;,
+            &quot;fact&quot;: &quot;Fresh low-level account screenshot showed Run at 200/200 steps.&quot;,
+            &quot;authority&quot;: &quot;observed&quot;
+          },
+          {
+            &quot;date&quot;: &quot;2026-09-19&quot;,
+            &quot;fact&quot;: &quot;User&#x27;s Agility-20 account confirms unlimited running outside combat and that combat still cancels Run.&quot;,
+            &quot;authority&quot;: &quot;observed&quot;
+          }
+        ],
+        &quot;unknowns&quot;: [
+          &quot;Exact maximum-step progression/formula for Agility levels 1-19 is pending direct observations.&quot;
+        ],
+        &quot;sources&quot;: [
+          &quot;https://flatmmo.wiki/index.php/Agility&quot;
+        ]
+      },
+      {
+        &quot;id&quot;: &quot;agility.dodge&quot;,
+        &quot;name&quot;: &quot;Dodge&quot;,
+        &quot;status&quot;: &quot;verified_rule&quot;,
+        &quot;facts&quot;: [
+          &quot;Dodge is available from Agility level 1 and avoids the next attack.&quot;,
+          &quot;Base Dodge cooldown is 60 seconds.&quot;,
+          &quot;Agility level 30 unlocks a second Dodge slot.&quot;,
+          &quot;Agility level 40 allows Run during combat.&quot;,
+          &quot;Agility level 50 unlocks another Dodge slot.&quot;,
+          &quot;At level 60, a successful Dodge makes the player attack on the next possible tick.&quot;,
+          &quot;At level 70, Dodge cooldown is reduced to 40 seconds.&quot;
+        ],
+        &quot;sources&quot;: [
+          &quot;https://flatmmo.wiki/index.php/Agility&quot;
+        ]
+      },
+      {
+        &quot;id&quot;: &quot;sleep.core&quot;,
+        &quot;name&quot;: &quot;Sleep Points&quot;,
+        &quot;status&quot;: &quot;partial&quot;,
+        &quot;facts&quot;: [
+          &quot;Sleep Points are separate from Run steps.&quot;,
+          &quot;Achievements can increase maximum Sleep Points.&quot;,
+          &quot;Beds restore Sleep Points.&quot;,
+          &quot;Many actions consume one Sleep Point.&quot;,
+          &quot;When Sleep Points reach zero, XP gain stops.&quot;
+        ],
+        &quot;observations&quot;: [
+          {
+            &quot;date&quot;: &quot;2026-09-19&quot;,
+            &quot;fact&quot;: &quot;Fresh account screenshot showed the Zzz resource at 25/25.&quot;,
+            &quot;authority&quot;: &quot;observed&quot;
+          },
+          {
+            &quot;date&quot;: &quot;2026-09-19&quot;,
+            &quot;fact&quot;: &quot;Production skills appear unavailable at 0 Sleep Points.&quot;,
+            &quot;authority&quot;: &quot;observed&quot;,
+            &quot;confidence&quot;: &quot;partial&quot;
+          }
+        ],
+        &quot;unknowns&quot;: [
+          &quot;Whether every action consumes exactly 1 Sleep Point.&quot;,
+          &quot;Exact 0-Sleep behaviour for each skill/activity category.&quot;,
+          &quot;Current true maximum Sleep Point capacity; wiki totals have shown internal inconsistencies.&quot;
+        ],
+        &quot;sources&quot;: [
+          &quot;https://flatmmo.wiki/index.php/Sleep_Points&quot;,
+          &quot;https://flatmmo.wiki/index.php/Achievement&quot;
+        ]
+      },
+      {
+        &quot;id&quot;: &quot;achievements.sleep_damage&quot;,
+        &quot;name&quot;: &quot;Achievement rewards&quot;,
+        &quot;status&quot;: &quot;verified_rule_with_source_conflict&quot;,
+        &quot;facts&quot;: [
+          &quot;Achievements can award Sleep Points or permanent combat damage bonuses.&quot;,
+          &quot;Achievement tiers use increasing Sleep Point or damage rewards.&quot;
+        ],
+        &quot;unknowns&quot;: [
+          &quot;The current wiki Achievement page contains inconsistent total counts/totals, so aggregate maximum Sleep Point calculations should not be treated as locked.&quot;
+        ],
+        &quot;sources&quot;: [
+          &quot;https://flatmmo.wiki/index.php/Achievement&quot;
+        ]
+      },
+      {
+        &quot;id&quot;: &quot;mining.speed&quot;,
+        &quot;name&quot;: &quot;Mining speed&quot;,
+        &quot;status&quot;: &quot;verified_rule&quot;,
+        &quot;facts&quot;: [
+          &quot;Every 2 Mining levels after an ore unlock reduces the ticks required to mine it by 1.&quot;,
+          &quot;Meteor and Piles use 10-level intervals instead.&quot;,
+          &quot;Better pickaxes provide speed buffs.&quot;
+        ],
+        &quot;sources&quot;: [
+          &quot;https://flatmmo.wiki/index.php/Mining&quot;
+        ]
+      },
+      {
+        &quot;id&quot;: &quot;woodcutting.speed&quot;,
+        &quot;name&quot;: &quot;Woodcutting speed&quot;,
+        &quot;status&quot;: &quot;verified_rule&quot;,
+        &quot;facts&quot;: [
+          &quot;Higher Woodcutting levels and better axes improve chopping speed.&quot;,
+          &quot;The current knowledge model should use explicit tree/tool data where available instead of assuming Mining&#x27;s formula applies.&quot;
+        ],
+        &quot;sources&quot;: [
+          &quot;https://flatmmo.wiki/index.php/Woodcutting&quot;
+        ]
+      },
+      {
+        &quot;id&quot;: &quot;worship.core&quot;,
+        &quot;name&quot;: &quot;Worship Points and abilities&quot;,
+        &quot;status&quot;: &quot;verified_rule&quot;,
+        &quot;facts&quot;: [
+          &quot;Worship Points begin at 1 and capacity increases by 1 per Worship level.&quot;,
+          &quot;Cemeteries refill Worship Points.&quot;,
+          &quot;Worship abilities have explicit level and WP costs.&quot;
+        ],
+        &quot;sources&quot;: [
+          &quot;https://flatmmo.wiki/index.php/Worship&quot;
+        ]
+      }
+    ],
+    &quot;calculationReadiness&quot;: {
+      &quot;safeNow&quot;: [
+        &quot;recipe material totals already represented in structured equipment data&quot;,
+        &quot;equip/craft level requirement checks&quot;,
+        &quot;drop-source lookup&quot;,
+        &quot;monster stat comparison&quot;,
+        &quot;room/location lookup&quot;,
+        &quot;quest requirement/procedure lookup&quot;,
+        &quot;known deterministic progression rules&quot;
+      ],
+      &quot;blockedPendingMechanics&quot;: [
+        &quot;exact combat hit chance&quot;,
+        &quot;exact combat DPS/kill time&quot;,
+        &quot;exact survivability estimates&quot;,
+        &quot;generic recommended combat levels&quot;
+      ],
+      &quot;pendingUserObservation&quot;: [
+        &quot;Agility level 1-19 maximum Run steps&quot;,
+        &quot;Sleep Point costs and zero-Sleep behaviour by activity type&quot;
+      ],
+      &quot;pendingPlayerApi&quot;: [
+        &quot;automatic player skills/XP&quot;,
+        &quot;automatic equipped gear&quot;,
+        &quot;automatic inventory quantities&quot;,
+        &quot;automatic bank quantities&quot;,
+        &quot;automatic quest completion&quot;,
+        &quot;other player snapshot fields exposed by the official API&quot;
+      ]
+    },
+    &quot;playerApiContract&quot;: {
+      &quot;status&quot;: &quot;interim_public_profile_loader_plus_reserved_official_api_adapter&quot;,
+      &quot;principle&quot;: &quot;The UI normalizes all player sources into one snapshot shape. v1.5 first tries to read the official public FlatMMO profile page directly from the browser; if browser cross-origin rules block that request, it fails cleanly. The eventual official API replaces only the provider adapter.&quot;,
+      &quot;normalizedSnapshot&quot;: {
+        &quot;username&quot;: null,
+        &quot;updatedAt&quot;: null,
+        &quot;skills&quot;: {},
+        &quot;combat&quot;: {
+          &quot;hpCurrent&quot;: null,
+          &quot;hpMax&quot;: null,
+          &quot;accuracy&quot;: null,
+          &quot;meleeDamage&quot;: null,
+          &quot;archeryDamage&quot;: null,
+          &quot;magicDamage&quot;: null,
+          &quot;defence&quot;: null,
+          &quot;magicDefence&quot;: null
+        },
+        &quot;equipment&quot;: {},
+        &quot;inventory&quot;: {},
+        &quot;bank&quot;: {},
+        &quot;quests&quot;: {},
+        &quot;collections&quot;: {},
+        &quot;achievements&quot;: {},
+        &quot;minigames&quot;: {}
+      },
+      &quot;interimProvider&quot;: {
+        &quot;name&quot;: &quot;official_public_profile_html&quot;,
+        &quot;urlPattern&quot;: &quot;https://flatmmo.com/profile/?user={username}&quot;,
+        &quot;fieldsTargeted&quot;: [
+          &quot;username&quot;,
+          &quot;total level/xp&quot;,
+          &quot;skill levels/xp&quot;
+        ],
+        &quot;limitations&quot;: [
+          &quot;Direct browser fetch depends on flatmmo.com allowing cross-origin reads from the Companion origin.&quot;,
+          &quot;Profile HTML structure may change.&quot;,
+          &quot;This interim provider does not promise bank, inventory, equipment, quests, collections, or live state.&quot;
+        ]
+      }
+    }
+  },
+  &quot;overrideMetadata&quot;: {
+    &quot;sourceFile&quot;: &quot;flatmmo-overrides.json&quot;,
+    &quot;generated&quot;: &quot;2026-09-19&quot;,
+    &quot;questCount&quot;: 2,
+    &quot;policy&quot;: &quot;Observation-backed additive records are merged conservatively. Unknown procedures and rewards remain empty rather than guessed.&quot;
   }
-}
-</pre>
+}</pre>
 </main></body></html>
