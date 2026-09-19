@@ -100,5 +100,6 @@
     "Agility level 1-19 Run-step progression and exact zero-Sleep behavior by activity remain pending observations.",
     "Known source conflicts remain retained in verification notes."
   ],
-  "aiContextSha256": "9aab3446a97466e6d931d7a9c3498c7b7b9538c13b6114511df947b4ba8b2ddb"
+  "aiContextSha256": "3b75602ebad818351331508bce5eb2552e2fc5bbc6572d66ef143cfffe860210",
+  "updatePolicy": "Manually maintained static snapshot. The deployment workflow publishes committed files; it does not refresh game data or player snapshots. AI retrieval is optional/best-effort."
 }

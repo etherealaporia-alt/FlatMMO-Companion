@@ -44,7 +44,8 @@
       "playerIntegration": "Human UI supports optional/disposable localStorage and an interim public skill-profile loader; the official player API adapter remains pending and no individual player snapshot is embedded in this public context",
       "humanUi": "Deterministic conversational assistant v1.5 with username loading, portable player link, stats-aware requirement checks, and safe failure when public profile reads are blocked"
     },
-    "release": "pre-api-player-loader-v1.5"
+    "release": "pre-api-player-loader-v1.5",
+    "updatePolicy": "Manually maintained static snapshot. The deployment workflow publishes committed files; it does not refresh game data or player snapshots. AI retrieval is optional/best-effort."
   },
   "instructions": [
     "FlatMMO is an independent game. Never infer mechanics, controls, locations, progression, item behaviour, or procedures from RuneScape or another game.",
@@ -157,7 +158,23 @@
         "verified_rule_with_source_conflict"
       ]
     },
-    "playerSnapshot": "Normalized future adapter shape is defined in mechanicsRules.playerApiContract; public AI context does not contain a user's snapshot."
+    "playerSnapshot": "Normalized future adapter shape is defined in mechanicsRules.playerApiContract; public AI context does not contain a user's snapshot.",
+    "questProcedureGraphEntry": [
+      "step",
+      "areaIds",
+      "roomIds",
+      "npcIds",
+      "monsterIds",
+      "confidence",
+      "note"
+    ],
+    "monsterRoomRefEntry": [
+      "roomId",
+      "relation",
+      "confidence",
+      "matchesBootstrapArea"
+    ],
+    "relationshipEncoding": "The relationship object describes full records in the source files/world model. Compact quests[].procedureGraph entries use questProcedureGraphEntry; compact monsters[].roomRefs entries use monsterRoomRefEntry. Omitted full-record fields remain in the source files and must not be inferred from array positions."
   },
   "reasoningGuide": {
     "understand": "Explain FlatMMO mechanics from recorded facts and distinguish similarly named resources/mechanics.",

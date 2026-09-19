@@ -61,7 +61,8 @@
       &quot;playerIntegration&quot;: &quot;Human UI supports optional/disposable localStorage and an interim public skill-profile loader; the official player API adapter remains pending and no individual player snapshot is embedded in this public context&quot;,
       &quot;humanUi&quot;: &quot;Deterministic conversational assistant v1.5 with username loading, portable player link, stats-aware requirement checks, and safe failure when public profile reads are blocked&quot;
     },
-    &quot;release&quot;: &quot;pre-api-player-loader-v1.5&quot;
+    &quot;release&quot;: &quot;pre-api-player-loader-v1.5&quot;,
+    &quot;updatePolicy&quot;: &quot;Manually maintained static snapshot. The deployment workflow publishes committed files; it does not refresh game data or player snapshots. AI retrieval is optional/best-effort.&quot;
   },
   &quot;instructions&quot;: [
     &quot;FlatMMO is an independent game. Never infer mechanics, controls, locations, progression, item behaviour, or procedures from RuneScape or another game.&quot;,
@@ -174,7 +175,23 @@
         &quot;verified_rule_with_source_conflict&quot;
       ]
     },
-    &quot;playerSnapshot&quot;: &quot;Normalized future adapter shape is defined in mechanicsRules.playerApiContract; public AI context does not contain a user&#x27;s snapshot.&quot;
+    &quot;playerSnapshot&quot;: &quot;Normalized future adapter shape is defined in mechanicsRules.playerApiContract; public AI context does not contain a user&#x27;s snapshot.&quot;,
+    &quot;questProcedureGraphEntry&quot;: [
+      &quot;step&quot;,
+      &quot;areaIds&quot;,
+      &quot;roomIds&quot;,
+      &quot;npcIds&quot;,
+      &quot;monsterIds&quot;,
+      &quot;confidence&quot;,
+      &quot;note&quot;
+    ],
+    &quot;monsterRoomRefEntry&quot;: [
+      &quot;roomId&quot;,
+      &quot;relation&quot;,
+      &quot;confidence&quot;,
+      &quot;matchesBootstrapArea&quot;
+    ],
+    &quot;relationshipEncoding&quot;: &quot;The relationship object describes full records in the source files/world model. Compact quests[].procedureGraph entries use questProcedureGraphEntry; compact monsters[].roomRefs entries use monsterRoomRefEntry. Omitted full-record fields remain in the source files and must not be inferred from array positions.&quot;
   },
   &quot;reasoningGuide&quot;: {
     &quot;understand&quot;: &quot;Explain FlatMMO mechanics from recorded facts and distinguish similarly named resources/mechanics.&quot;,

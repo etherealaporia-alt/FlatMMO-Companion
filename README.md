@@ -52,3 +52,9 @@ Still pending or intentionally incomplete:
 FlatMMO is treated as an independent game. Missing mechanics must never be inferred from RuneScape or other games.
 
 See `flatmmo-sources.json`, `flatmmo-status.json`, `flatmmo-rules.json` and `flatmmo-overrides.json` for provenance, readiness and known limitations.
+
+## Updating and AI access
+
+The knowledge files are manually maintained static snapshots. The GitHub Pages workflow publishes committed files; it does not refresh game data. The official player API/schema is still pending. Public AI retrieval is optional and best-effort; the human assistant works without AI.
+
+The JSON, text and HTML grounding copies contain the same context. Compact quest-step and monster-room arrays have explicit field-order schemas in `flatmmo-context.json`. After changing the context, regenerate both copies and update `aiContextSha256` in `flatmmo-status.json`.
