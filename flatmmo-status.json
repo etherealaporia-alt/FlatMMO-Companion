@@ -1,7 +1,7 @@
 {
   "schemaVersion": 6,
   "generated": "2026-09-20",
-  "release": "knowledge-expansion-v1.8",
+  "release": "reasoning-engine-v1.9",
   "layout": "flat-root",
   "branch": "v2-online",
   "counts": {
@@ -52,7 +52,7 @@
     }
   },
   "humanUi": {
-    "mode": "deterministic conversational assistant backed by a first-class item/acquisition graph",
+    "mode": "deterministic conversational reasoning assistant backed by the first-class item/acquisition graph",
     "playerUsername": true,
     "localStorage": "optional and disposable; stores username, latest normalized player snapshot (public or user-entered) and recent questions when available",
     "portablePlayerLink": "#player=<username>",
@@ -62,10 +62,15 @@
     "refreshFailure": "Retain previous same-player snapshot with warning and timestamp; never reuse across different usernames; ignore superseded responses.",
     "visualStyle": "FlatMMO-inspired charcoal panels, brown secondary controls, green primary actions, cream text and monospace headings; no external images/fonts required.",
     "manualFormLayout": "Bounded dialog with independently scrolling fields and persistent Save/Cancel footer; two skill columns at phone widths.",
-    "queryEngine": "v1.8 browser-side natural-language interpreter using the first-class item graph for acquisition, shop inventory, Stealing, Farming, production and item-use questions; no LLM required",
-    "conversationContext": "Tracks the recent resolved subject/intent in memory for short follow-ups such as it/there/requirements and elliptical alternatives such as other-than-combat; disposable with the session",
+    "queryEngine": "v1.9 browser-side structured query interpreter: candidate entity resolution, goals, composable constraints, query planning, graph traversal, deterministic deductions and conversational composition; no LLM required",
+    "conversationContext": "Keeps a bounded semantic turn stack in memory, including subject, goal, source-role references and applicable constraints, so follow-ups can inherit or explicitly replace prior context; disposable with the session",
     "inlineLevels": "Skill levels explicitly stated in a question may be used for that answer only; they do not overwrite the saved/manual player snapshot",
-    "acquisitionIndex": "flatmmo-items.json is authoritative for item-specific acquisition/use questions. It normalizes monster drops, world nodes, production, shops, Stealing, Farming, quests, spirits, events, bundles and explicit NPC services/trades; unknown rates/currencies stay unknown."
+    "acquisitionIndex": "flatmmo-items.json is authoritative for item-specific acquisition/use questions. It normalizes monster drops, world nodes, production, shops, Stealing, Farming, quests, spirits, events, bundles and explicit NPC services/trades; unknown rates/currencies stay unknown.",
+    "reasoningEngine": "Builds a structured query object from the question, applies method/area/skill/price/access constraints, plans a deterministic graph query, and records an explicit user-visible reasoning trace",
+    "constraintReasoning": "Supports acquisition-method include/exclude constraints, non-combat/non-quest/no-spend filters, area filters, stated skill levels, numeric shop-price caps and documented access conditions",
+    "recursiveProduction": "Expands documented production recipes recursively with cycle protection; terminal inputs and missing intermediate recipes remain explicit rather than assumed",
+    "explainability": "A follow-up such as Why? explains the previous deterministic interpretation, constraints, conclusions, evidence and limits; it does not expose hidden model reasoning because the site has no model reasoning layer",
+    "rankingPolicy": "Uses measurable comparisons such as numeric shop price or documented skill gate when requested; qualitative best/easiest/fastest prompts ask for a criterion instead of inventing an overall ranking"
   },
   "coverage": {
     "combatStyles": [
@@ -109,7 +114,12 @@
       "multi-source item acquisition lookup",
       "item recipe/use lookup",
       "item-specific shop inventory lookup",
-      "Stealing source/unlock lookup"
+      "Stealing source/unlock lookup",
+      "constraint-aware multi-source acquisition filtering and discovery",
+      "lowest documented skill-gate comparison within matching acquisition routes",
+      "numeric shop-price comparison when price and currency are explicitly structured",
+      "recursive production dependency expansion from documented recipes with explicit gaps",
+      "deterministic explanation of the previous query interpretation, constraints and conclusions"
     ],
     "blockedPendingMechanics": [
       "exact combat hit chance",
@@ -141,11 +151,13 @@
     "Exact combat hit/damage formulas remain unresolved, so exact DPS, kill time, survivability and recommended combat levels are intentionally blocked.",
     "Agility level 1-19 Run-step progression and exact zero-Sleep behavior by activity remain pending observations.",
     "Known source conflicts remain retained in verification notes.",
-    "The v1.8 natural-language interpreter is deterministic and finite; unusual or genuinely ambiguous phrasing may still require a more specific question.",
+    "The v1.9 reasoning interpreter is deterministic and finite; unusual or genuinely ambiguous phrasing may still require a more specific question.",
     "The item graph is substantially expanded but not exhaustive; absence of a source/use means not documented in the current snapshot, not proof that it does not exist in FlatMMO.",
     "Some Stealing stall drop chances are shown as unknown on the current wiki and remain unknown in the Companion.",
-    "Prospector shop price values are preserved from the shop table but its currency column is not labelled for those rows, so the Companion does not assume Coins."
+    "Prospector shop price values are preserved from the shop table but its currency column is not labelled for those rows, so the Companion does not assume Coins.",
+    "Qualitative route terms such as easiest, fastest and best are not assigned an overall ranking without a measurable criterion supported by the data.",
+    "Recursive production expansion can expose missing intermediate recipes/acquisition records; those remain explicit knowledge gaps rather than inferred steps."
   ],
-  "aiContextSha256": "541d03f0a50249decbfa3221f97d4ccd3c43865cbc4a03de30ffcaee715372b5",
+  "aiContextSha256": "bbc1b9ce3d54a443a954a552165aae944e156fe5e37778b4ef26c85f085cf534",
   "updatePolicy": "Manually maintained static snapshot. The deployment workflow publishes committed files; it does not refresh game data or player snapshots. AI retrieval is optional/best-effort."
 }

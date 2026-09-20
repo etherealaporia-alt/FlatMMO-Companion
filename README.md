@@ -15,7 +15,7 @@ https://etherealaporia-alt.github.io/FlatMMO-Companion/flatmmo-context.json
 
 The `v2-online` branch is the active development branch. Project data is deliberately kept at the repository root because the mobile maintenance workflow flattens archive directory structures.
 
-The human UI is a deterministic conversational assistant. v1.8 keeps the browser-side natural-language interpreter and adds a first-class item/acquisition graph instead of reconstructing items from scattered mentions at query time. It can answer ordinary phrasing about quests, skills, monsters, areas, rooms, NPCs, shops, Stealing, Farming, item sources/uses, travel, requirements and known material calculations. It retains recent session state with optional/disposable `localStorage`, creates a portable `#player=<username>` link, and performs stats-aware requirement checks using public skill data, explicitly labelled user-entered levels, or temporary levels stated in a question.
+The human UI is a deterministic conversational reasoning assistant. v1.9 keeps the v1.8 first-class item/acquisition graph and adds structured query planning: questions are interpreted as goals, entities and composable constraints before the engine traverses the graph, applies documented requirements, performs allowed calculations and composes an answer. It retains recent semantic conversation context, optional/disposable `localStorage`, portable player links, and stats-aware checks using public skill data, explicitly labelled user-entered levels, or temporary levels stated in a question.
 
 The current public-profile loader is interim and may be blocked by normal browser cross-origin policy. It fails cleanly. The player-provider boundary is already isolated so an official player API can replace the loader without redesigning the assistant.
 
@@ -109,3 +109,14 @@ v1.8 moves item knowledge into `flatmmo-items.json`, a first-class acquisition/u
 The source policy is intentionally conservative. A generic statement such as “sells fishing-related items” is not treated as a complete inventory; the Companion uses explicit item rows. Unknown stall odds remain unknown, zero-stock shop rows stay visible as source-state information, and unlabeled Prospector price units are not silently assumed to be Coins.
 
 The human query engine now uses this graph for ordinary questions such as `Where can I get Green Leaf Seeds?`, `Any ways other than combat?`, `Where can I buy a Shovel?`, `What does the Omboko shop sell?`, and `What can I make with Graphite?`. The item graph is broad, not exhaustive: a missing source or use means **not documented in this snapshot**, not that FlatMMO has none.
+
+## v1.9 reasoning engine
+
+v1.9 adds a deterministic reasoning layer above the v1.8 knowledge graph. A question is parsed into a structured query containing a goal, candidate entities, player-level overrides and constraints such as acquisition method, excluded combat, area, price ceiling and access requirements. A query planner then chooses the relevant graph operation rather than relying on one first-match route.
+
+Conversation context is now semantic rather than just a last-entity pointer. A bounded in-memory turn stack keeps recent subjects, goals, source roles and applicable constraints. This allows sequences such as `How do I get Green Leaf Seeds?` → `Any ways other than combat?` → `Which source is available first?` → `Where is the farmer?` while preserving the distinction between a Farmer as a pickpocket source and a Farmer as a monster. Explicit new constraints can replace inherited ones, so `What about combat?` re-opens monster-drop routes.
+
+The reasoning engine supports constrained acquisition discovery (`What can I steal at level 15 that gives seeds?`, `What can I buy in Everbrook under 100 coins?`), access-aware filtering, lowest documented skill-gate comparison, numeric shop-price comparison, recursive production expansion with cycle/gap protection, and downstream structured-use traversal. `Why?` exposes the Companion's explicit deterministic interpretation, constraints, conclusions, evidence and limits. It does not expose or depend on hidden model reasoning.
+
+Qualitative requests such as `best`, `easiest` or `fastest` are not silently converted into a made-up ranking. When the data cannot support a universal ordering, the Companion asks for a measurable criterion such as non-combat, lowest documented skill requirement, buying or making. Exact combat calculations remain blocked until the underlying mechanics are verified.
+

@@ -81,7 +81,7 @@ dialog{background:var(--panel);color:var(--text);border:1px solid #687258;border
 <div id="chat" class="chat">
   <div class="msg bot">
     <div class="kicker">The field guide</div><h3>What are you working toward?</h3>
-    <p>Ask naturally about quests, items, skills, places, monsters, routes, requirements or your next unlock. The Companion interprets the question, then answers from structured FlatMMO data with evidence and gaps shown along the way.</p>
+    <p>Ask naturally about goals, constraints, quests, items, skills, places, monsters, routes or requirements. The Companion builds a structured query plan, follows FlatMMO relationships, applies only supported deductions, and keeps gaps visible.</p>
     <p class="muted small">Enter a public FlatMMO username above. This build will try to read the official public profile for skill levels. If it is unavailable, use Enter skill levels for personal checks. Leave unknown skills blank. Browser storage is optional.</p>
   </div>
 </div>
@@ -143,7 +143,9 @@ const KNOWN_SKILLS=[
 const SKILL_ALIASES={firemake:"Firemaking"};
 
 const state = {
-  data:{}, ready:false, lastEntity:null, context:{intent:null,entities:[],raw:""}, playerRequest:0,
+  data:{}, ready:false, lastEntity:null,
+  context:{intent:null,entities:[],raw:""}, contextStack:[], lastReasoning:null, lastQuery:null, graphDiagnostics:null,
+  playerRequest:0,
   player:null, history:[], restoring:false,
   playerProvider:{
     status:"interim-public-profile",
@@ -277,7 +279,7 @@ function clearLocal(){
   state.playerRequest++;
   $("#loadPlayer").disabled=false;
   try{localStorage.removeItem(STORAGE_KEY)}catch(_){}
-  state.player=null;state.history=[];state.lastEntity=null;
+  state.player=null;state.history=[];state.lastEntity=null;state.context={intent:null,entities:[],raw:""};state.contextStack=[];state.lastReasoning=null;state.lastQuery=null;
   $("#username").value="";
   updatePlayerUi();
   history.replaceState(null,"",location.pathname+location.search);
@@ -486,7 +488,7 @@ async function loadAll(){
   buildIndexes();
   state.ready=true;
   $("#loading").style.display="none";
-  $("#loadState").textContent=`Knowledge loaded: ${state.data.monsters.records.length} monsters, ${state.data.quests.records.length} quests, ${state.data.areas.records.length} areas`;
+  $("#loadState").textContent=`Knowledge loaded: ${state.data.items?.records?.length||0} items, ${state.data.monsters.records.length} monsters, ${state.data.quests.records.length} quests, ${state.data.areas.records.length} areas`;
   restoreSession();
 }
 function buildIndexes(){
@@ -636,22 +638,53 @@ function resolveEntities(q,{types=null,limit=6}={}){
   for(const r of rows){const k=`${r.type}:${norm(r.name)}`;if(seen.has(k))continue;seen.add(k);out.push(r);if(out.length>=limit)break}
   return out;
 }
-function rememberContext(intent,entities,raw){
-  const keep=(entities||[]).slice(0,4).map(e=>({type:e.type,name:e.name,obj:e.obj,area:e.area||null,room:e.room||null}));
+function compactEntity(e){
+  if(!e)return null;
+  return {type:e.type,name:e.name,obj:e.obj,area:e.area||null,room:e.room||null,score:e.score??null,role:e.role||null,source:e.source||null};
+}
+function latestContextTurn(){return state.contextStack?.length?state.contextStack[state.contextStack.length-1]:null}
+function rememberContext(intent,entities,raw,{query=null,resultRefs=[],reasoning=null}={}){
+  const keep=(entities||[]).slice(0,6).map(compactEntity).filter(Boolean);
   state.context={intent,entities:keep,raw};
-  const primary=keep[0]; if(primary?.obj)state.lastEntity={type:primary.type,obj:primary.obj};
+  const turn={intent,entities:keep,raw,goal:query?.goal||intent,constraints:query?.constraints||{},resultRefs:(resultRefs||[]).slice(0,30),reasoning:reasoning||null};
+  state.contextStack.push(turn);if(state.contextStack.length>8)state.contextStack.shift();
+  const primary=keep[0];if(primary?.obj)state.lastEntity={type:primary.type,obj:primary.obj};
+  if(reasoning)state.lastReasoning=reasoning;
+  if(query)state.lastQuery=query;
+}
+function previousContextEntities(){
+  for(let i=(state.contextStack?.length||0)-1;i>=0;i--){const es=state.contextStack[i]?.entities||[];if(es.length)return es}
+  return state.context?.entities||[];
+}
+function contextResultCandidates(q){
+  for(let i=(state.contextStack?.length||0)-1;i>=Math.max(0,(state.contextStack?.length||0)-6);i--){
+    const rows=[];
+    for(const ref of state.contextStack[i]?.resultRefs||[]){
+      if(!ref?.name||!hasWholePhrase(q,ref.name))continue;
+      const role=ref.role||ref.method||ref.type||"source";let boost=0;
+      if(role==="pickpocket"&&/\b(pickpocket|steal|stealing)\b/.test(q))boost=24;
+      else if(role==="monster_drop"&&/\b(monster|drop|combat|fight|fighting)\b/.test(q))boost=24;
+      else if(role==="shop"&&/\b(shop|buy|purchase|store)\b/.test(q))boost=24;
+      else if(["stall","map_chest","rogue_chest"].includes(role)&&/\b(stall|chest|steal|stealing)\b/.test(q))boost=18;
+      rows.push({type:"source_ref",name:ref.name,obj:ref,source:ref.source||null,area:ref.area||null,room:null,aliases:[norm(ref.name)],score:190+boost,role});
+    }
+    if(rows.length)return rows; // Most recent matching answer owns the conversational reference.
+  }
+  return [];
 }
 function contextualize(q,entities){
-  const prior=state.context?.entities||[];
-  const pronounFollow=/\b(it|its|that|this|there|them|those|same|again)\b/.test(q);
-  const shortFollow=/\b(requirements?|level|drop|drops|where|how|what about|reward|materials?|make|craft|fight|weak)\b/.test(q)&&contentTokens(q).length<=5;
-  const alternativeFollow=/\b(other|another|alternative|alternatives|else|instead|besides|without|ways?)\b/.test(q)&&contentTokens(q).length<=7;
+  const prior=previousContextEntities();
+  const pronounFollow=/\b(it|its|this|them|those|same|again|former|latter)\b/.test(q)||/^(?:that|there)\b/.test(q)||/\bwhat about (?:that|there)\b/.test(q);
+  const freshQuestion=/\b(what can i|how many|list|show me|which items?|what items?)\b/.test(q);
+  const shortFollow=/\b(requirements?|level|drop|drops|where|how|what about|reward|materials?|make|craft|fight|weak|why|which|first|earliest)\b/.test(q)&&contentTokens(q).length<=6;
+  const alternativeFollow=/\b(other|another|alternative|alternatives|else|instead|besides|without|ways?)\b/.test(q)&&contentTokens(q).length<=8;
+  if(freshQuestion&&!pronounFollow&&!alternativeFollow)return entities;
   if(!(pronounFollow||shortFollow||alternativeFollow))return entities;
-  const concreteTypes=new Set(["monster","quest","area","skill","equipment","room","npc","resource","item"]);
-  const explicitConcrete=entities.some(e=>concreteTypes.has(e.type));
+  const concreteTypes=new Set(["monster","quest","area","skill","equipment","room","npc","resource","item","shop","source_ref"]);
+  const explicitConcrete=entities.some(e=>concreteTypes.has(e.type)&&e.score>=100);
   if(explicitConcrete||!prior.length)return entities;
   const seen=new Set(),merged=[];
-  for(const e of [...prior,...entities]){const k=`${e.type}:${norm(e.name)}`;if(!seen.has(k)){seen.add(k);merged.push(e)}}
+  for(const e of [...prior,...entities]){const k=`${e.type}:${norm(e.name)}:${e.role||""}`;if(!seen.has(k)){seen.add(k);merged.push(e)}}
   return merged;
 }
 function extractStatedSkillLevels(q){
@@ -675,7 +708,7 @@ function detectIntent(q,entities){
   if(/\b(can i do|am i ready|ready for|requirements?|requirement|what do i need|what level do i need|eligible)\b/.test(q))return "requirements";
   if(/\b(get to|travel to|travel from|route to|route from|how do i reach|how can i reach|go from|go to)\b/.test(q))return "travel";
   if(/\b(drop|drops|loot|dropped by)\b/.test(q))return "drops";
-  if(/\b(used for|use it for|use this for|what can i make with|what can .* be used for|uses of|what is .* for)\b/.test(q))return "uses";
+  if(/\b(used for|use it for|use this for|what can i make with|what can .* be used for|uses of|what is .* for|lead to|leads to|downstream|turn into|eventually make)\b/.test(q))return "uses";
   if(/\b(materials?|ingredients?|from scratch|smelt|forge|craft|make|recipe|how many .* (?:bar|ore|coal|log|plank))\b/.test(q))return "materials";
   if(/\b(compare|versus|\bvs\b|difference between)\b/.test(q))return "compare";
   if(/\b(bed|beds|sleep in|rest in)\b/.test(q) && entities.some(e=>e.type==="area"))return "beds";
@@ -817,7 +850,7 @@ function resourceAnswer(name,q=""){
   for(const kind of order){const rows=by.get(kind)||[];if(!rows.length)continue;const shown=rows.slice(0,30);bits.push(`<p><b>${esc(ACQ_LABELS[kind]||title(kind))}:</b></p><ul>${shown.map(h=>`<li>${esc(sourceLine(h))}</li>`).join("")}</ul>${rows.length>shown.length?`<p class="muted small">${rows.length-shown.length} more recorded ${esc((ACQ_LABELS[kind]||kind).toLowerCase())} omitted from this compact answer.</p>`:""}`)}
   const item=itemRecord(name),sourceUrls=unique((sources.length?sources:all).map(h=>h.source?.source).filter(Boolean));
   if(!bits.length){
-    if(avoidCombat&&all.some(x=>x.kind==="monster_drop"))return `<h3>Non-combat sources for ${esc(title(name))}</h3><p>I don't currently have an <b>item-specific non-combat source recorded</b> for ${esc(title(name))}.</p><p class="muted small">That means “not documented in the Companion,” not proof that no non-combat method exists in FlatMMO.</p>${evidence(sourceUrls,["v1.8 checks the first-class item graph across shops, Stealing, Farming, production, quests, spirits, events, bundles, world nodes and monster drops."])}`;
+    if(avoidCombat&&all.some(x=>x.kind==="monster_drop"))return `<h3>Non-combat sources for ${esc(title(name))}</h3><p>I don't currently have an <b>item-specific non-combat source recorded</b> for ${esc(title(name))}.</p><p class="muted small">That means “not documented in the Companion,” not proof that no non-combat method exists in FlatMMO.</p>${evidence(sourceUrls,["The first-class item graph covers shops, Stealing, Farming, production, quests, spirits, events, bundles, world nodes and monster drops."])}`;
     return `<h3>${esc(title(name))}</h3><p class="warn">I can identify that item, but I don't have a matching item-specific source for the method you asked about.</p>${all.length?`<p class="muted small">There are ${all.length} other recorded acquisition route${all.length===1?"":"s"}; ask “how do I get ${esc(title(name))}?” to see them.</p>`:""}${evidence(sourceUrls,["Missing source types are not treated as proof that the method does not exist in the game."])}`;
   }
   const heading=avoidCombat?`Non-combat sources for ${title(name)}`:filtered?`Matching sources for ${title(name)}`:`How to get ${title(name)}`;
@@ -983,42 +1016,407 @@ function compareAnswer(entities){
   const ms=entities.filter(e=>e.type==="monster").slice(0,2);if(ms.length===2){const [a,b]=ms.map(e=>e.obj);return `<h3>${esc(title(a.name))} vs ${esc(title(b.name))}</h3><table><tr><th></th><th>${esc(title(a.name))}</th><th>${esc(title(b.name))}</th></tr>${[["HP","hp"],["Damage","damage"],["Accuracy","accuracy"],["Defence","defence"],["Magic Defence","magic_defence"],["Weakness","weakness"]].map(([n,k])=>`<tr><td>${esc(n)}</td><td>${esc(a[k]??"None")}</td><td>${esc(b[k]??"None")}</td></tr>`).join("")}</table><p class="muted small">These are recorded stats only; I am not declaring an overall winner.</p>`}
   return null;
 }
+
+const PRODUCTION_METHODS=new Set(["production","smelting","enchantment","brewing","cooking","conversion","npc_service"]);
+const STEALING_METHODS=new Set(["pickpocket","stall","map_chest","rogue_chest"]);
+const REWARD_METHODS=new Set(["quest_reward","spirit_reward","event_reward","bundle_reward","npc_trade","special_source"]);
+const METHOD_GROUPS={
+  combat:new Set(["monster_drop"]),buying:new Set(["shop"]),stealing:STEALING_METHODS,
+  gathering:new Set(["world_resource"]),farming:new Set(["farming"]),production:PRODUCTION_METHODS,rewards:REWARD_METHODS
+};
+const REASON_METHOD_ORDER=["world_resource","farming","shop","npc_service","npc_trade","pickpocket","stall","map_chest","rogue_chest","production","smelting","enchantment","brewing","cooking","conversion","quest_reward","spirit_reward","event_reward","bundle_reward","special_source","monster_drop"];
+const SEARCH_STOP=new Set([...QUERY_STOP,"thing","things","way","ways","method","methods","source","sources","item","items","available","first","earliest","lowest","level","levels","combat","fighting","fight","killing","kill","buy","buying","purchase","shop","shopping","steal","stealing","pickpocket","stall","chest","farm","farming","grow","growing","plant","mine","mining","fish","fishing","chop","woodcutting","dig","gather","craft","crafting","forge","forging","smelt","smelting","brew","brewing","cook","cooking","make","making","myself","self","without","other","another","instead","besides","under","below","less","than","coins","coin","give","gives","that"].map(norm));
+
+function setUnion(...sets){const out=new Set();for(const s of sets)for(const x of s||[])out.add(x);return out}
+function addMethods(target,set){for(const x of set||[])target.add(x)}
+function explicitPositive(q,wordPattern){return new RegExp(`\\b(?:${wordPattern})\\b`).test(q)&&!new RegExp(`\\b(?:without|avoid|excluding|except|no|besides|other than)\\s+(?:${wordPattern})\\b`).test(q)}
+function sourceActorName(a){return a?.victim||a?.monster||a?.shop||a?.stall||a?.spirit||a?.npc||a?.quest||a?.chest||a?.event||a?.bundle||null}
+function resultRefsFromSources(sources=[]){
+  return sources.map(h=>{const a=h.source||h;const name=sourceActorName(a);if(!name)return null;return {type:a.type||h.kind,method:a.type||h.kind,role:a.type||h.kind,name,area:a.area||null,location:a.location||a.room||null,source:a};}).filter(Boolean);
+}
+function knownSkillLevel(skill,overrides={},caps={}){
+  const key=norm(canonicalSkillName(skill));
+  if(overrides[key]!=null)return {level:Number(overrides[key]),basis:"stated"};
+  if(caps[key]!=null)return {level:Number(caps[key]),basis:"question limit"};
+  const rec=playerSkill(skill);if(rec?.level!=null)return {level:Number(rec.level),basis:state.player?.source==="manual"?"user-entered":"player snapshot"};
+  return null;
+}
+function inferGoal(q,intent,entities){
+  if(/^\s*(why|how come|what made you|why did you)\b/.test(q))return "explain";
+  if(/\b(which|what).*(available|accessible).*(first|earliest)|\b(first|earliest|lowest level).*(way|method|source)|\bwhich.*first\b/.test(q))return "earliest_source";
+  const priceCurrency=/\b[\d,]+\s*coins?\b/.test(q);
+  const hasSpecificItem=entities.some(e=>["item","resource","equipment"].includes(e.type)&&e.score>=80&&!(priceCurrency&&norm(e.name)==="coins"));
+  if(hasSpecificItem&&/^what about (?:combat|fighting|buying|shopping|stealing|pickpocketing|farming|crafting|making)\b/.test(q)&&["acquire","earliest_source","search_acquisition"].includes(latestContextTurn()?.goal))return "acquire";
+  const methodSearch=/\bwhat can i\b.*\b(buy|steal|pickpocket|farm|grow|mine|fish|gather|craft|forge|smelt|brew|cook|make)\b/.test(q)||/\b(show|list|which)\b.*\b(items?|things?)\b.*\b(buy|steal|farm|craft|make)\b/.test(q);
+  if(hasSpecificItem&&/\bcheapest\b/.test(q)&&/\b(buy|shop|purchase|source|way|method)\b/.test(q))return "cheapest_source";
+  if(hasSpecificItem&&/\b(best|easiest|fastest|simplest)\b/.test(q))return "preference_clarification";
+  if(hasSpecificItem&&/\b(buy|purchase|shop|steal|pickpocket|farm|grow|plant|mine|fish|gather|obtain|get|acquire|drop|loot)\b/.test(q))return "acquire";
+  if(methodSearch&&!hasSpecificItem)return "search_acquisition";
+  if(/\b(from scratch|make .* from scratch|craft .* from scratch|what do i need to (?:make|craft|forge|smelt|brew|cook)|how (?:do|can) i (?:make|craft|forge|smelt|brew|cook))\b/.test(q)&&hasSpecificItem)return "produce";
+  if(/\bwhat (?:does|do) .* (?:sell|stock)|\bshop inventory\b|\bwhat can i buy\b/.test(q)&&entities.some(e=>e.type==="shop"||e.type==="area"))return "shop_inventory";
+  if(intent==="player_next")return "player_next";
+  if(intent==="count"||intent==="list")return "enumerate";
+  if(intent==="walkthrough")return "walkthrough";
+  if(intent==="requirements")return "readiness";
+  if(intent==="travel")return "travel";
+  if(intent==="compare")return "compare";
+  if(intent==="uses")return "uses";
+  if(intent==="materials"&&hasSpecificItem)return "produce";
+  if(intent==="drops"||intent==="locate")return hasSpecificItem?"acquire":"locate";
+  if(intent==="mechanics")return "mechanics";
+  if(intent==="progression")return "progression";
+  return "info";
+}
+function goalTypeWeight(goal,type){
+  const table={
+    acquire:{item:48,resource:46,equipment:32,source_ref:36,monster:8,area:4},
+    produce:{item:50,equipment:48,resource:38,skill:5},uses:{item:50,resource:48,equipment:30},
+    search_acquisition:{item:25,resource:20,area:18,skill:12},earliest_source:{item:48,resource:46,equipment:30,source_ref:25},
+    travel:{area:55,room:38,npc:10},locate:{source_ref:52,room:45,npc:42,area:40,monster:34,item:20,resource:20},
+    readiness:{quest:55,equipment:32,skill:16},walkthrough:{quest:60},progression:{skill:48,equipment:38},
+    shop_inventory:{shop:60,area:42},compare:{monster:40,equipment:34,item:20},mechanics:{rule:55,mechanic:50,skill:18},info:{item:28,quest:26,monster:24,area:22,skill:20,equipment:18,npc:18,room:16}
+  };
+  return table[goal]?.[type]||0;
+}
+function rankEntitiesForGoal(entities,goal){return [...entities].sort((a,b)=>(b.score+goalTypeWeight(goal,b.type))-(a.score+goalTypeWeight(goal,a.type))||b.name.length-a.name.length)}
+function extractConstraints(raw,q,entities,overrides){
+  const includeMethods=new Set(),excludeMethods=new Set(),skillCaps={};
+  const addExclude=group=>addMethods(excludeMethods,METHOD_GROUPS[group]);
+  const addInclude=group=>addMethods(includeMethods,METHOD_GROUPS[group]);
+  if(/\b(without|avoid|excluding|except|no|besides|other than)\s+(combat|fighting|killing)\b|\bnon combat\b/.test(q))addExclude("combat");
+  if(/\b(without|avoid|excluding|except|no|besides|other than)\s+(buying|shopping|spending)\b/.test(q))addExclude("buying");
+  if(/\b(without|avoid|excluding|except|no|besides|other than)\s+(stealing|pickpocketing)\b/.test(q))addExclude("stealing");
+  if(/\b(without|avoid|excluding|except|no|besides|other than)\s+(farming|growing)\b/.test(q))addExclude("farming");
+  if(/\b(without|avoid|excluding|except|no|besides|other than)\s+(crafting|making|forging|smelting|brewing|cooking)\b/.test(q))addExclude("production");
+  if(/\b(without|avoid|excluding|except|no)\s+quests?\b/.test(q))excludeMethods.add("quest_reward");
+  if(explicitPositive(q,"combat|fighting|fight|kill|killing"))addInclude("combat");
+  if(explicitPositive(q,"buy|purchase|shop"))addInclude("buying");
+  if(explicitPositive(q,"steal|stealing|pickpocket|stall|chest"))addInclude("stealing");
+  if(explicitPositive(q,"farm|farming|grow|plant"))addInclude("farming");
+  if(explicitPositive(q,"mine|mining|fish|fishing|chop|woodcutting|dig|gather"))addInclude("gathering");
+  if(explicitPositive(q,"craft|crafting|forge|forging|smelt|smelting|brew|brewing|cook|cooking|make"))addInclude("production");
+  if(/\b(drop|drops|dropped|loot)\b/.test(q))addMethods(includeMethods,new Set(["monster_drop"]));
+  for(const [skillKey,level] of Object.entries(overrides||{}))skillCaps[skillKey]=Number(level);
+  let generic=q.match(/\b(?:at|by|under|below|up to|max(?:imum)?(?: level)?)\s*(?:level\s*)?(\d+)\b/);
+  if(!generic)generic=q.match(/\blevel\s*(\d+)\b/);
+  if(generic){
+    const n=Number(generic[1]);let inferred=null;
+    const skillEntity=entities.find(e=>e.type==="skill");if(skillEntity)inferred=norm(skillEntity.name);
+    else if([...includeMethods].some(x=>STEALING_METHODS.has(x)))inferred="stealing";
+    else if(includeMethods.has("farming"))inferred="farming";
+    else if(includeMethods.has("world_resource")){if(/\bmine|mining\b/.test(q))inferred="mining";else if(/\bfish|fishing\b/.test(q))inferred="fishing";else if(/\bchop|woodcutting\b/.test(q))inferred="woodcutting";}
+    if(inferred&&skillCaps[inferred]==null)skillCaps[inferred]=n;
+  }
+  let maxPrice=null;const pm=q.match(/\b(?:under|below|less than|at most|up to|max(?:imum)?)\s*([\d,]+)\s*coins?\b/);if(pm)maxPrice=Number(pm[1].replace(/,/g,""));
+  const areas=unique(entities.filter(e=>e.type==="area").map(e=>e.name));
+  const fromScratch=/\bfrom scratch\b|\braw materials?\b|\bevery ingredient\b/.test(q);
+  const avoidCombat=/\b(without|avoid|excluding|except|no|besides|other than)\s+(combat|fighting|killing)\b|\bnon combat\b/.test(q);
+  const avoidQuests=/\b(without|avoid|excluding|except|no|besides|other than)\s+quests?\b/.test(q);
+  const avoidSpending=/\b(without|avoid|no)\s+(spending|coins?|money)\b|\bfree(?: way| source| method)?\b/.test(q);
+  const onlyAccessible=/\b(can i|available to me|accessible to me|at level|by level|with .* level)\b/.test(q)||Object.keys(skillCaps).length>0;
+  return {includeMethods:[...includeMethods],excludeMethods:[...excludeMethods],areas,skillCaps,maxPrice,fromScratch,avoidCombat,avoidQuests,avoidSpending,onlyAccessible};
+}
+function isSemanticFollowup(q){
+  if(/\b(what can i|how many|list|show me|which items?|what items?)\b/.test(q))return false;
+  return /^(?:and |also |so |then |what about |how about |where |why |which (?:one|source|way)|what else|any other|any ways?|does it|can it|can i still)/.test(q)||/\b(it|its|this|them|those|same|again|former|latter)\b/.test(q);
+}
+function inheritContextConstraints(q,current){
+  if(!isSemanticFollowup(q))return current;
+  const prior=latestContextTurn()?.constraints;if(!prior)return current;
+  const merged={...current};
+  merged.includeMethods=current.includeMethods?.length?current.includeMethods:[...(prior.includeMethods||[])];
+  merged.excludeMethods=unique([...(prior.excludeMethods||[]),...(current.excludeMethods||[])]);
+  // An explicit new positive method re-opens a method that a prior turn excluded, and vice versa.
+  if(current.includeMethods?.length)merged.excludeMethods=merged.excludeMethods.filter(x=>!current.includeMethods.includes(x));
+  if(current.excludeMethods?.length)merged.includeMethods=merged.includeMethods.filter(x=>!current.excludeMethods.includes(x));
+  merged.areas=current.areas?.length?current.areas:[...(prior.areas||[])];
+  merged.skillCaps={...(prior.skillCaps||{}),...(current.skillCaps||{})};
+  merged.maxPrice=current.maxPrice!=null?current.maxPrice:(prior.maxPrice??null);
+  merged.fromScratch=!!(current.fromScratch||prior.fromScratch&&/\b(same|again|that|it|which|what about|how about)\b/.test(q));
+  merged.avoidCombat=!!(current.avoidCombat||prior.avoidCombat&&!current.includeMethods?.includes("monster_drop"));
+  merged.avoidQuests=!!(current.avoidQuests||prior.avoidQuests&&!current.includeMethods?.includes("quest_reward"));
+  merged.avoidSpending=!!(current.avoidSpending||prior.avoidSpending);
+  if(current.includeMethods?.includes("monster_drop"))merged.avoidCombat=false;
+  if(current.includeMethods?.includes("quest_reward"))merged.avoidQuests=false;
+  merged.onlyAccessible=!!(current.onlyAccessible||Object.keys(merged.skillCaps).length);
+  return merged;
+}
+function searchTermsForQuery(q,entities){
+  const entityWords=new Set(entities.flatMap(e=>contentTokens(e.name)));
+  const skillWords=new Set(KNOWN_SKILLS.flatMap(x=>contentTokens(x)));
+  const areaWords=new Set((state.data.areas.records||[]).flatMap(a=>contentTokens(a.name)));
+  const out=[];
+  for(let t of contentTokens(q)){
+    if(/^\d+$/.test(t)||SEARCH_STOP.has(t)||entityWords.has(t)||skillWords.has(t)||areaWords.has(t))continue;
+    if(t.endsWith("ies")&&t.length>4)t=t.slice(0,-3)+"y";else if(t.endsWith("s")&&t.length>3)t=t.slice(0,-1);
+    if(!SEARCH_STOP.has(t))out.push(t);
+  }
+  return unique(out);
+}
+function itemMatchesTerms(item,terms){if(!terms.length)return true;const hay=[norm(item.name),...(item.categories||[]).map(norm),...(item.aliases||[]).map(norm)];return terms.every(t=>hay.some(x=>x===t||x.includes(t)||t.includes(x)))}
+function semanticAmbiguity(entities,goal){
+  if(entities.length<2)return null;const [a,b]=entities;const as=a.score+goalTypeWeight(goal,a.type),bs=b.score+goalTypeWeight(goal,b.type);
+  if(as<115||bs<115||as-bs>7)return null;
+  const sameName=norm(a.name)===norm(b.name),sameConcept=sameName&&new Set([a.type,b.type]).size===2&&[a.type,b.type].every(t=>["item","resource","equipment"].includes(t));
+  if(sameConcept)return null;
+  if(sameName&&a.type==="source_ref"&&b.type==="source_ref"&&a.role!==b.role)return {options:[a,b],reason:"The same name refers to more than one recent acquisition source."};
+  if(sameName)return null;
+  const at=new Set(contentTokens(a.name)),bt=new Set(contentTokens(b.name));let overlap=0;for(const t of at)if(bt.has(t))overlap++;
+  if(!overlap)return null; // Different explicit entities can coexist in a compound question.
+  const aContainsB=hasWholePhrase(a.name,b.name),bContainsA=hasWholePhrase(b.name,a.name);
+  if((aContainsB||bContainsA)&&norm(a.name).length!==norm(b.name).length){
+    const longer=norm(a.name).length>norm(b.name).length?a:b;
+    if(hasWholePhrase(norm(entities.map(()=>"").join(" "))||"",longer.name))return null;
+    // The resolver already knows the longer phrase occurred in the question when its score is high.
+    if(longer.score>=125)return null;
+  }
+  const overlapRatio=overlap/Math.max(1,Math.min(at.size,bt.size));
+  if(overlapRatio>=0.75)return {options:[a,b],reason:"Two overlapping entity names fit that wording almost equally well."};
+  return null;
+}
+function interpretQuestion(raw){
+  const q=norm(raw),base=resolveEntities(q,{limit:10}),contextRefs=isSemanticFollowup(q)?contextResultCandidates(q):[];
+  let entities=[...contextRefs,...base];
+  const seen=new Set();entities=entities.filter(e=>{const k=`${e.type}:${norm(e.name)}:${e.role||""}`;if(seen.has(k))return false;seen.add(k);return true});
+  entities=contextualize(q,entities);
+  let intent=detectIntent(q,entities),goal=inferGoal(q,intent,entities);
+  entities=rankEntitiesForGoal(entities,goal);
+  // Goal inference may become more specific after context has supplied a prior item.
+  goal=inferGoal(q,intent,entities);entities=rankEntitiesForGoal(entities,goal);
+  const overrides=extractStatedSkillLevels(raw);let constraints=extractConstraints(raw,q,entities,overrides);constraints=inheritContextConstraints(q,constraints);
+  const collection=genericCollection(q),directRule=ruleForQuestion(q),searchTerms=searchTermsForQuery(q,entities),ambiguity=semanticAmbiguity(entities,goal);
+  return {raw,q,intent,goal,entities,overrides,constraints,collection,directRule,searchTerms,ambiguity};
+}
+function planQuery(query){
+  const item=query.entities.find(e=>["item","resource","equipment"].includes(e.type));
+  const sourceRef=query.entities.find(e=>e.type==="source_ref");
+  const steps=[`Interpret goal as ${query.goal}.`];
+  if(item)steps.push(`Resolve subject as ${item.name}.`);
+  if(query.constraints.includeMethods.length)steps.push(`Keep requested acquisition methods: ${query.constraints.includeMethods.join(", ")}.`);
+  if(query.constraints.excludeMethods.length)steps.push(`Exclude methods: ${query.constraints.excludeMethods.join(", ")}.`);
+  if(query.constraints.areas.length)steps.push(`Apply area constraint: ${query.constraints.areas.join(", ")}.`);
+  if(Object.keys(query.constraints.skillCaps).length)steps.push(`Apply stated skill levels/limits: ${Object.entries(query.constraints.skillCaps).map(([k,v])=>`${title(k)} ${v}`).join(", ")}.`);
+  let route=query.goal;
+  if(query.goal==="locate"&&sourceRef)route="source_location";
+  if(query.goal==="acquire"&&item)route="item_acquisition";
+  if(query.goal==="produce"&&item)route=(item.type==="equipment"&&!itemRecord(item.name))?"equipment_materials":"item_production";
+  if(query.goal==="uses"&&item)route="item_uses";
+  if(query.goal==="earliest_source"&&item)route="earliest_source";
+  if(query.goal==="cheapest_source"&&item)route="cheapest_source";
+  if(query.goal==="preference_clarification"&&item)route="preference_clarification";
+  if(query.goal==="search_acquisition")route="search_acquisition";
+  steps.push(`Execute ${route} plan against structured data.`);
+  return {route,item,sourceRef,steps};
+}
+function sourceHardMatches(a,constraints){
+  if(constraints.includeMethods.length&&!constraints.includeMethods.includes(a.type))return false;
+  if(constraints.excludeMethods.includes(a.type))return false;
+  const accessText=norm([a.access,a.note].filter(Boolean).join(" "));
+  if(constraints.avoidCombat&&/\b(kill|defeat|combat|fight)\b/.test(accessText))return false;
+  if(constraints.avoidQuests&&(a.type==="quest_reward"||/\b(quest|complete|completion)\b/.test(accessText)))return false;
+  if(constraints.avoidSpending&&(a.type==="shop"||a.price!=null||Object.keys(a.materials||{}).some(k=>norm(k)==="coins")||/\bcoins?\b/.test(accessText)))return false;
+  if(constraints.areas.length&&a.area&&!constraints.areas.some(x=>norm(x)===norm(a.area)))return false;
+  if(constraints.areas.length&&!a.area)return false;
+  if(constraints.maxPrice!=null&&a.type==="shop"&&a.price!=null&&Number(a.price)>constraints.maxPrice)return false;
+  if(constraints.maxPrice!=null&&a.type==="shop"&&a.price==null)return false;
+  return true;
+}
+function assessAcquisitionSource(a,query){
+  if(!sourceHardMatches(a,query.constraints))return {source:a,eligible:false,status:"excluded",reason:"Does not match the question constraints."};
+  if(a.skill&&a.level!=null){const known=knownSkillLevel(a.skill,query.overrides,query.constraints.skillCaps);if(known){const ok=known.level>=Number(a.level);return {source:a,eligible:true,status:ok?(a.access?"conditional":"accessible"):"blocked",have:known.level,basis:known.basis,reason:ok?(a.access?`Skill requirement met; additional access condition: ${a.access}`:`${a.skill} ${a.level} met.`):`Requires ${a.skill} ${a.level}; known level is ${known.level}.`}}}
+  if(a.access)return {source:a,eligible:true,status:"conditional",reason:`Access condition is recorded but current completion state is unknown: ${a.access}`};
+  return {source:a,eligible:true,status:"unknown",reason:a.skill&&a.level!=null?`Requires ${a.skill} ${a.level}; no level is known for this question.`:"No player-specific gate is represented for this route."};
+}
+function evaluatedAcquisition(item,query){return (item?.acquisition||[]).map(a=>assessAcquisitionSource(a,query)).filter(x=>x.eligible)}
+function statusOrder(s){return {accessible:0,conditional:1,unknown:2,blocked:3}[s]??4}
+function sourceOrder(type){const i=REASON_METHOD_ORDER.indexOf(type);return i<0?99:i}
+function evaluatedSourceText(ev){const a=ev.source;let suffix="";if(ev.status==="accessible")suffix=" · available at the stated/known level";else if(ev.status==="blocked")suffix=` · blocked: ${ev.reason}`;else if(ev.status==="conditional")suffix=` · conditional: ${ev.reason}`;else if(a.skill&&a.level!=null)suffix=` · ${ev.reason}`;return `${sourceLine({kind:a.type,source:a})}${suffix}`}
+function reasoningEntities(query,plan){
+  if(plan?.sourceRef)return [`source: ${plan.sourceRef.name} (${ACQ_LABELS[plan.sourceRef.role||plan.sourceRef.method]||title(plan.sourceRef.role||plan.sourceRef.method||"source")})`];
+  if(plan?.item)return [`${plan.item.type}: ${plan.item.name}`];
+  if(query.goal==="travel")return query.entities.filter(e=>e.type==="area").slice(0,2).map(e=>`area: ${e.name}`);
+  if(query.goal==="readiness")return query.entities.filter(e=>["quest","equipment"].includes(e.type)).slice(0,2).map(e=>`${e.type}: ${e.name}`);
+  return query.entities.filter(e=>e.score>=115).slice(0,3).map(e=>`${e.type}: ${e.name}`);
+}
+function makeReasoning(query,plan,{conclusions=[],uncertainties=[],sources=[]}={}){
+  return {question:query.raw,goal:query.goal,interpretation:{entities:reasoningEntities(query,plan),constraints:query.constraints},steps:plan.steps,conclusions,uncertainties,sources:unique(sources.filter(Boolean))};
+}
+function result(html,focus=[],reasoning=null,resultRefs=[]){return {html,focus,reasoning,resultRefs}}
+function itemEntity(item){return {type:"item",name:item.name,obj:item,score:200,area:null,room:null}}
+function reasonedAcquisitionAnswer(query,plan){
+  const item=itemRecord(plan.item.name)||plan.item.obj;if(!item)return result(resourceAnswer(plan.item.name,query.q),[plan.item],makeReasoning(query,plan,{uncertainties:["No first-class item record was found; legacy lookup was used."]}));
+  let rows=evaluatedAcquisition(item,query).sort((a,b)=>statusOrder(a.status)-statusOrder(b.status)||sourceOrder(a.source.type)-sourceOrder(b.source.type));
+  const all=item.acquisition||[],sources=rows.map(x=>x.source.source),refs=resultRefsFromSources(rows.map(x=>({source:x.source})));
+  if(!rows.length){
+    const scoped=query.constraints.excludeMethods.length||query.constraints.includeMethods.length||query.constraints.areas.length||query.constraints.maxPrice!=null;
+    const why=scoped?"No recorded acquisition route matches all of those constraints.":"No item-specific acquisition route is recorded.";
+    const html=`<h3>${esc(item.name)}</h3><p>${esc(why)}</p><p class="muted small">That is a knowledge-gap statement, not proof that the method does not exist in FlatMMO.</p>${all.length?chips([`How do I get ${item.name}?`]):""}`;
+    return result(html,[itemEntity(item)],makeReasoning(query,plan,{conclusions:[why],uncertainties:["The item graph is broad but not exhaustive."],sources:all.map(a=>a.source)}),[]);
+  }
+  const by=new Map();for(const ev of rows){const k=ev.source.type;if(!by.has(k))by.set(k,[]);by.get(k).push(ev)}
+  const groups=[];for(const kind of REASON_METHOD_ORDER){const g=by.get(kind);if(!g?.length)continue;groups.push(`<p><b>${esc(ACQ_LABELS[kind]||title(kind))}:</b></p><ul>${g.slice(0,30).map(ev=>`<li>${esc(evaluatedSourceText(ev))}</li>`).join("")}</ul>${g.length>30?`<p class="muted small">${g.length-30} additional routes omitted from this compact answer.</p>`:""}`)}
+  const accessible=rows.filter(x=>x.status==="accessible").length,blocked=rows.filter(x=>x.status==="blocked").length,conditional=rows.filter(x=>x.status==="conditional").length;
+  let intro=`I found <b>${rows.length}</b> documented route${rows.length===1?"":"s"} matching the question.`;
+  if(query.constraints.onlyAccessible&&accessible)intro+=` <b>${accessible}</b> ${accessible===1?"is":"are"} available from the skill levels supplied/known.`;
+  if(blocked)intro+=` ${blocked} ${blocked===1?"is":"are"} blocked by a known skill requirement.`;
+  if(conditional)intro+=` ${conditional} ${conditional===1?"has":"have"} an additional access condition I can't verify from current player data.`;
+  const html=`<h3>${esc(item.name)}</h3><p>${intro}</p>${groups.join("")}${item.uses?.length?chips([`What is ${item.name} used for?`,`Which source is available first?`]):chips([`Which source is available first?`])}${evidence(unique(sources),["Routes were filtered from the first-class item graph. Missing routes are not assumed impossible."])}`;
+  const conclusions=[`Found ${rows.length} documented route(s) after applying the question constraints.`];if(accessible)conclusions.push(`${accessible} route(s) meet the known/stated skill level.`);if(blocked)conclusions.push(`${blocked} route(s) fail a known skill requirement.`);
+  return result(html,[itemEntity(item)],makeReasoning(query,plan,{conclusions,uncertainties:["Ungated routes may still have game-state requirements that are not represented in the current player snapshot."],sources}),refs);
+}
+function acquisitionSearchAnswer(query,plan){
+  const rows=[];
+  for(const item of state.data.items?.records||[]){
+    if(!itemMatchesTerms(item,query.searchTerms))continue;
+    for(const a of item.acquisition||[]){const ev=assessAcquisitionSource(a,query);if(ev.eligible&&!(query.constraints.onlyAccessible&&ev.status==="blocked"))rows.push({item,ev})}
+  }
+  rows.sort((a,b)=>statusOrder(a.ev.status)-statusOrder(b.ev.status)||sourceOrder(a.ev.source.type)-sourceOrder(b.ev.source.type)||a.item.name.localeCompare(b.item.name));
+  if(!rows.length){const desc=query.searchTerms.length?` matching “${query.searchTerms.join(" ")}”`:"";return result(`<h3>No matching documented routes</h3><p>I couldn't find an item-specific acquisition route${esc(desc)} that satisfies those constraints.</p><p class="muted small">That means not documented in the current graph, not impossible in FlatMMO.</p>`,query.entities,makeReasoning(query,plan,{conclusions:["No acquisition records matched the structured filters."],uncertainties:["The item graph is not exhaustive."]}));}
+  const shown=rows.slice(0,45),terms=query.searchTerms.length?` matching <b>${esc(query.searchTerms.join(" "))}</b>`:"";
+  const html=`<h3>Matching acquisition options</h3><p>I found <b>${rows.length}</b> item/source pair${rows.length===1?"":"s"}${terms}.</p><ul>${shown.map(({item,ev})=>`<li><b>${esc(item.name)}</b> — ${esc(evaluatedSourceText(ev))}</li>`).join("")}</ul>${rows.length>shown.length?`<p class="muted small">${rows.length-shown.length} additional matches omitted.</p>`:""}${evidence(unique(shown.map(x=>x.ev.source.source).filter(Boolean)),["This is a constrained graph search, not a recommendation ranking."])}`;
+  const refs=resultRefsFromSources(shown.map(x=>({source:x.ev.source})));
+  return result(html,unique(shown.slice(0,6).map(x=>itemEntity(x.item))),makeReasoning(query,plan,{conclusions:[`Matched ${rows.length} item/source pairs after applying method, area, level and price constraints.`],sources:shown.map(x=>x.ev.source.source)}),refs);
+}
+function earliestSourceAnswer(query,plan){
+  const item=itemRecord(plan.item.name)||plan.item.obj;if(!item)return result(`<h3>${esc(plan.item.name)}</h3><p>I don't have a first-class item record to compare.</p>`,[plan.item],makeReasoning(query,plan,{uncertainties:["No first-class item record."]}));
+  const rows=evaluatedAcquisition(item,query),gated=rows.filter(x=>x.source.skill&&Number.isFinite(Number(x.source.level)));
+  if(!gated.length){return result(`<h3>${esc(item.name)}</h3><p>None of the matching routes has a numeric skill requirement I can use for an “available first” comparison.</p><p class="muted small">I won't turn missing requirements into zero-level requirements.</p>`,[itemEntity(item)],makeReasoning(query,plan,{conclusions:["No comparable numeric skill gates were available."],uncertainties:["Ungated routes may still have other prerequisites."]}));}
+  const skills=unique(gated.map(x=>norm(x.source.skill))),min=Math.min(...gated.map(x=>Number(x.source.level))),best=gated.filter(x=>Number(x.source.level)===min);
+  let caveat=skills.length>1?`<p class="warn">These routes use different skills, so level numbers are not a universal measure of which you will reach first. The lowest <i>numeric documented requirement</i> is shown only as a factual comparison.</p>`:"";
+  const ungated=rows.filter(x=>!x.source.skill||x.source.level==null);
+  if(ungated.length)caveat+=`<p class="muted small">${ungated.length} matching route${ungated.length===1?" has":"s have"} no comparable numeric skill gate, so ${ungated.length===1?"it is":"they are"} not ranked here.</p>`;
+  const html=`<h3>${esc(item.name)} — lowest documented skill gate</h3><p>${best.map(x=>`<b>${esc(sourceLine({kind:x.source.type,source:x.source}))}</b>`).join("<br>")}</p>${caveat}`;
+  return result(html,[itemEntity(item)],makeReasoning(query,plan,{conclusions:[`Lowest numeric documented skill requirement among comparable routes is ${min}.`],uncertainties:[skills.length>1?"Different skill levels are not directly comparable as progression time.":"Routes without numeric skill requirements were not ranked."],sources:best.map(x=>x.source.source)}),resultRefsFromSources(best.map(x=>({source:x.source}))));
+}
+function recipeSources(item){return (item?.acquisition||[]).filter(a=>PRODUCTION_METHODS.has(a.type)&&a.materials&&Object.keys(a.materials).length)}
+function expandRecipeBranch(itemName,qty=1,{depth=0,maxDepth=8,seen=new Set()}={}){
+  const item=itemRecord(itemName);if(!item)return {name:itemName,qty,kind:"leaf",gap:true,reason:"No first-class item record."};
+  if(depth>=maxDepth)return {name:item.name,qty,kind:"leaf",gap:true,reason:"Expansion depth limit reached."};
+  const key=norm(item.name);if(seen.has(key))return {name:item.name,qty,kind:"leaf",gap:true,reason:"Recipe cycle detected."};
+  const recipes=recipeSources(item);
+  if(!recipes.length)return {name:item.name,qty,kind:"leaf",gap:!(item.acquisition||[]).length,sources:item.acquisition||[]};
+  if(recipes.length>1)return {name:item.name,qty,kind:"alternatives",recipes:recipes.map(r=>expandSpecificRecipe(item,qty,r,{depth,maxDepth,seen}))};
+  return expandSpecificRecipe(item,qty,recipes[0],{depth,maxDepth,seen});
+}
+function expandSpecificRecipe(item,qty,recipe,{depth,maxDepth,seen}){
+  const outQty=Number(recipe.outputQuantity||1)||1,crafts=Math.ceil(Number(qty)/outQty),nextSeen=new Set(seen);nextSeen.add(norm(item.name));
+  const children=Object.entries(recipe.materials||{}).map(([name,n])=>expandRecipeBranch(title(name),crafts*Number(n),{depth:depth+1,maxDepth,seen:nextSeen}));
+  return {name:item.name,qty,kind:"recipe",recipe,crafts,children};
+}
+function collectRecipeLeaves(node,totals={},gaps=[]){
+  if(!node)return {totals,gaps};
+  if(node.kind==="leaf"){totals[node.name]=(totals[node.name]||0)+Number(node.qty||0);if(node.gap)gaps.push(`${node.name}: ${node.reason||"no documented acquisition/production source"}`);return {totals,gaps}}
+  if(node.kind==="alternatives"){gaps.push(`${node.name}: multiple production recipes exist; totals depend on which recipe is chosen.`);return {totals,gaps}}
+  for(const c of node.children||[])collectRecipeLeaves(c,totals,gaps);return {totals,gaps};
+}
+function recipeNodeHtml(node,depth=0){
+  if(node.kind==="leaf")return `<li>${esc(node.name)} ×${esc(node.qty)}${node.gap?` <span class="warn">(knowledge gap)</span>`:""}</li>`;
+  if(node.kind==="alternatives")return `<li><b>${esc(node.name)} ×${esc(node.qty)}</b> — multiple recipes:<ul>${node.recipes.map(r=>recipeNodeHtml(r,depth+1)).join("")}</ul></li>`;
+  const r=node.recipe;return `<li><b>${esc(node.name)} ×${esc(node.qty)}</b> — ${esc(r.skill||title(r.type))}${r.level!=null?` ${esc(r.level)}`:""}; ${esc(node.crafts)} craft${node.crafts===1?"":"s"}<ul>${(node.children||[]).map(c=>recipeNodeHtml(c,depth+1)).join("")}</ul></li>`;
+}
+function productionPlanAnswer(query,plan){
+  const item=itemRecord(plan.item.name)||plan.item.obj;if(!item)return result(`<h3>${esc(plan.item.name)}</h3><p>I don't have a first-class item record for a production plan.</p>`,[plan.item],makeReasoning(query,plan,{uncertainties:["No first-class item record."]}));
+  const recipes=recipeSources(item);
+  if(!recipes.length){const alt=(item.acquisition||[]).length?chips([`How do I get ${item.name}?`]):"";return result(`<h3>Making ${esc(item.name)}</h3><p>I don't currently have a structured production recipe for this item.</p>${alt}<p class="muted small">That is a knowledge gap, not proof the item cannot be made.</p>`,[itemEntity(item)],makeReasoning(query,plan,{conclusions:["No structured production recipe is recorded."],uncertainties:["The item graph is not exhaustive."],sources:(item.acquisition||[]).map(a=>a.source)}));}
+  const branches=recipes.map(r=>expandSpecificRecipe(item,1,r,{depth:0,maxDepth:8,seen:new Set()}));
+  const parts=branches.map((node,i)=>{const {totals,gaps}=collectRecipeLeaves(node,{},[]);return `<p><b>${branches.length>1?`Recipe ${i+1}`:"Production plan"}</b></p><ul>${recipeNodeHtml(node)}</ul>${query.constraints.fromScratch?`<p><b>Terminal inputs in the current graph:</b> ${esc(Object.entries(totals).map(([k,v])=>`${k} ×${v}`).join(", ")||"None")}</p>`:""}${gaps.length?`<p class="warn"><b>Unresolved while expanding:</b> ${esc(unique(gaps).join("; "))}</p>`:""}`}).join("");
+  const reqs=unique(recipes.map(r=>r.skill&&r.level!=null?`${r.skill} ${r.level}`:null)),sources=recipes.map(r=>r.source);
+  const html=`<h3>How to make ${esc(item.name)}</h3>${reqs.length?`<p><b>Direct production requirement${reqs.length===1?"":"s"}:</b> ${esc(reqs.join(" / "))}</p>`:""}${parts}${query.constraints.fromScratch?`<p class="muted small">“From scratch” recursively expands only documented production recipes. A terminal input may still be bought, gathered, stolen, rewarded or dropped; ask about that item to see those routes.</p>`:""}${evidence(unique(sources),["Recipe expansion is deterministic. Missing sub-recipes remain explicit gaps rather than invented steps."])}`;
+  return result(html,[itemEntity(item)],makeReasoning(query,plan,{conclusions:[`Found ${recipes.length} structured production recipe(s) for ${item.name}.`,query.constraints.fromScratch?"Expanded documented sub-recipes recursively to terminal inputs.":"Reported the direct recipe."],uncertainties:["Terminal inputs are not assumed to be raw or self-gatherable unless their own records say so."],sources}),[]);
+}
+function cheapestSourceAnswer(query,plan){
+  const item=itemRecord(plan.item.name)||plan.item.obj;if(!item)return result(`<h3>${esc(plan.item.name)}</h3><p>I don't have an item record to compare shop prices.</p>`,[plan.item],makeReasoning(query,plan,{uncertainties:["No first-class item record."]}));
+  const shops=(item.acquisition||[]).filter(a=>a.type==="shop"&&a.price!=null&&sourceHardMatches(a,{...query.constraints,includeMethods:["shop"]}));
+  if(!shops.length)return result(`<h3>${esc(item.name)}</h3><p>I don't have a matching shop source with a numeric price to compare.</p><p class="muted small">I won't treat missing prices as free or cheaper.</p>`,[itemEntity(item)],makeReasoning(query,plan,{conclusions:["No comparable numeric shop prices matched the constraints."],uncertainties:["Missing or unlabelled prices were not ranked."]}));
+  const min=Math.min(...shops.map(a=>Number(a.price))),best=shops.filter(a=>Number(a.price)===min);
+  const html=`<h3>Lowest recorded shop price for ${esc(item.name)}</h3><p>${best.map(a=>`<b>${esc(sourceLine({kind:"shop",source:a}))}</b>`).join("<br>")}</p><p class="muted small">This compares recorded purchase price only. Stock, access, travel and opportunity cost are separate.</p>${evidence(unique(best.map(a=>a.source)),["Only numeric shop prices are compared."])}`;
+  return result(html,[itemEntity(item)],makeReasoning(query,plan,{conclusions:[`Lowest recorded numeric shop price is ${min} Coins.`],uncertainties:["This is not an overall easiest/fastest ranking."],sources:best.map(a=>a.source)}),resultRefsFromSources(best.map(a=>({source:a}))));
+}
+function preferenceClarificationAnswer(query,plan){
+  const item=itemRecord(plan.item.name)||plan.item.obj,name=item?.name||plan.item.name;
+  return result(`<h3>What should “${/\bfastest\b/.test(query.q)?"fastest":/\b(?:easiest|simplest)\b/.test(query.q)?"easiest":"best"}” mean for ${esc(name)}?</h3><p>I can compare documented routes by measurable criteria, but I won't invent a single overall ranking.</p>${chips([`Which source for ${name} has the lowest documented skill requirement?`,`How do I get ${name} without combat?`,`Can I buy ${name}?`,`How do I make ${name}?`])}`,item?[itemEntity(item)]:[plan.item],makeReasoning(query,plan,{conclusions:["The requested ranking criterion is ambiguous."],uncertainties:["Fastest/easiest cannot be inferred safely from incomplete timing, travel and probability data."]}));
+}
+function downstreamUsePaths(itemName,maxDepth=3){
+  const out=[],walk=(name,path,depth,seen)=>{if(depth>maxDepth)return;const item=itemRecord(name);if(!item)return;for(const u of item.uses||[]){if(u.type!=="material_for"&&u.type!=="plant_to_grow"&&u.type!=="plant_tree")continue;const next=u.output;if(!next||seen.has(norm(next)))continue;const np=[...path,{from:name,to:next,use:u}];out.push(np);const ns=new Set(seen);ns.add(norm(next));walk(next,np,depth+1,ns)}};walk(itemName,[],1,new Set([norm(itemName)]));return out;
+}
+function downstreamUseAnswer(name){
+  const item=itemRecord(name);if(!item)return itemUseAnswer(name);const paths=downstreamUsePaths(item.name,3);if(!paths.length)return itemUseAnswer(name);
+  const leaves=paths.filter(p=>!paths.some(q=>q.length>p.length&&q.slice(0,p.length).every((x,i)=>x.to===p[i].to))).slice(0,30);
+  const urls=unique(paths.flatMap(p=>p.map(x=>x.use.source)).filter(Boolean));
+  return `<h3>What ${esc(item.name)} can lead to</h3><p>Following structured use relationships up to three steps:</p><ul>${leaves.map(p=>`<li>${esc([item.name,...p.map(x=>x.to)].join(" → "))}</li>`).join("")}</ul><p class="muted small">These are relationship paths, not claims that every downstream item is worthwhile or currently accessible.</p>${evidence(urls,["Only structured use edges are traversed."])}`;
+}
+function sourceLocationAnswer(query,plan){
+  const ref=plan.sourceRef?.obj||plan.sourceRef;if(!ref)return null;const a=ref.source||ref;
+  if(a.type==="monster_drop"&&a.monster){const m=(state.data.monsters.records||[]).find(x=>norm(x.name)===norm(a.monster));if(m)return result(monsterWhere(m),[{type:"monster",name:title(m.name),obj:m,score:180}],makeReasoning(query,plan,{conclusions:[`Resolved ${a.monster} as the referenced monster-drop source and used its structured location links.`],sources:[a.source]}));}
+  let where="";
+  if(a.area)where+=a.area;if(a.location)where+=`${where?" → ":""}${a.location}`;else if(a.room)where+=`${where?" → ":""}${a.room}`;else if(a.shop)where+=`${where?" → ":""}${a.shop}`;
+  const methodLabel=ACQ_LABELS[a.type||ref.method]||title(a.type||ref.method||"source");
+  const html=`<h3>${esc(ref.name||sourceActorName(a)||"Referenced source")}</h3>${where?`<p>The referenced <b>${esc(methodLabel)}</b> source is recorded at <b>${esc(where)}</b>.</p>`:`<p>I have the source relationship, but not a more precise structured location for it.</p>`}<p class="muted small">I kept the interaction role from the previous answer rather than assuming another entity with the same name.</p>`;
+  return result(html,[plan.sourceRef],makeReasoning(query,plan,{conclusions:[where?`Referenced source location: ${where}.`:"No precise location is structured for the referenced source."],sources:[a.source]}));
+}
+function whyAnswer(){
+  const r=state.lastReasoning;if(!r)return `<h3>Why?</h3><p>I don't have a previous reasoning trace in this session yet.</p>`;
+  const constraints=r.interpretation?.constraints||{},cs=[];
+  if(constraints.includeMethods?.length)cs.push(`included methods: ${constraints.includeMethods.map(x=>ACQ_LABELS[x]||title(x)).join(", ")}`);
+  if(constraints.excludeMethods?.length)cs.push(`excluded methods: ${constraints.excludeMethods.map(x=>ACQ_LABELS[x]||title(x)).join(", ")}`);
+  if(constraints.areas?.length)cs.push(`area: ${constraints.areas.join(", ")}`);
+  if(Object.keys(constraints.skillCaps||{}).length)cs.push(`levels: ${Object.entries(constraints.skillCaps).map(([k,v])=>`${title(k)} ${v}`).join(", ")}`);
+  return `<h3>Why I answered that way</h3><p>I interpreted your previous question as <b>${esc(r.goal)}</b>${r.interpretation?.entities?.length?` about ${esc(r.interpretation.entities.join(", "))}`:""}.</p>${cs.length?`<p><b>Constraints I applied:</b> ${esc(cs.join("; "))}.</p>`:""}${r.conclusions?.length?`<p><b>Deterministic conclusions:</b></p><ul>${r.conclusions.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}${r.uncertainties?.length?`<p class="warn"><b>Limits:</b></p><ul>${r.uncertainties.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}${evidence(r.sources||[],["This is the Companion's explicit query trace, not hidden model reasoning."])}`;
+}
+function clarificationAnswer(query){
+  const opts=query.ambiguity?.options||[];
+  return `<h3>I need one distinction</h3><p>${esc(query.ambiguity?.reason||"More than one interpretation fits.")}</p>${chips(opts.map(o=>o.type==="source_ref"?`${o.name} — ${title(o.role||"source")}`:`Tell me about ${o.name}`))}`;
+}
+function genericReasoning(query,plan,conclusion,sources=[],uncertainties=[]){return makeReasoning(query,plan,{conclusions:[conclusion],sources,uncertainties})}
+function executeQuery(query,plan){
+  if(query.goal==="explain")return result(whyAnswer(),[],null,[]);
+  if(query.ambiguity)return result(clarificationAnswer(query),query.ambiguity.options,genericReasoning(query,plan,"Asked for clarification because multiple interpretations were similarly strong."));
+  if(plan.route==="source_location"){const v=sourceLocationAnswer(query,plan);if(v)return v}
+  if(plan.route==="item_acquisition")return reasonedAcquisitionAnswer(query,plan);
+  if(plan.route==="search_acquisition")return acquisitionSearchAnswer(query,plan);
+  if(plan.route==="earliest_source")return earliestSourceAnswer(query,plan);
+  if(plan.route==="cheapest_source")return cheapestSourceAnswer(query,plan);
+  if(plan.route==="preference_clarification")return preferenceClarificationAnswer(query,plan);
+  if(plan.route==="equipment_materials"){const e=plan.item;return result(equipmentAnswer(e.obj,query.q,query.overrides),[e],genericReasoning(query,plan,`Calculated structured requirements/materials for ${e.name}.`,e.obj.obj?.sources||[]));}
+  if(plan.route==="item_production")return productionPlanAnswer(query,plan);
+  if(plan.route==="item_uses"){const item=itemRecord(plan.item.name)||plan.item.obj;const deep=/\b(lead to|leads to|downstream|eventually|turn into)\b/.test(query.q);return result(deep?downstreamUseAnswer(item.name):itemUseAnswer(item.name),[itemEntity(item)],genericReasoning(query,plan,deep?`Traversed structured downstream uses for ${item.name}.`:`Looked up structured uses for ${item.name}.`,(item.uses||[]).map(u=>u.source),["Only structured uses are traversed/listed."]))}
+
+  const entities=query.entities,intent=query.intent,q=query.q,overrides=query.overrides,collection=query.collection,directRule=query.directRule;
+  if(intent==="player_next")return result(playerAware(),entities,genericReasoning(query,plan,"Built a stats-only next-step set from the loaded skill snapshot.",[],["Bank, inventory, equipment and quest completion are not available yet."]));
+  if((intent==="count"||intent==="list")&&collection)return result(collectionAnswer(collection,intent),entities,genericReasoning(query,plan,`Enumerated the structured ${collection} collection.`));
+  if(directRule&&(intent==="mechanics"||!entities.length))return result(ruleAnswer(directRule),[{type:"rule",name:directRule.name,obj:directRule,score:180}],genericReasoning(query,plan,`Matched the question to mechanics rule ${directRule.name}.`,directRule.sources||[],directRule.unknowns||[]));
+  if(intent==="compare"){const v=compareAnswer(entities);if(v)return result(v,entities,genericReasoning(query,plan,"Compared recorded fields only; no overall winner was inferred."))}
+
+  const quests=entities.filter(e=>e.type==="quest"),monsters=entities.filter(e=>e.type==="monster"),areas=entities.filter(e=>e.type==="area"),skills=entities.filter(e=>e.type==="skill"),equipment=entities.filter(e=>e.type==="equipment"),rooms=entities.filter(e=>e.type==="room"),npcs=entities.filter(e=>e.type==="npc"),resources=entities.filter(e=>e.type==="resource"||e.type==="item"),shops=entities.filter(e=>e.type==="shop"),rules=entities.filter(e=>e.type==="rule"),mechanics=entities.filter(e=>e.type==="mechanic");
+  if(intent==="travel"&&areas.length){const v=travelAnswer(areas);if(v)return result(v,areas,genericReasoning(query,plan,"Traversed explicit area connections only.",[],["Undocumented room adjacency is not invented."]))}
+  if(intent==="beds"&&areas[0])return result(bedsAnswer(areas[0].obj),areas,genericReasoning(query,plan,`Listed explicitly documented beds in ${areas[0].name}.`));
+  if(intent==="monsters_in_area"&&areas[0])return result(monstersInArea(areas[0].obj),areas,genericReasoning(query,plan,`Used exact room-linked monsters for ${areas[0].name}.`,[],["Unlinked monsters may be omitted."]));
+  if(quests[0]){const ready=intent==="requirements"||/\b(can i|ready|requirements?|need)\b/.test(q);return result(questAnswer(quests[0].obj,ready,overrides),quests,genericReasoning(query,plan,ready?`Checked ${quests[0].name} requirements against known/stated skill levels.`:`Returned the structured ${quests[0].name} quest record.`,[quests[0].obj.source].filter(Boolean),["Items/access/completion may remain unknown."]))}
+  if(monsters[0]){let html,conclusion;if(intent==="drops"){html=monsterDrops(monsters[0].obj);conclusion="Returned recorded monster drops."}else if(intent==="locate"){html=monsterWhere(monsters[0].obj);conclusion="Returned exact room links where available."}else if(intent==="requirements"||intent==="mechanics"||/\b(fight|combat|weak|best|recommended|dps|hit chance)\b/.test(q)){html=monsterCombat(monsters[0].obj);conclusion="Compared only verified combat fields and preserved formula limits."}else{html=monsterProfile(monsters[0].obj);conclusion="Returned the structured monster profile."}return result(html,monsters,genericReasoning(query,plan,conclusion,["https://flatmmo.wiki/index.php/Monsters"],["Exact combat DPS/recommended levels remain unresolved."]))}
+  if(shops[0]&&/\b(sell|sells|stock|inventory|buy|shop|store)\b/.test(q))return result(shopInventoryAnswer(shops[0]),shops,genericReasoning(query,plan,`Listed item-specific inventory for ${shops[0].name}.`));
+  if(areas[0]&&/\b(shop|store)\b/.test(q)&&/\b(sell|sells|stock|inventory|buy|what)\b/.test(q))return result(shopInventoryAnswer(areas[0]),areas,genericReasoning(query,plan,`Listed item-specific shops in ${areas[0].name}.`));
+  if(equipment[0]&&intent==="materials")return result(equipmentAnswer(equipment[0].obj,q,overrides),equipment,genericReasoning(query,plan,`Calculated structured materials for ${equipment[0].name}.`,equipment[0].obj.obj?.sources||[]));
+  if(resources[0]&&intent==="info")return result(itemOverviewAnswer(resources[0].name),resources,genericReasoning(query,plan,`Summarized acquisition/use coverage for ${resources[0].name}.`));
+  if(rooms[0])return result(roomAnswer(rooms[0]),rooms,genericReasoning(query,plan,`Returned structured room data for ${rooms[0].name}.`));
+  if(npcs[0])return result(npcAnswer(npcs[0]),npcs,genericReasoning(query,plan,`Returned structured NPC data for ${npcs[0].name}.`));
+  const service=serviceAnswer(q,areas[0]?.obj||null);if(service&&(intent==="locate"||/\b(service|shop|store|bank|travel|teleport)\b/.test(q)))return result(service,areas,genericReasoning(query,plan,"Matched documented room/NPC service relationships."));
+  if(equipment[0])return result(equipmentAnswer(equipment[0].obj,q,overrides),equipment,genericReasoning(query,plan,`Returned structured equipment data for ${equipment[0].name}.`,equipment[0].obj.obj?.sources||[]));
+  if(skills[0]){const key=norm(skills[0].name),level=overrides[key]??query.constraints.skillCaps[key];if(norm(skills[0].name)==="stealing"&&level!=null&&/\b(steal|pickpocket|stall|chest|unlock|can i)\b/.test(q))return result(stealingProgressionAnswer(level),skills,genericReasoning(query,plan,`Filtered Stealing sources to level ${level} or below.`));if(level!=null&&(intent==="progression"||/\b(at|level|equip|make|unlock|can i)\b/.test(q)))return result(skillProgressionAnswer(skills[0].obj,level),skills,genericReasoning(query,plan,`Filtered structured ${skills[0].name} unlocks to level ${level} or below.`));return result(skillAnswer(skills[0].obj),skills,genericReasoning(query,plan,`Returned the structured ${skills[0].name} skill record.`,[skills[0].obj.source].filter(Boolean)))}
+  if(rules[0])return result(ruleAnswer(rules[0].obj),rules,genericReasoning(query,plan,`Returned mechanics rule ${rules[0].name}.`,rules[0].obj.sources||[],rules[0].obj.unknowns||[]));
+  if(mechanics[0])return result(mechanicAnswer(mechanics[0].obj),mechanics,genericReasoning(query,plan,`Returned mechanic ${mechanics[0].name}.`,[mechanics[0].obj.source].filter(Boolean)));
+  if(areas[0])return result(areaAnswer(areas[0].obj),areas,genericReasoning(query,plan,`Returned structured area data for ${areas[0].name}.`,[areas[0].obj.source].filter(Boolean)));
+  if(collection&&(intent==="info"||intent==="mechanics"))return result(collectionAnswer(collection,"count"),entities,genericReasoning(query,plan,`Counted the structured ${collection} collection.`));
+  return result(unknown(q),entities,genericReasoning(query,plan,"No supported interpretation/entity combination was strong enough to answer safely.",[],["The Companion chose not to fill the gap from another game or from unsupported assumptions."]));
+}
 function unknown(q){
   const candidates=resolveEntities(q,{limit:4});return `<h3>I couldn't resolve that confidently</h3><p>I understood the wording as a FlatMMO question, but I couldn't connect it to a supported intent/entity combination without guessing.</p>${candidates.length?`<p>Possible matches:</p>${chips(candidates.map(x=>`Tell me about ${x.name}`))}`:""}<p class="muted small">You can ask naturally: “where can I mine graphite?”, “can I do Atlas Crown with Mining 40 and Crafting 48?”, “how do I get to Omboko from Everbrook?”, or “what does a gorilla drop?”</p>`;
 }
 function answer(raw){
   const q=norm(raw);if(!state.ready)return `<p class="warn">Knowledge is still loading.</p>`;
-  let entities=resolveEntities(q);entities=contextualize(q,entities);const intent=detectIntent(q,entities),overrides=extractStatedSkillLevels(raw),collection=genericCollection(q),directRule=ruleForQuestion(q);
-  if(intent==="player_next"){rememberContext(intent,entities,raw);return playerAware()}
-  if((intent==="count"||intent==="list")&&collection){rememberContext(intent,entities,raw);return collectionAnswer(collection,intent)}
-  if(directRule && (intent==="mechanics"||!entities.length)){rememberContext("mechanics",[{type:"rule",name:directRule.name,obj:directRule}],raw);return ruleAnswer(directRule)}
-  if(intent==="compare"){const v=compareAnswer(entities);if(v){rememberContext(intent,entities,raw);return v}}
-
-  const quests=entities.filter(e=>e.type==="quest"),monsters=entities.filter(e=>e.type==="monster"),areas=entities.filter(e=>e.type==="area"),skills=entities.filter(e=>e.type==="skill"),equipment=entities.filter(e=>e.type==="equipment"),rooms=entities.filter(e=>e.type==="room"),npcs=entities.filter(e=>e.type==="npc"),resources=entities.filter(e=>e.type==="resource"||e.type==="item"),shops=entities.filter(e=>e.type==="shop"),rules=entities.filter(e=>e.type==="rule"),mechanics=entities.filter(e=>e.type==="mechanic");
-
-  if(intent==="travel"&&areas.length){const v=travelAnswer(areas);rememberContext(intent,areas,raw);if(v)return v}
-  if(intent==="beds"&&areas[0]){rememberContext(intent,areas,raw);return bedsAnswer(areas[0].obj)}
-  if(intent==="monsters_in_area"&&areas[0]){rememberContext(intent,areas,raw);return monstersInArea(areas[0].obj)}
-  if(quests[0]){const ready=intent==="requirements"||/\b(can i|ready|requirements?|need)\b/.test(q);rememberContext(intent,quests,raw);return questAnswer(quests[0].obj,ready,overrides)}
-  if(monsters[0]){rememberContext(intent,monsters,raw);if(intent==="drops")return monsterDrops(monsters[0].obj);if(intent==="locate")return monsterWhere(monsters[0].obj);if(intent==="requirements"||intent==="mechanics"||/\b(fight|combat|weak|best|recommended|dps|hit chance)\b/.test(q))return monsterCombat(monsters[0].obj);return monsterProfile(monsters[0].obj)}
-  if(shops[0]&&/\b(sell|sells|stock|inventory|buy|shop|store)\b/.test(q)){rememberContext("shop",shops,raw);return shopInventoryAnswer(shops[0])}
-  if(areas[0]&&/\b(shop|store)\b/.test(q)&&/\b(sell|sells|stock|inventory|buy|what)\b/.test(q)){rememberContext("shop",areas,raw);return shopInventoryAnswer(areas[0])}
-  // A compound materials question about a named equipment item/set should use that
-  // structured recipe before incidental ingredient entities such as Coal or Iron Ore.
-  if(equipment[0]&&intent==="materials"){rememberContext(intent,equipment,raw);return equipmentAnswer(equipment[0].obj,q,overrides)}
-  if(resources[0]&&intent==="uses"){rememberContext(intent,resources,raw);return itemUseAnswer(resources[0].name)}
-  if(resources[0]&&(intent==="locate"||intent==="drops"||intent==="materials"||/\b(get|obtain|source|mine|fish|chop|dig|buy|steal|farm|grow|craft|make|brew|cook|smelt|forge)\b/.test(q))){rememberContext(intent==="drops"?"locate":intent,resources,raw);return resourceAnswer(resources[0].name,q)}
-  if(resources[0]&&intent==="info"){rememberContext(intent,resources,raw);return itemOverviewAnswer(resources[0].name)}
-  if(rooms[0]){rememberContext(intent,rooms,raw);return roomAnswer(rooms[0])}
-  if(npcs[0]){rememberContext(intent,npcs,raw);return npcAnswer(npcs[0])}
-  const service=serviceAnswer(q,areas[0]?.obj||null);if(service && (intent==="locate"||/\b(service|shop|store|bank|travel|teleport)\b/.test(q))){rememberContext("service",areas,raw);return service}
-  if(equipment[0]){rememberContext(intent,equipment,raw);return equipmentAnswer(equipment[0].obj,q,overrides)}
-  if(skills[0]){const key=norm(skills[0].name),level=overrides[key];rememberContext(intent,skills,raw);if(norm(skills[0].name)==="stealing"&&level!=null&&/\b(steal|pickpocket|stall|chest|unlock|can i)\b/.test(q))return stealingProgressionAnswer(level);if(level!=null&&(intent==="progression"||/\b(at|level|equip|make|unlock|can i)\b/.test(q)))return skillProgressionAnswer(skills[0].obj,level);return skillAnswer(skills[0].obj)}
-  if(rules[0]){rememberContext("mechanics",rules,raw);return ruleAnswer(rules[0].obj)}
-  if(mechanics[0]){rememberContext("mechanics",mechanics,raw);return mechanicAnswer(mechanics[0].obj)}
-  if(areas[0]){rememberContext(intent,areas,raw);return areaAnswer(areas[0].obj)}
-  if(collection&&(intent==="info"||intent==="mechanics")){rememberContext(intent,entities,raw);return collectionAnswer(collection,"count")}
-  rememberContext(intent,entities,raw);return unknown(q);
+  const query=interpretQuestion(raw),plan=planQuery(query),out=executeQuery(query,plan);
+  // “Why?” explains the previous turn and must not replace that reasoning trace.
+  if(query.goal!=="explain")rememberContext(query.intent,out.focus?.length?out.focus:query.entities,raw,{query,resultRefs:out.resultRefs||[],reasoning:out.reasoning||null});
+  return out.html;
 }
 
 function submitQuestion(text,{record=true}={}){

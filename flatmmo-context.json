@@ -47,10 +47,10 @@
       "resources": "61 structured resource/activity nodes across 44 rooms",
       "mechanicsRules": "12 explicit rule/readiness records from flatmmo-rules.json",
       "playerIntegration": "Optional/disposable browser storage. Manual levels are unverified and may be partial; XP is unknown. Official API remains pending. No individual player snapshot is embedded in this public context.",
-      "humanUi": "Deterministic conversational assistant v1.8: intent/entity interpretation backed by a first-class item graph for acquisition, uses, shops, Stealing, Farming, recipes, rewards and follow-ups. FlatMMO facts remain structured/source-backed; no LLM is required.",
+      "humanUi": "Deterministic conversational reasoning assistant v1.9: structured query interpretation, goal/constraint planning, semantic context across turns, constrained graph search, recursive documented-recipe expansion, measurable route comparisons and explicit why/explanation traces. FlatMMO facts remain structured/source-backed; no LLM is required.",
       "items": "588 first-class item records with 1168 normalized acquisition routes; 199 items have structured use relationships. The graph is broad but intentionally not claimed exhaustive."
     },
-    "release": "knowledge-expansion-v1.8",
+    "release": "reasoning-engine-v1.9",
     "updatePolicy": "Manually maintained static snapshot. The deployment workflow publishes committed files; it does not refresh game data or player snapshots. AI retrieval is optional/best-effort."
   },
   "instructions": [

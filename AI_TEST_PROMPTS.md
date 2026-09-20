@@ -1,4 +1,4 @@
-# FlatMMO Companion v1.8 — Regression Tests
+# FlatMMO Companion v1.9 — Regression Tests
 
 These tests cover both the public AI grounding layer and the deterministic human Companion.
 
@@ -582,3 +582,108 @@ Expected:
 - Crafting 80 converts 1 Magic Logs into 100 Stardust.
 - Arrow Shaft recipes preserve their different output quantities, including both Cactus Logs and Blessed Logs producing 16 shafts.
 - Do not collapse alternative recipes merely because level/output quantity match.
+
+# Human Companion v1.9 reasoning-engine tests
+
+These tests exercise the deployed deterministic reasoning layer. They are intentionally multi-turn where conversation state matters.
+
+## Constraint inheritance and source-role context
+Prompts in sequence:
+1. `How do I get Green Leaf Seeds?`
+2. `Any ways other than combat?`
+3. `Which source is available first?`
+4. `Where is the farmer?`
+
+Expected:
+- Turn 1 shows the documented pickpocket and monster-drop routes.
+- Turn 2 preserves Green Leaf Seeds as the subject and excludes monster drops.
+- Turn 3 inherits the non-combat constraint and identifies Farmer pickpocketing at Stealing 10 as the lowest documented skill gate among the remaining routes.
+- Turn 4 resolves the Farmer as the referenced pickpocket source at Everbrook → Farm, rather than silently switching to the monster named Farmer.
+
+Then ask: `What about combat?`
+
+Expected:
+- The explicit new method re-opens monster-drop routes instead of inheriting the old non-combat exclusion.
+
+## Access-condition reasoning
+Prompt:
+`What can I steal at level 40 without combat?`
+
+Expected:
+- Skill-eligible Stealing routes may be shown.
+- A route whose documented access condition requires killing/defeating a guard is excluded by the non-combat constraint even though the acquisition method itself is Stealing.
+
+## Stated-level blocking
+Prompt:
+`How do I get Green Leaf Seeds without combat at Stealing 5?`
+
+Expected:
+- Farmer pickpocketing remains the documented non-combat item-specific route.
+- It is marked blocked because it requires Stealing 10 and the question states Stealing 5.
+- No monster route is used to bypass the constraint.
+
+## Constrained graph discovery
+Prompts:
+- `What can I steal at level 15 that gives seeds?`
+- `What can I buy in Everbrook under 100 coins?`
+
+Expected:
+- The first query searches item acquisition relationships, filters to Stealing sources at/below the stated level where the skill gate is known, and matches seed items.
+- The second query filters explicit shop rows by Everbrook and numeric Coin prices below the requested cap.
+- Neither answer is an XP-rate or overall efficiency recommendation.
+
+## Numeric comparison versus qualitative ranking
+Prompts:
+- `What is the cheapest way to buy Iron Scimitar?`
+- `What is the easiest way to get Green Leaf Seeds?`
+
+Expected:
+- The first may compare explicit numeric shop prices and reports Donny's recorded 2,160 Coin Iron Scimitar price, while keeping access/travel/stock as separate considerations.
+- The second does not invent a universal definition of easiest; it asks for a measurable criterion such as lowest documented skill requirement, non-combat, buying or making.
+
+## Price-cap filtering
+Prompts:
+- `Can I buy Iron Scimitar under 2000 coins?`
+- `Can I buy Iron Scimitar under 3000 coins?`
+
+Expected:
+- The 2,000 Coin query has no documented shop route matching the cap.
+- The 3,000 Coin query can return Donny's 2,160 Coin route.
+- A failed filter is described as no documented matching route, not proof that the game contains none.
+
+## Recursive production planning
+Prompts:
+- `How do I make Iron Bar from scratch?`
+- `How do I make Iron Scimitar from scratch?`
+
+Expected:
+- Iron Bar expands to Forging 5, 1 Iron Ore and 1 Coal Ore.
+- Iron Scimitar expands its documented recipe but leaves Iron Blade as an explicit knowledge gap if the current graph has no recipe/acquisition source for that intermediate item.
+- Recursive expansion never invents a missing sub-recipe.
+
+## Downstream use traversal
+Prompt:
+`What can Graphite lead to?`
+
+Expected:
+- Traverse structured use relationships and include Graphite → Graphite Bucket.
+- Do not turn the relationship traversal into an unsupported value/worth recommendation.
+
+## Why/explainability
+Prompts in sequence:
+1. `Can I do Atlas Crown with Mining 40 and Crafting 48?`
+2. `Why?`
+
+Expected:
+- First answer: Mining 40 passes; Crafting 50 fails by 2.
+- `Why?` explains the explicit deterministic interpretation, stated levels, requirement comparison, evidence/limits and does not expose hidden model chain-of-thought.
+
+## Existing calculation and combat guardrails remain intact
+Prompts:
+- `How many Iron Bars do I need for full Iron Armour, and if I smelt them myself how much ore and coal?`
+- `What combat level should I be before fighting a gorilla and what exact DPS will I do?`
+
+Expected:
+- Full Iron Armour remains 125 Iron Bars → 125 Iron Ore + 125 Coal under the documented recipe expansion.
+- Exact DPS/recommended combat level remain blocked because the combat formulas are unresolved.
+
