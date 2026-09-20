@@ -1,7 +1,7 @@
 {
   "schemaVersion": 8,
   "generated": "2026-09-20",
-  "release": "language-conversation-lexicon-v2.1",
+  "release": "conversation-kernel-v2.2",
   "layout": "flat-root",
   "branch": "v2-online",
   "counts": {
@@ -138,7 +138,14 @@
     "negatedEntitySuppression": "Explicitly rejected/negated entity candidates are suppressed so phrases such as “combat, not Bat” do not let Bat outrank the positive subject.",
     "glossaryDefinitions": "Beginner and player-language questions can be answered from curated term definitions without creating an active gameplay topic thread.",
     "communityTerminology": "FlatMMO-specific usage is provenance-backed from official news, the community wiki and public web-visible community/developer discussions. Usage evidence is not mechanics authority.",
-    "genreVocabulary": "Broader MMO/RPG genre vocabulary is intentionally deferred to a later, separately controlled layer."
+    "genreVocabulary": "Broader MMO/RPG genre vocabulary is intentionally deferred to a later, separately controlled layer.",
+    "conversationKernel": "Deterministic conversation kernel v2.2: executable semantic actions, separate gameplay/language context, hard typed corrections, isolated hypothetical levels, retained production/journey/search operations, and answer-style composition. No LLM or public API dependency.",
+    "files": [
+      "index.html",
+      "companion-engine.js",
+      "companion-conversation.js",
+      "companion-ui.js"
+    ]
   },
   "coverage": {
     "combatStyles": [
@@ -250,7 +257,7 @@
     "Public web evidence does not provide a complete Discord terminology corpus, so only web-visible official/community language is attested.",
     "The foreign-game comparison list is intentionally small and conservative; unlisted comparisons use a non-mechanical fallback."
   ],
-  "aiContextSha256": "c030f04788562ca3f92ec0ce0dab50ea715774d9e4bf81d9a4611226ad297f95",
+  "aiContextSha256": "3dd6024e7a21b49f374de2c9cba6ec1d9818a4c4847ad0790cfcbc47aa3f558b",
   "updatePolicy": "Manually maintained static snapshot. The deployment workflow publishes committed files; it does not refresh game data or player snapshots. AI retrieval is optional/best-effort.",
-  "languageLexiconSha256": "81f3232e804aa96bd6de7becce7ed0812f9d7e1bb12e2c4c16a7e6da30acb1d8"
+  "languageLexiconSha256": "fd31e1d792e9bb7b22637b60cb1aeb60f1094befef3f824773d08db081cf3824"
 }

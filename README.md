@@ -21,6 +21,12 @@ The current public-profile loader is interim and may be blocked by normal browse
 
 Browser persistence is a convenience, not a dependency. Clearing site data must result in a harmless cold start.
 
+## v2.2 architecture and implementation pass
+
+The current replacement extracts the browser engine into `companion-engine.js`, adds `companion-conversation.js` for semantic interpretation and operation memory, and moves startup/events into `companion-ui.js`. All three files must be deployed beside `index.html`. The structured game knowledge is preserved.
+
+See `ARCHITECTURE-v2.2.md` for implementation boundaries, validation and known limitations; `UPLOAD-v2.2.txt` for the flat-upload procedure. Run `node conversation-regression.cjs` and `node ui-smoke.cjs` for the included checks. No browser/LLM service or new public API dependency is added.
+
 ## Current source scope
 
 Included:

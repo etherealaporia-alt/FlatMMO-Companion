@@ -7,7 +7,7 @@
 <link rel="canonical" href="https://etherealaporia-alt.github.io/FlatMMO-Companion/ai.html">
 <style>:root{color-scheme:dark}body{margin:0;background:#0d1117;color:#eef2f7;font-family:system-ui,-apple-system,Segoe UI,sans-serif}main{max-width:1100px;margin:auto;padding:28px 18px 64px}h1{margin-bottom:.3rem}.muted{color:#9ba9bb}.card{background:#151b25;border:1px solid #283448;border-radius:14px;padding:16px;margin:14px 0}a{color:#73b8ff}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#101620;border:1px solid #283448;border-radius:12px;padding:16px;font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}</style>
 </head><body><main>
-<h1>FlatMMO Companion AI Context</h1><p class="muted">v2.1 · curated player-language interpretation + deterministic conversational architecture · generated 2026-09-20</p>
+<h1>FlatMMO Companion AI Context</h1><p class="muted">v2.2 · curated player-language interpretation + deterministic conversational architecture · generated 2026-09-20</p>
 <section class="card">
 <p><strong>Critical rule:</strong> FlatMMO is independent. Missing facts must not be filled with RuneScape or other-game mechanics.</p>
 <p><strong>Language rule:</strong> colloquial/community/foreign-game wording can help interpret intent, but cannot rename FlatMMO entities or establish mechanics.</p>
@@ -19,7 +19,7 @@
 <p><strong>Quest coverage:</strong> 21 named quests: 19 normalized core records plus 2 conservative observation-backed placeholders.</p>
 <p><strong>Player data:</strong> the human Companion may load public skill stats by username, but this public grounding page contains no individual player's live/private snapshot.</p>
 <p><a href="flatmmo-context.json">Canonical JSON</a> · <a href="flatmmo-context.txt">Text fallback</a> · <a href="flatmmo-items.json">Item graph</a> · <a href="flatmmo-graph.json">Relationship graph</a> · <a href="flatmmo-language.json">Language lexicon</a> · <a href="flatmmo-rules.json">Mechanics rules</a> · <a href="flatmmo-overrides.json">Observed overrides</a></p>
-<p><strong>Human UI:</strong> v2.1 adds English colloquial interpretation, provenance-backed FlatMMO terminology, negated-entity suppression and isolated foreign-game comparisons to the v2.0 topic-thread/repair architecture. FlatMMO facts still come from the structured knowledge layer.</p>
+<p><strong>Human UI:</strong> Deterministic conversation kernel v2.2: executable semantic actions, separate gameplay/language context, hard typed corrections, isolated hypothetical levels, retained production/journey/search operations, and answer-style composition. No LLM or public API dependency.</p>
 </section><pre>{
   "meta": {
     "id": "flatmmo-companion-ai-context",
@@ -74,12 +74,12 @@
       "resources": "61 structured resource/activity nodes across 44 rooms",
       "mechanicsRules": "12 explicit rule/readiness records from flatmmo-rules.json",
       "playerIntegration": "Optional/disposable browser storage. Manual levels are unverified and may be partial; XP is unknown. Official API remains pending. No individual player snapshot is embedded in this public context.",
-      "humanUi": "Deterministic conversational companion v2.1: v2.0 typed topic threads/semantic repair plus a curated English colloquial interpreter, provenance-backed FlatMMO terminology glossary, negated-entity suppression, and quarantined stock foreign-game comparisons. Language knowledge helps interpret requests but never supplies game mechanics.",
+      "humanUi": "Deterministic conversation kernel v2.2: executable semantic actions, separate gameplay/language context, hard typed corrections, isolated hypothetical levels, retained production/journey/search operations, and answer-style composition. No LLM or public API dependency.",
       "items": "588 first-class item records with 1168 normalized acquisition routes; 199 items have structured use relationships. The graph is broad but intentionally not claimed exhaustive.",
       "relationshipGraph": "flatmmo-graph.json: 1574 typed nodes, 7380 explicit relationships and 1 retained unresolved text-only reference",
       "languageLexicon": "flatmmo-language.json: 20 English colloquial groups, 46 FlatMMO-attested terms, 7 curated foreign-game comparison responses; genre-wide vocabulary is intentionally deferred."
     },
-    "release": "language-conversation-lexicon-v2.1",
+    "release": "conversation-kernel-v2.2",
     "updatePolicy": "Manually maintained static snapshot. The deployment workflow publishes committed files; it does not refresh game data or player snapshots. AI retrieval is optional/best-effort."
   },
   "instructions": [
@@ -331,7 +331,7 @@
     "findItem": "Resolve the item in items, then inspect all acquisition routes or filter by the requested method (buy/steal/farm/craft/non-combat). Preserve unknown prices, chances and access conditions.",
     "useItem": "Use items[].uses to answer what an item makes, grows, or contributes to. Distinguish recipe quantity from acquisition quantity.",
     "relationshipGraph": "For cross-domain questions, resolve stable typed entities and traverse explicit flatmmo-graph.json edges. Do not collapse entities merely because their display names match.",
-    "conversation": "Human-side remembered context may resolve omitted references, but explicit current language always wins. Corrections re-run the relevant prior query rather than becoming new game facts.",
+    "conversation": "Explicit subjects and role constraints replace candidates before execution. Gameplay operations and short-lived glossary/comparison context are separate. User fact corrections update real levels; hypothetical levels remain scoped to the calculation.",
     "language": "Interpret ordinary English discourse markers and attested FlatMMO terms before fuzzy entity scoring. Use language knowledge to identify speech acts/concepts only; resolve factual answers from FlatMMO structured data.",
     "foreignComparison": "When a user explicitly compares FlatMMO to RuneScape/OSRS, use the curated comparison table in flatmmo-language.json when available. Otherwise give the conservative comparison fallback. Never promote foreign-game terminology into a FlatMMO alias."
   },
@@ -48875,8 +48875,8 @@
   },
   "languageLexiconMetadata": {
     "sourceFile": "flatmmo-language.json",
-    "schemaVersion": "1.0",
-    "release": "language-conversation-lexicon-v2.1",
+    "schemaVersion": "1.1",
+    "release": "conversation-kernel-v2.2",
     "englishColloquialGroups": 20,
     "flatmmoAttestedTerms": 46,
     "foreignComparisonResponses": 7,
@@ -48916,7 +48916,9 @@
         "role": "public FlatMMO developer/community discussion; attests AFK, skilling/grinds, PvM/raids language"
       }
     ],
-    "embeddingPolicy": "The full language lexicon is published as a separate root JSON file. This context publishes its counts, policies, provenance and comparison IDs without duplicating the complete phrase inventory."
+    "embeddingPolicy": "The full language lexicon is published as a separate root JSON file. This context publishes its counts, policies, provenance and comparison IDs without duplicating the complete phrase inventory.",
+    "semanticActionGroups": 3
   }
-}</pre>
+}
+</pre>
 </main></body></html>
