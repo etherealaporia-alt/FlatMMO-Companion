@@ -1,4 +1,4 @@
-# FlatMMO Companion v1.6.1 — Regression Tests
+# FlatMMO Companion v1.7 — Regression Tests
 
 These tests cover both the public AI grounding layer and the deterministic human Companion.
 
@@ -262,7 +262,100 @@ Expected:
 - No.
 - `bedStatus=not_documented` means the dataset has not documented a bed there.
 
-# Human Companion v1.6.1 tests
+# Human Companion v1.7 tests
+
+
+## Conversational query-engine tests
+
+These tests verify that the human Companion accepts ordinary phrasing rather than requiring one exact command form.
+
+### Collection questions
+Prompts:
+- `How many quests are there?`
+- `List the skills.`
+
+Expected:
+- 21 quests, with the 19-core + 2 observation-backed distinction preserved.
+- 18 structured skills, including Firemaking and excluding Summoning.
+
+### Resource/acquisition phrasing
+Prompts:
+- `Where can I mine graphite?`
+- `How do I get green leaf?`
+
+Expected:
+- Graphite reports the structured Volcano resource locations and Mining 70 only where explicitly documented; Volcanic Rocky may also appear as a monster-drop source.
+- Green Leaf reports recorded monster-drop sources rather than returning a generic monster stat card.
+
+### Exact place over generic service
+Prompts:
+- `Where is the Magic Shop?`
+- `Where can I bank in Everbrook?`
+
+Expected:
+- Magic Shop resolves to Mystic Vale → Magic Shop, not a list of every shop.
+- Everbrook banking resolves to the documented Everbrook Bank room/service.
+
+### Natural travel question
+Prompt:
+`How do I get to Omboko from Everbrook?`
+
+Expected:
+- Everbrook → Omboko by boat from Everbrook Docks.
+- Hold 25 Coins.
+- Do not invent undocumented room-to-room walking directions.
+
+### Inline player levels
+Prompt:
+`I'm Mining 40 and Crafting 48. Can I do Atlas Crown?`
+
+Expected:
+- Mining 40 passes.
+- Crafting 50 fails by 2 levels.
+- Inline levels apply only to this answer and do not silently replace the saved player snapshot.
+- Unknown procedure/reward/player-state fields remain unknown.
+
+### Follow-up context
+Prompts in sequence:
+1. `What does a gorilla drop?`
+2. `Where is it?`
+
+Expected:
+- The second prompt resolves `it` to Gorilla.
+- The location answer uses exact room links where available.
+
+### Material expansion
+Prompt:
+`How many Iron Bars do I need for full Iron Armour, and if I smelt them myself how much ore and coal?`
+
+Expected:
+- 125 Iron Bars.
+- Expanded known recipe total: 125 Iron Ore + 125 Coal.
+- Equip and Forging requirements remain separate from the material calculation.
+
+### Skill progression phrasing
+Prompt:
+`At Melee 25 what can I equip?`
+
+Expected:
+- Return structured Melee equipment unlocked at or below 25.
+- Do not convert production requirements into equip requirements.
+
+### Unsupported combat maths in natural language
+Prompt:
+`What combat level should I be before fighting a gorilla and what exact DPS will I do?`
+
+Expected:
+- Recorded Gorilla facts may be discussed.
+- Exact DPS/recommended level remain blocked because the formulas are unresolved.
+
+### Ambiguity/unknown behaviour
+Prompt:
+`What's the best thing?`
+
+Expected:
+- Do not manufacture an interpretation or recommendation.
+- Ask for or suggest a more specific FlatMMO entity/goal.
 
 These tests apply to the deployed deterministic human UI rather than an external AI reading the context file.
 
@@ -299,7 +392,7 @@ Expected:
 
 ## Legacy Firemake cache compatibility
 Setup:
-Use a previously saved v1.6.1 manual snapshot whose skill key is `firemake`, if one exists.
+Use a previously saved pre-v1.7 manual snapshot whose skill key is `firemake`, if one exists.
 
 Expected:
 - It is displayed/used as Firemaking.

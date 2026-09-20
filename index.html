@@ -81,7 +81,7 @@ dialog{background:var(--panel);color:var(--text);border:1px solid #687258;border
 <div id="chat" class="chat">
   <div class="msg bot">
     <div class="kicker">The field guide</div><h3>What are you working toward?</h3>
-    <p>Ask about a quest, an item or your next unlock. Answers come from the Companion’s FlatMMO data, with evidence and gaps shown along the way.</p>
+    <p>Ask naturally about quests, items, skills, places, monsters, routes, requirements or your next unlock. The Companion interprets the question, then answers from structured FlatMMO data with evidence and gaps shown along the way.</p>
     <p class="muted small">Enter a public FlatMMO username above. This build will try to read the official public profile for skill levels. If it is unavailable, use Enter skill levels for personal checks. Leave unknown skills blank. Browser storage is optional.</p>
   </div>
 </div>
@@ -142,7 +142,7 @@ const KNOWN_SKILLS=[
 const SKILL_ALIASES={firemake:"Firemaking"};
 
 const state = {
-  data:{}, ready:false, lastEntity:null, playerRequest:0,
+  data:{}, ready:false, lastEntity:null, context:{intent:null,entities:[],raw:""}, playerRequest:0,
   player:null, history:[], restoring:false,
   playerProvider:{
     status:"interim-public-profile",
@@ -489,284 +489,373 @@ async function loadAll(){
   restoreSession();
 }
 function buildIndexes(){
-  const dropMap=new Map();
+  const dropMap=new Map(), resourceMap=new Map(), serviceMap=new Map(), roomById=new Map(), npcById=new Map(), productionMap=new Map(), areaGraph=new Map();
+  const catalog=[];
+  const add=(type,name,obj,extra={})=>{
+    if(!name)return;
+    const aliases=unique([name,...(extra.aliases||[])]).map(norm).filter(x=>x.length>=2);
+    catalog.push({type,name:String(name),obj,aliases,area:extra.area||null,room:extra.room||null});
+  };
+  const pushMap=(map,key,value)=>{key=norm(key);if(!key)return;if(!map.has(key))map.set(key,[]);map.get(key).push(value)};
+
   for(const m of state.data.monsters.records||[]){
+    add("monster",title(m.name),m,{aliases:[m.name]});
     for(const d of m.drops||[]){
-      const k=norm(d.item);
-      if(!dropMap.has(k)) dropMap.set(k,[]);
-      dropMap.get(k).push({monster:m,drop:d});
+      const item=title(d.item); pushMap(dropMap,item,{monster:m,drop:d});
     }
   }
-  state.dropMap=dropMap;
-}
+  for(const q of state.data.quests.records||[]) add("quest",q.name,q);
+  for(const sk of state.data.skills.records||[]) add("skill",sk.name,sk,{aliases:sk.wikiPageName?[sk.wikiPageName]:[]});
+  for(const e of state.data.equipmentFlat||[]) add("equipment",e.name,e,{aliases:[e.family,e.kind].filter(Boolean)});
+  for(const m of state.data.mechanics.records||[]) add("mechanic",m.name,m,{aliases:[m.id]});
+  for(const r of state.data.rules.rules||[]) add("rule",r.name,r,{aliases:[r.id,...String(r.id||"").split(/[._-]/)]});
 
-function getMonster(q){
-  let m=findNamed(q,state.data.monsters.records);
-  if(!m && state.lastEntity?.type==="monster" && /\b(it|itself|them|that|this|weak|drop|where|fight|combat)\b/i.test(q)) m=state.lastEntity.obj;
-  return m;
-}
-function getQuest(q){
-  let x=findNamed(q,state.data.quests.records);
-  if(!x && state.lastEntity?.type==="quest" && /\b(it|that|this|requirements?|reward|steps?|where|do)\b/i.test(q)) x=state.lastEntity.obj;
-  return x;
-}
-function getArea(q){
-  let x=findNamed(q,state.data.areas.records);
-  if(!x && state.lastEntity?.type==="area" && /\b(it|there|that|this|rooms?|bed|where)\b/i.test(q)) x=state.lastEntity.obj;
-  return x;
-}
-function getSkill(q){ return findNamed(q,state.data.skills.records); }
-function getEquipment(q){
-  let best=null,bestScore=0;
-  for(const x of state.data.equipmentFlat){
-    const s=entityScore(q,x.name);
-    if(s>bestScore){best=x;bestScore=s}
+  for(const a of state.data.areas.records||[]){
+    add("area",a.name,a);
+    areaGraph.set(norm(a.name),(a.externalConnections||[]).map(x=>({...x,from:a.name})));
+    for(const room of a.rooms||[]){
+      roomById.set(room.id,{area:a,room});
+      add("room",room.name,room,{area:a,aliases:[room.id]});
+      for(const service of room.services||[]) pushMap(serviceMap,service,{area:a,room,kind:"service",value:service});
+      for(const feature of room.features||[]) pushMap(serviceMap,feature,{area:a,room,kind:"feature",value:feature});
+      for(const node of room.resourceNodes||[]){
+        if(node.resource){
+          pushMap(resourceMap,node.resource,{area:a,room,node});
+        }
+      }
+    }
+    for(const npc of a.npcs||[]){
+      npcById.set(npc.id,{area:a,npc});
+      const room=roomById.get(npc.roomId)?.room||null;
+      add("npc",npc.name,npc,{area:a,room,aliases:[npc.id]});
+      for(const fn of npc.functions||[]) pushMap(serviceMap,fn,{area:a,room,npc,kind:"npc-function",value:fn});
+    }
   }
-  return bestScore>=50?best:null;
+
+  for(const [key,hits] of dropMap) add("item",title(key),{name:title(key),key,hits});
+  for(const [key,hits] of resourceMap) add("resource",title(key),{name:title(key),key,hits});
+
+  for(const e of state.data.equipmentFlat||[]){
+    const mats=e.obj?.materials||e.obj?.setMaterialTotals||{};
+    for(const k of Object.keys(mats)) if(!catalog.some(x=>x.type==="item"&&norm(x.name)===norm(title(k)))) add("item",title(k),{name:title(k),key:norm(title(k))});
+    if(e.kind==="production" && e.obj?.materials) productionMap.set(norm(e.name),e.obj);
+  }
+
+  state.dropMap=dropMap; state.resourceMap=resourceMap; state.serviceMap=serviceMap;
+  state.roomById=roomById; state.npcById=npcById; state.productionMap=productionMap; state.areaGraph=areaGraph; state.entityCatalog=catalog;
 }
 
+const QUERY_STOP=new Set("what where when which who why how is are was were do does did can could should would i me my we our the a an to from for of in on at with about tell show give list find get need want please there here it its that this those these and or versus vs into through all any every".split(" "));
+function contentTokens(s){return norm(s).split(" ").filter(x=>x.length>1&&!QUERY_STOP.has(x))}
+function catalogScore(q,e){
+  const nq=norm(q); let best=0;
+  for(const a of e.aliases||[]){
+    if(!a)continue;
+    if(nq===a)best=Math.max(best,160+a.length/10);
+    else if(nq.includes(a) && a.length>=3)best=Math.max(best,125+Math.min(20,a.length/2));
+    else if(a.includes(nq) && nq.length>=4)best=Math.max(best,85+Math.min(15,nq.length/2));
+    const qt=contentTokens(nq),at=contentTokens(a); if(qt.length&&at.length){
+      const aset=new Set(at),common=qt.filter(t=>aset.has(t)).length;
+      if(common)best=Math.max(best,35+common*20+(common===at.length?15:0));
+    }
+  }
+  return best;
+}
+function resolveEntities(q,{types=null,limit=6}={}){
+  const rows=[];
+  for(const e of state.entityCatalog||[]){
+    if(types && !types.includes(e.type))continue;
+    const score=catalogScore(q,e); if(score>=58)rows.push({...e,score});
+  }
+  rows.sort((a,b)=>b.score-a.score || b.name.length-a.name.length);
+  const seen=new Set(),out=[];
+  for(const r of rows){const k=`${r.type}:${norm(r.name)}`;if(seen.has(k))continue;seen.add(k);out.push(r);if(out.length>=limit)break}
+  return out;
+}
+function rememberContext(intent,entities,raw){
+  const keep=(entities||[]).slice(0,4).map(e=>({type:e.type,name:e.name,obj:e.obj,area:e.area||null,room:e.room||null}));
+  state.context={intent,entities:keep,raw};
+  const primary=keep[0]; if(primary?.obj)state.lastEntity={type:primary.type,obj:primary.obj};
+}
+function contextualize(q,entities){
+  if(entities.length)return entities;
+  const follow=/\b(it|its|that|this|there|them|those|same|again)\b/.test(q) || (/\b(requirements?|level|drop|drops|where|how|what about|reward|materials?|make|craft|fight|weak)\b/.test(q)&&contentTokens(q).length<=5);
+  return follow?(state.context?.entities||[]):[];
+}
+function extractStatedSkillLevels(q){
+  const out={};
+  const labels=[...KNOWN_SKILLS,"Firemake"].sort((a,b)=>b.length-a.length);
+  for(const label of labels){
+    const p=label.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+    let m=String(q).match(new RegExp(`\\b${p}\\s*(?:level\\s*)?(\\d+)\\b`,"i"));
+    if(!m)m=String(q).match(new RegExp(`\\b(?:level\\s*)?(\\d+)\\s*${p}\\b`,"i"));
+    if(m)out[norm(canonicalSkillName(label))]=Number(m[1]);
+  }
+  return out;
+}
+function detectIntent(q,entities){
+  if(/\b(what should i do next|what do i do next|what should i work on|suggest.*next|recommend.*next)\b/.test(q))return "player_next";
+  if(/\b(how many|count|number of)\b/.test(q))return "count";
+  if(/\b(list|show me all|which .* are there|what .* are there)\b/.test(q))return "list";
+  if(/\b(walkthrough|step by step|start to finish|how (?:do|can) i (?:complete|finish)|quest steps)\b/.test(q))return "walkthrough";
+  if(/\b(can i do|am i ready|ready for|requirements?|requirement|what do i need|what level do i need|eligible)\b/.test(q))return "requirements";
+  if(/\b(get to|travel to|travel from|route to|route from|how do i reach|how can i reach|go from|go to)\b/.test(q))return "travel";
+  if(/\b(drop|drops|loot|dropped by)\b/.test(q))return "drops";
+  if(/\b(materials?|ingredients?|from scratch|smelt|forge|craft|make|recipe|how many .* (?:bar|ore|coal|log|plank))\b/.test(q))return "materials";
+  if(/\b(compare|versus|\bvs\b|difference between)\b/.test(q))return "compare";
+  if(/\b(bed|beds|sleep in|rest in)\b/.test(q) && entities.some(e=>e.type==="area"))return "beds";
+  if(/\b(monsters?|enemies)\b/.test(q) && entities.some(e=>e.type==="area"))return "monsters_in_area";
+  if(/\b(where|location|located|find|obtain|source|sources|get|mine|fish|chop|dig)\b/.test(q))return "locate";
+  if(/\b(how does|how do|explain|mechanic|works?|what happens|ticks?|cooldown|sleep points?|run energy|dodge|weakness)\b/.test(q))return "mechanics";
+  if(/\b(unlock|progression|at level|by level|can i equip|can i make)\b/.test(q))return "progression";
+  return "info";
+}
+function ruleForQuestion(q){
+  if(/\bsleep(?: points?)?\b/.test(q) && !/\bbed/.test(q))return rule("sleep.core");
+  if(/\b(run|running|run energy|run steps?)\b/.test(q))return rule("agility.run");
+  if(/\bdodge\b/.test(q))return rule("agility.dodge");
+  if(/\b(mining).*(speed|tick)|\b(speed|tick).*(mining)\b/.test(q))return rule("mining.speed");
+  if(/\bwoodcutting.*speed|\bspeed.*woodcutting\b/.test(q))return rule("woodcutting.speed");
+  if(/\bworship(?: points?)?\b/.test(q))return rule("worship.core");
+  if(/\bachievement.*sleep|sleep.*achievement|achievement.*damage\b/.test(q))return rule("achievements.sleep_damage");
+  if(/\b(defence|defense|magic defence|magic defense)\b/.test(q) && /\b(melee|archery|magic|combat)\b/.test(q))return rule("combat.defence");
+  if(/\b(hit chance|dps|kill time|surviv|recommended combat|damage formula|combat formula)\b/.test(q))return rule("combat.formulas");
+  if(/\bweakness(?:es)?\b/.test(q) && !resolveEntities(q,{types:["monster"],limit:1}).length)return rule("combat.weakness");
+  return null;
+}
+function genericCollection(q){
+  if(/\bskills?\b/.test(q))return "skills";
+  if(/\bquests?\b/.test(q))return "quests";
+  if(/\bareas?|regions?|locations?\b/.test(q))return "areas";
+  if(/\bmonsters?|enemies\b/.test(q))return "monsters";
+  if(/\bmechanics?|rules\b/.test(q))return "mechanics";
+  return null;
+}
+function collectionAnswer(kind,intent){
+  let rows=[],note="";
+  if(kind==="skills")rows=state.data.skills.records||[];
+  if(kind==="quests"){rows=state.data.quests.records||[];note="The public context contains 19 normalized core quests plus 2 conservative observation-backed quest placeholders."}
+  if(kind==="areas")rows=state.data.areas.records||[];
+  if(kind==="monsters")rows=state.data.monsters.records||[];
+  if(kind==="mechanics")rows=state.data.mechanics.records||[];
+  const label=kind[0].toUpperCase()+kind.slice(1);
+  if(intent==="count")return `<h3>${label}</h3><p>The Companion currently represents <b>${rows.length}</b> ${esc(kind)}.</p>${note?`<p class="muted small">${esc(note)}</p>`:""}${chips(kind==="skills"?["List the skills"]:kind==="quests"?["List the quests"]:[])}`;
+  const names=rows.map(x=>title(x.name)).sort((a,b)=>a.localeCompare(b));
+  return `<h3>${label} (${rows.length})</h3><p>${esc(names.join(", "))}</p>${note?`<p class="muted small">${esc(note)}</p>`:""}`;
+}
 function monsterProfile(m){
   state.lastEntity={type:"monster",obj:m};
   const stats=[["HP",m.hp],["Damage",m.damage],["Accuracy",m.accuracy],["Defence",m.defence],["Magic Defence",m.magic_defence],["Weakness",m.weakness||"None recorded"]];
   const drops=(m.drops||[]).slice(0,8);
-  return `<h3>${esc(title(m.name))}</h3>
+  return `<h3>${esc(title(m.name))}</h3><p>${esc(title(m.name))} is recorded in <b>${esc(m.area||"an unknown area")}</b>. Its current structured combat stats are:</p>
     <div class="grid">${stats.map(([a,b])=>`<div class="stat"><span class="kicker">${esc(a)}</span><b>${esc(b)}</b></div>`).join("")}</div>
-    <p><b>Area:</b> ${esc(m.area||"Unknown")}</p>
-    ${drops.length?`<p><b>Drops:</b></p><ul>${drops.map(d=>`<li>${esc(fmtDrop(d))}</li>`).join("")}</ul>`:""}
-    ${chips([`What is ${title(m.name)} weak to?`,`Where is ${title(m.name)}?`,`What combat style should I use against ${title(m.name)}?`])}
+    ${drops.length?`<p>It has ${drops.length} recorded drop${drops.length===1?"":"s"} in this dataset.</p>`:""}
+    ${chips([`What does ${title(m.name)} drop?`,`Where is ${title(m.name)}?`,`How should I fight ${title(m.name)}?`])}
     ${evidence(["https://flatmmo.wiki/index.php/Monsters"],["Monster bootstrap data is still marked for an official-endpoint refresh."])}`;
 }
 function monsterDrops(m){
   state.lastEntity={type:"monster",obj:m};
-  return `<h3>${esc(title(m.name))} drops</h3><ul>${(m.drops||[]).map(d=>`<li>${esc(fmtDrop(d))}${d.unique?" <span class='muted'>(unique)</span>":""}</li>`).join("")}</ul>
-    ${chips([`Where is ${title(m.name)}?`,`Tell me about ${title(m.name)}`])}${evidence(["https://flatmmo.wiki/index.php/Monsters"])}`;
+  const drops=m.drops||[];
+  return `<h3>${esc(title(m.name))} drops</h3>${drops.length?`<p>The Companion records the following drops:</p><ul>${drops.map(d=>`<li>${esc(fmtDrop(d))}${d.unique?" <span class='muted'>(unique)</span>":""}</li>`).join("")}</ul>`:`<p class="warn">No drops are recorded for this monster.</p>`}${chips([`Where is ${title(m.name)}?`,`Tell me about ${title(m.name)}`])}${evidence(["https://flatmmo.wiki/index.php/Monsters"])}`;
 }
 function monsterWhere(m){
   state.lastEntity={type:"monster",obj:m};
-  const rooms=(m.roomRefs||[]).map(r=>{
-    for(const a of state.data.areas.records||[]){const room=(a.rooms||[]).find(x=>x.id===r.roomId);if(room)return `${a.name} → ${room.name}`;}
-    return r.roomId;
-  });
-  return `<h3>Where to find ${esc(title(m.name))}</h3><p><b>Area:</b> ${esc(m.area||"Unknown")}</p>
-    ${rooms.length?`<p><b>Linked rooms:</b></p><ul>${unique(rooms).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:`<p class="warn">The Companion has no exact room link for this monster yet.</p>`}
-    ${chips([`What does ${title(m.name)} drop?`,`Tell me about ${title(m.name)}`])}
-    ${evidence([], [m.roomLinkStatus==="linked"?"Exact room links are structured Companion relationships.":"Location coverage is incomplete."])}`;
+  const rooms=(m.roomRefs||[]).map(r=>{const hit=state.roomById?.get(r.roomId);return hit?`${hit.area.name} → ${hit.room.name}`:r.roomId});
+  return `<h3>Where to find ${esc(title(m.name))}</h3>${rooms.length?`<p>I have ${rooms.length} exact room link${rooms.length===1?"":"s"}:</p><ul>${unique(rooms).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>${m.area?`<p class="muted small">Its bootstrap area label is ${esc(m.area)}; retained source disagreements are not silently overwritten.</p>`:""}`:`<p>The broad recorded area is <b>${esc(m.area||"unknown")}</b>, but the Companion has no exact room link yet.</p>`}${evidence([], [m.roomLinkStatus==="linked"?"Exact room links are structured Companion relationships.":"Location coverage is incomplete."])}`;
 }
 function monsterCombat(m){
   state.lastEntity={type:"monster",obj:m};
-  const formulas=rule("combat.formulas");
-  let statements=[];
-  if(m.weakness) statements.push(`<p><b>Listed weakness:</b> ${esc(title(m.weakness))}. Using a listed weakness is documented to increase hit chance and damage.</p>`);
-  else statements.push(`<p><b>Weakness:</b> none recorded.</p>`);
-  statements.push(`<p><b>Defence:</b> ${esc(m.defence)} against physical Melee/Archery attacks.<br><b>Magic Defence:</b> ${esc(m.magic_defence)} against Magic.</p>`);
-  if(!m.weakness && Number(m.magic_defence)<Number(m.defence)){
-    statements.push(`<p>Magic faces the lower listed defensive stat here (${esc(m.magic_defence)} vs ${esc(m.defence)}). That is a <b>defence-stat advantage</b>, not a recorded weakness.</p>`);
-  } else if(!m.weakness && Number(m.defence)<Number(m.magic_defence)){
-    statements.push(`<p>Melee/Archery face the lower listed defensive stat here (${esc(m.defence)} vs ${esc(m.magic_defence)}). The Companion cannot yet choose between Melee and Archery from defence alone.</p>`);
-  }
-  if(state.player){
-    const levels=["Melee","Archery","Magic"].map(n=>[n,playerSkill(n)?.level]).filter(x=>x[1]!=null);
-    if(levels.length) statements.push(`<p><b>${esc(state.player.username)}'s combat skill levels:</b> ${levels.map(([n,l])=>`${esc(n)} ${esc(l)}`).join(" · ")}</p>`);
-  }
-  statements.push(`<p class="warn"><b>Recommended level:</b> not currently calculable. Exact hit/damage formulas and a recommendation threshold are not yet verified.</p>`);
-  return `<h3>Combat against ${esc(title(m.name))}</h3>${statements.join("")}
-    ${chips([`Tell me about ${title(m.name)}`,`What does ${title(m.name)} drop?`])}
-    ${evidence(["https://flatmmo.wiki/index.php/Monsters"],["The assistant will not invent exact hit chance, DPS, kill time or a recommended level while combat formulas remain unresolved.",...(formulas?.unknowns||[])])}`;
+  const formulas=rule("combat.formulas"),parts=[];
+  if(m.weakness)parts.push(`<p><b>Listed weakness:</b> ${esc(title(m.weakness))}. A listed weakness is documented to improve hit chance and damage.</p>`);
+  else parts.push(`<p><b>Weakness:</b> none recorded.</p>`);
+  parts.push(`<p>Its physical <b>Defence is ${esc(m.defence)}</b>; its <b>Magic Defence is ${esc(m.magic_defence)}</b>.</p>`);
+  if(!m.weakness&&Number(m.magic_defence)<Number(m.defence))parts.push(`<p>Magic faces the lower defensive stat here. That is a defence-stat observation, not a recorded elemental/style weakness.</p>`);
+  else if(!m.weakness&&Number(m.defence)<Number(m.magic_defence))parts.push(`<p>Melee and Archery face the lower defensive stat here. Defence alone does not let the Companion choose between those two styles.</p>`);
+  if(state.player){const levels=["Melee","Archery","Magic"].map(n=>[n,playerSkill(n)?.level]).filter(x=>x[1]!=null);if(levels.length)parts.push(`<p><b>Your known combat levels:</b> ${levels.map(([n,l])=>`${esc(n)} ${esc(l)}`).join(" · ")}</p>`)}
+  parts.push(`<p class="warn">I can't calculate an exact hit chance, DPS, kill time, survival probability or recommended combat level yet because the required combat formulas are unresolved.</p>`);
+  return `${playerBasis()}<h3>Fighting ${esc(title(m.name))}</h3>${parts.join("")}${evidence(["https://flatmmo.wiki/index.php/Monsters"],[...(formulas?.unknowns||[])])}`;
 }
-
 function bedsAnswer(area){
   const areas=area?[area]:state.data.areas.records,hits=[];
-  for(const a of areas||[]) for(const r of a.rooms||[]) if((r.bedCount||0)>0 || r.bedStatus==="documented_present") hits.push({area:a.name,room:r.name,count:r.bedCount});
-  if(area) state.lastEntity={type:"area",obj:area};
-  if(!hits.length) return `<h3>Bed locations</h3><p class="warn">No documented bed was found for ${esc(area?.name||"that location")}. “Not documented” is not treated as proof that no bed exists.</p>`;
-  return `<h3>${area?`Beds in ${esc(area.name)}`:"Documented beds"}</h3><ul>${hits.map(x=>`<li>${esc(x.area)} → ${esc(x.room)}${x.count?` (${x.count})`:""}</li>`).join("")}</ul>${evidence([],["Only rooms with an explicitly documented bed are included."])}`;
+  for(const a of areas||[])for(const r of a.rooms||[])if((r.bedCount||0)>0||r.bedStatus==="documented_present")hits.push({area:a.name,room:r.name,count:r.bedCount});
+  if(area)state.lastEntity={type:"area",obj:area};
+  if(!hits.length)return `<h3>Bed locations</h3><p class="warn">No documented bed was found for ${esc(area?.name||"that location")}. “Not documented” is not treated as proof that no bed exists.</p>`;
+  return `<h3>${area?`Beds in ${esc(area.name)}`:"Documented beds"}</h3><p>${area?`I found ${hits.length} documented sleeping location${hits.length===1?"":"s"}.`:"These are the explicitly documented bed locations."}</p><ul>${hits.map(x=>`<li>${esc(x.area)} → ${esc(x.room)}${x.count?` (${x.count})`:""}</li>`).join("")}</ul>${evidence([],["Only rooms with an explicitly documented bed are included."])}`;
 }
 function ruleAnswer(r){
+  if(!r)return `<h3>Mechanic not resolved</h3><p>I couldn't match that question to a verified mechanics rule.</p>`;
   state.lastEntity={type:"rule",obj:r};
-  return `<h3>${esc(r.name)}</h3>${(r.facts||[]).map(x=>`<p>${esc(x)}</p>`).join("")}
-    ${r.known?`<p><b>Known:</b></p><ul>${r.known.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
-    ${r.observations?`<p><b>Direct observations:</b></p><ul>${r.observations.map(x=>`<li>${esc(x.fact)}</li>`).join("")}</ul>`:""}
-    ${r.unknowns?`<p class="warn"><b>Still unresolved:</b></p><ul>${r.unknowns.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
-    ${evidence(r.sources||[], r.policy?[r.policy]:[])}`;
+  return `<h3>${esc(r.name)}</h3>${(r.facts||[]).map(x=>`<p>${esc(x)}</p>`).join("")}${r.known?`<p><b>Known:</b></p><ul>${r.known.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}${r.observations?`<p><b>Direct observations:</b></p><ul>${r.observations.map(x=>`<li>${esc(x.fact)}</li>`).join("")}</ul>`:""}${r.unknowns?`<p class="warn"><b>Still unresolved:</b></p><ul>${r.unknowns.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}${evidence(r.sources||[],r.policy?[r.policy]:[])}`;
 }
-function itemSources(q){
-  let cleaned=norm(q).replace(/\b(what|which|where|how|does|do|can|i|get|find|drops?|drop|source|sources|of|the|a|an|me|tell|about|from)\b/g," ").replace(/\s+/g," ").trim();
-  let bestKey=null,bestScore=0;
-  for(const k of state.dropMap.keys()){const s=entityScore(cleaned,k);if(s>bestScore){bestKey=k;bestScore=s}}
-  if(bestScore<50) return null;
-  const hits=state.dropMap.get(bestKey)||[],item=title(bestKey);
-  return {item,hits,html:`<h3>Sources for ${esc(item)}</h3>
-    ${hits.length?`<p>Known monster drops:</p><ul>${hits.map(h=>`<li><b>${esc(title(h.monster.name))}</b> — ${esc(fmtDrop(h.drop))}</li>`).join("")}</ul>`:`<p class="warn">No monster drop source is recorded.</p>`}
-    ${chips(hits.slice(0,3).map(h=>`Where is ${title(h.monster.name)}?`))}
-    ${evidence(["https://flatmmo.wiki/index.php/Monsters"],["This lookup currently covers normalized monster drops. Shop/resource/crafting sources are handled by their own records when identifiable."])}`};
+function mechanicAnswer(m){return `<h3>${esc(m.name)}</h3><p>${esc(m.summary||"")}</p>${evidence([m.source].filter(Boolean))}`}
+function resourceLocations(name){return state.resourceMap?.get(norm(name))||[]}
+function dropSources(name){return state.dropMap?.get(norm(name))||[]}
+function resourceAnswer(name){
+  const nodes=resourceLocations(name),drops=dropSources(name),bits=[];
+  if(nodes.length){bits.push(`<p><b>World/resource locations:</b></p><ul>${nodes.map(h=>{const n=h.node;const req=n.level!=null?` · ${esc(n.skill||"Level")} ${esc(n.level)}`:"";const tool=n.tool?` · tool: ${esc(n.tool)}`:"";return `<li>${esc(h.area.name)} → ${esc(h.room.name)}${req}${tool}</li>`}).join("")}</ul>`)}
+  if(drops.length){bits.push(`<p><b>Monster drops:</b></p><ul>${drops.map(h=>`<li>${esc(title(h.monster.name))} — ${esc(fmtDrop(h.drop))}</li>`).join("")}</ul>`)}
+  if(!bits.length)return `<h3>${esc(title(name))}</h3><p class="warn">I can identify that name, but I don't have a structured acquisition source for it yet.</p>`;
+  return `<h3>How to get ${esc(title(name))}</h3>${bits.join("")}${evidence([], ["World nodes and monster drops are reported independently; missing source types are not assumed absent from the game."])}`;
 }
-
+function npcAnswer(e){
+  const n=e.obj,room=e.room||state.roomById?.get(n.roomId)?.room,area=e.area||state.roomById?.get(n.roomId)?.area;
+  return `<h3>${esc(n.name)}</h3><p>${area?`You can find ${esc(n.name)} in <b>${esc(area.name)}${room?` → ${esc(room.name)}`:""}</b>.`:"The exact location is not linked."}</p>${n.functions?.length?`<p><b>Functions:</b> ${esc(n.functions.map(title).join(", "))}.</p>`:""}${n.details?`<p>${esc(n.details)}</p>`:""}`;
+}
+function roomAnswer(e){
+  const r=e.obj,a=e.area||state.roomById?.get(r.id)?.area;
+  const resources=(r.resourceNodes||[]).map(x=>x.resource).filter(Boolean);
+  return `<h3>${esc(a?`${a.name} → ${r.name}`:r.name)}</h3>${r.services?.length?`<p><b>Services:</b> ${esc(r.services.map(title).join(", "))}.</p>`:""}${r.features?.length?`<p><b>Features:</b> ${esc(r.features.join(", "))}.</p>`:""}${resources.length?`<p><b>Resources:</b> ${esc(unique(resources).join(", "))}.</p>`:""}${r.accessRequirements?.length?`<p><b>Access:</b> ${esc(r.accessRequirements.join("; "))}.</p>`:""}${r.bedStatus==="documented_present"?`<p>A bed is documented here${r.bedCount?` (${esc(r.bedCount)})`:""}.</p>`:""}`;
+}
+function serviceAnswer(q,area=null){
+  const keys=[...state.serviceMap.keys()].filter(k=>norm(q).includes(k));
+  if(/\bbank\b/.test(q)&&!keys.includes("bank"))keys.push("bank");
+  if(/\bshop|store\b/.test(q)&&!keys.includes("shop"))keys.push("shop");
+  if(/\btravel|boat|teleport\b/.test(q)&&!keys.includes("travel"))keys.push("travel");
+  const hits=[];for(const k of keys)for(const h of state.serviceMap.get(k)||[])if(!area||norm(h.area.name)===norm(area.name))hits.push({...h,key:k});
+  const uniqueHits=[];const seen=new Set();for(const h of hits){const id=`${h.area.name}:${h.room?.id||h.npc?.id||h.key}`;if(!seen.has(id)){seen.add(id);uniqueHits.push(h)}}
+  if(!uniqueHits.length)return null;
+  return `<h3>${area?`Services in ${esc(area.name)}`:"Matching services"}</h3><ul>${uniqueHits.slice(0,20).map(h=>`<li>${esc(h.area.name)}${h.room?` → ${esc(h.room.name)}`:""}${h.npc?` — ${esc(h.npc.name)}`:""} (${esc(title(h.key))})</li>`).join("")}</ul>`;
+}
 function parseLevelRequirement(req){
-  const s=String(req);
-  const labels=[...KNOWN_SKILLS,"Firemake"].sort((a,b)=>b.length-a.length);
-  const pattern=labels.map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")).join("|");
-  let m=s.match(new RegExp(`(?:level\\s*)?(\\d+)\\s+(${pattern})\\b`,"i"));
-  if(m) return {level:Number(m[1]),skill:canonicalSkillName(m[2])};
-  m=s.match(new RegExp(`\\b(${pattern})\\s+(?:level\\s*)?(\\d+)\\b`,"i"));
-  if(m) return {level:Number(m[2]),skill:canonicalSkillName(m[1])};
-  return null;
+  const s=String(req),labels=[...KNOWN_SKILLS,"Firemake"].sort((a,b)=>b.length-a.length),pattern=labels.map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")).join("|");
+  let m=s.match(new RegExp(`(?:level\\s*)?(\\d+)\\s+(${pattern})\\b`,"i"));if(m)return {level:Number(m[1]),skill:canonicalSkillName(m[2])};
+  m=s.match(new RegExp(`\\b(${pattern})\\s+(?:level\\s*)?(\\d+)\\b`,"i"));if(m)return {level:Number(m[2]),skill:canonicalSkillName(m[1])};return null;
 }
-function requirementCheck(skill,level){
-  const rec=playerSkill(skill);
-  if(!state.player) return {status:"unknown",text:`${skill} ${level} — load a player to check`};
-  if(!rec) return {status:"unknown",text:`${skill} ${level} — player field unavailable`};
-  return rec.level>=level
-    ? {status:"good",text:`${skill} ${level} — your level ${rec.level} ✓`}
-    : {status:"bad",text:`${skill} ${level} — your level ${rec.level}; need ${level-rec.level} more`};
+function requirementCheck(skill,level,overrides={}){
+  const key=norm(canonicalSkillName(skill));
+  if(overrides[key]!=null){const have=overrides[key];return have>=level?{status:"good",text:`${skill} ${level} — stated level ${have} ✓`}:{status:"bad",text:`${skill} ${level} — stated level ${have}; need ${level-have} more`}}
+  const rec=playerSkill(skill);if(!state.player)return {status:"unknown",text:`${skill} ${level} — no player level supplied`};
+  if(!rec)return {status:"unknown",text:`${skill} ${level} — player field unavailable`};
+  return rec.level>=level?{status:"good",text:`${skill} ${level} — your level ${rec.level} ✓`}:{status:"bad",text:`${skill} ${level} — your level ${rec.level}; need ${level-rec.level} more`};
 }
-function questAnswer(qst,readiness=false){
-  state.lastEntity={type:"quest",obj:qst};
-  const reqs=qst.requirements||[];
-  const checks=reqs.map(r=>({raw:r,parsed:parseLevelRequirement(r)}));
-  const checkHtml=checks.map(x=>{
-    if(!x.parsed) return `<li>${esc(x.raw)}${state.player?" <span class='muted'>— ownership/access not available from the current player loader</span>":""}</li>`;
-    const c=requirementCheck(x.parsed.skill,x.parsed.level);
-    return `<li class="${c.status}">${esc(c.text)}</li>`;
-  }).join("");
-  return `${playerBasis()}<h3>${esc(qst.name)}</h3><p><b>Difficulty:</b> ${esc(qst.difficulty||"Unknown")}</p>
-    ${reqs.length?`<p><b>${readiness?"Readiness":"Requirements"}:</b></p><ul>${checkHtml}</ul>`:""}
-    ${qst.rewards?.length?`<p><b>Rewards:</b></p><ul>${qst.rewards.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
-    ${qst.procedure?.length?`<p><b>Procedure:</b></p><ol>${qst.procedure.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>`:`<p class="warn">Procedure not documented in the current Companion data.</p>`}
-    ${state.player&&readiness?`<p class="muted small">This readiness check currently knows skill levels only. Item ownership, quest completion and access state are still unknown.</p>`:""}
-    ${evidence([qst.source].filter(Boolean), qst.verificationNote?[qst.verificationNote]:[])}`;
+function questAnswer(qst,readiness=false,overrides={}){
+  state.lastEntity={type:"quest",obj:qst};const reqs=qst.requirements||[],checks=reqs.map(r=>({raw:r,parsed:parseLevelRequirement(r)}));
+  const checkHtml=checks.map(x=>{if(!x.parsed)return `<li>${esc(x.raw)}${(state.player||Object.keys(overrides).length)?" <span class='muted'>— ownership/access not available from known player data</span>":""}</li>`;const c=requirementCheck(x.parsed.skill,x.parsed.level,overrides);return `<li class="${c.status}">${esc(c.text)}</li>`}).join("");
+  return `${playerBasis()}<h3>${esc(qst.name)}</h3><p><b>Difficulty:</b> ${esc(qst.difficulty||"Unknown")}</p>${reqs.length?`<p><b>${readiness?"Readiness":"Requirements"}:</b></p><ul>${checkHtml}</ul>`:""}${qst.rewards?.length?`<p><b>Rewards:</b></p><ul>${qst.rewards.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}${qst.procedure?.length?`<p><b>Procedure:</b></p><ol>${qst.procedure.map((x,i)=>{const g=qst.procedureGraph?.[i],rooms=(g?.roomIds||[]).map(id=>state.roomById?.get(id)).filter(Boolean).map(h=>`${h.area.name} → ${h.room.name}`);return `<li>${esc(x)}${rooms.length?` <span class="muted">(${esc(unique(rooms).join(" / "))})</span>`:""}</li>`}).join("")}</ol>`:`<p class="warn">Procedure not documented in the current Companion data.</p>`}${(state.player||Object.keys(overrides).length)&&readiness?`<p class="muted small">Skill readiness is only part of readiness: item ownership, access and quest completion may still be unknown.</p>`:""}${evidence([qst.source].filter(Boolean),qst.verificationNote?[qst.verificationNote]:[])}`;
 }
 function areaAnswer(a){
-  state.lastEntity={type:"area",obj:a};
-  const services=unique((a.rooms||[]).flatMap(r=>r.services||[]));
-  return `<h3>${esc(a.name)}</h3>${a.gettingThere?`<p><b>Getting there:</b> ${esc(a.gettingThere)}</p>`:""}
-    ${a.requirements?.length?`<p><b>Requirements:</b> ${esc(a.requirements.join("; "))}</p>`:""}
-    <p><b>Documented rooms/sub-locations:</b> ${(a.rooms||[]).length}</p>
-    ${services.length?`<p><b>Services/features:</b> ${esc(services.slice(0,12).map(title).join(", "))}${services.length>12?"…":""}</p>`:""}
-    ${chips([`Where can I sleep in ${a.name}?`,`What monsters are in ${a.name}?`])}${evidence([a.source], a.coverage==="partial"?["Area coverage is partial."]:[])}`;
+  state.lastEntity={type:"area",obj:a};const services=unique((a.rooms||[]).flatMap(r=>r.services||[]));
+  return `<h3>${esc(a.name)}</h3>${a.gettingThere?`<p><b>Getting there:</b> ${esc(a.gettingThere)}</p>`:""}${a.requirements?.length?`<p><b>Requirements:</b> ${esc(a.requirements.join("; "))}</p>`:""}<p>I have <b>${(a.rooms||[]).length}</b> documented rooms/sub-locations here.</p>${services.length?`<p><b>Recorded services:</b> ${esc(services.map(title).join(", "))}.</p>`:""}${chips([`Where can I sleep in ${a.name}?`,`What monsters are in ${a.name}?`,`What services are in ${a.name}?`])}${evidence([a.source],a.coverage==="partial"?["Area coverage is partial."]:[])}`;
 }
-function skillAnswer(s){
-  state.lastEntity={type:"skill",obj:s};
-  const mine=playerSkill(s.name);
-  return `${playerBasis()}<h3>${esc(s.name)}</h3>${mine?`<p><b>Your level:</b> ${esc(mine.level)} · ${mine.xp==null?"XP unknown":esc(fmtNumber(mine.xp))+" XP"}</p>`:""}
-    <p>${esc(s.training||"")}</p>${s.keyRules?.length?`<ul>${s.keyRules.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}${evidence([s.source])}`;
+function skillAnswer(sk){
+  state.lastEntity={type:"skill",obj:sk};const mine=playerSkill(sk.name);
+  return `${playerBasis()}<h3>${esc(sk.name)}</h3>${mine?`<p><b>Your known level:</b> ${esc(mine.level)} · ${mine.xp==null?"XP unknown":esc(fmtNumber(mine.xp))+" XP"}</p>`:""}<p>${esc(sk.training||"")}</p>${sk.keyRules?.length?`<ul>${sk.keyRules.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}${evidence([sk.source])}`;
 }
-function equipmentAnswer(e,q=""){
-  state.lastEntity={type:"equipment",obj:e};
-  const x=e.obj,mats=x.materials||x.setMaterialTotals;
-  let checks="";
-  if(x.equipSkill && x.equipLevel!=null){
-    const c=requirementCheck(x.equipSkill,x.equipLevel);
-    checks+=`<p class="${c.status}"><b>Equip check:</b> ${esc(c.text)}</p>`;
-  }
-  if(x.craftSkill && x.craftLevel!=null){
-    const c=requirementCheck(x.craftSkill,x.craftLevel);
-    checks+=`<p class="${c.status}"><b>Craft check:</b> ${esc(c.text)}</p>`;
-  }
-  return `${playerBasis()}<h3>${esc(e.name)}</h3>${x.style?`<p><b>Style:</b> ${esc(title(x.style))}</p>`:""}
-    ${x.damage!=null?`<p><b>Damage:</b> ${esc(x.damage)}${x.accuracy!=null?` · <b>Accuracy:</b> ${esc(x.accuracy)}`:""}</p>`:""}
-    ${x.equipSkill?`<p><b>Equip:</b> ${esc(x.equipSkill)} ${esc(x.equipLevel??"unknown")}</p>`:""}
-    ${x.craftSkill?`<p><b>Make:</b> ${esc(x.craftSkill)} ${esc(x.craftLevel??"unknown")}</p>`:""}
-    ${checks}
-    ${mats?`<p><b>Materials:</b></p><ul>${Object.entries(mats).map(([k,v])=>`<li>${esc(title(k))}: ${esc(v)}</li>`).join("")}</ul>`:""}
-    ${state.player&&mats?`<p class="muted small">Material ownership cannot be checked until bank/inventory data is available from the player API.</p>`:""}
-    ${evidence(x.sources||[x.source].filter(Boolean), x.note?[x.note]:[])}`;
+function expandedMaterials(mats,depth=2){
+  const totals={};
+  const add=(k,v,d)=>{const prod=d>0?state.productionMap?.get(norm(title(k))):null;if(prod?.materials){for(const [sub,n] of Object.entries(prod.materials))add(sub,v*Number(n),d-1)}else totals[k]=(totals[k]||0)+v};
+  for(const [k,v] of Object.entries(mats||{}))add(k,Number(v),depth);return totals;
+}
+function equipmentAnswer(e,q="",overrides={}){
+  state.lastEntity={type:"equipment",obj:e};const x=e.obj,mats=x.materials||x.setMaterialTotals;let checks="";
+  if(x.equipSkill&&x.equipLevel!=null){const c=requirementCheck(x.equipSkill,x.equipLevel,overrides);checks+=`<p class="${c.status}"><b>Equip check:</b> ${esc(c.text)}</p>`}
+  if(x.craftSkill&&x.craftLevel!=null){const c=requirementCheck(x.craftSkill,x.craftLevel,overrides);checks+=`<p class="${c.status}"><b>Make check:</b> ${esc(c.text)}</p>`}
+  const wantsRaw=/\b(from scratch|raw|smelt|every|ore|coal)\b/.test(q),raw=wantsRaw&&mats?expandedMaterials(mats,2):null;
+  return `${playerBasis()}<h3>${esc(e.name)}</h3>${x.style?`<p><b>Style:</b> ${esc(title(x.style))}</p>`:""}${x.damage!=null?`<p><b>Damage:</b> ${esc(x.damage)}${x.accuracy!=null?` · <b>Accuracy:</b> ${esc(x.accuracy)}`:""}</p>`:""}${x.equipSkill?`<p><b>Equip:</b> ${esc(x.equipSkill)} ${esc(x.equipLevel??"unknown")}</p>`:""}${x.craftSkill?`<p><b>Make:</b> ${esc(x.craftSkill)} ${esc(x.craftLevel??"unknown")}</p>`:""}${checks}${mats?`<p><b>Structured materials:</b></p><ul>${Object.entries(mats).map(([k,v])=>`<li>${esc(title(k))}: ${esc(v)}</li>`).join("")}</ul>`:""}${raw?`<p><b>Expanded raw materials from known production recipes:</b></p><ul>${Object.entries(raw).map(([k,v])=>`<li>${esc(title(k))}: ${esc(v)}</li>`).join("")}</ul>`:""}${state.player&&mats?`<p class="muted small">Material ownership cannot be checked until bank/inventory data is available.</p>`:""}${evidence(x.sources||[x.source].filter(Boolean),x.note?[x.note]:[])}`;
 }
 function monstersInArea(a){
-  state.lastEntity={type:"area",obj:a};
-  const names=unique((a.rooms||[]).flatMap(r=>(r.monsterRefs||[]).map(x=>{
-    const id=(x && typeof x==="object") ? x.monsterId : x;
-    return title(String(id||"").replace(/^monster\./,""));
-  })));
-  return `<h3>Monsters in ${esc(a.name)}</h3>${names.length?`<ul>${names.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:`<p class="warn">No exact room-linked monsters are recorded for this area.</p>`}
-  ${evidence([],["This uses exact room relationships, so it may omit monsters whose precise room is not yet linked."])}`;
+  state.lastEntity={type:"area",obj:a};const names=unique((a.rooms||[]).flatMap(r=>(r.monsterRefs||[]).map(x=>{const id=(x&&typeof x==="object")?x.monsterId:x;return title(String(id||"").replace(/^monster\./,""))})));
+  return `<h3>Monsters in ${esc(a.name)}</h3>${names.length?`<p>I have ${names.length} exact room-linked monster name${names.length===1?"":"s"}:</p><ul>${names.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:`<p class="warn">No exact room-linked monsters are recorded for this area.</p>`}${evidence([],["This uses exact room relationships, so it may omit monsters whose precise room is not yet linked."])}`;
 }
-
+function skillProgressionAnswer(skill,level){
+  const key=norm(skill.name),equip=[],make=[];
+  for(const e of state.data.equipmentFlat||[]){const x=e.obj;if(norm(x.equipSkill)===key&&x.equipLevel!=null&&x.equipLevel<=level)equip.push({name:e.name,level:x.equipLevel});if(norm(x.craftSkill)===key&&x.craftLevel!=null&&x.craftLevel<=level)make.push({name:e.name,level:x.craftLevel})}
+  equip.sort((a,b)=>a.level-b.level||a.name.localeCompare(b.name));make.sort((a,b)=>a.level-b.level||a.name.localeCompare(b.name));
+  return `<h3>${esc(skill.name)} ${esc(level)} progression</h3>${equip.length?`<p><b>Recorded equipment you can equip by this level:</b></p><ul>${equip.map(x=>`<li>${esc(x.name)} — ${esc(skill.name)} ${esc(x.level)}</li>`).join("")}</ul>`:""}${make.length?`<p><b>Recorded items whose production requirement uses ${esc(skill.name)}:</b></p><ul>${make.map(x=>`<li>${esc(x.name)} — ${esc(skill.name)} ${esc(x.level)}</li>`).join("")}</ul>`:""}${!equip.length&&!make.length?`<p>No structured equipment unlocks are indexed for this level.</p>`:""}`;
+}
 function nearestUnlocks(){
-  if(!state.player) return null;
-  const choices=[];
-  for(const e of state.data.equipmentFlat){
-    const x=e.obj;
-    for(const [kind,skill,level] of [["equip",x.equipSkill,x.equipLevel],["craft",x.craftSkill,x.craftLevel]]){
-      if(!skill || level==null) continue;
-      const rec=playerSkill(skill); if(!rec || rec.level>=level) continue;
-      choices.push({delta:level-rec.level,name:e.name,kind,skill,need:level,have:rec.level});
-    }
-  }
-  choices.sort((a,b)=>a.delta-b.delta || a.need-b.need || a.name.localeCompare(b.name));
-  return choices.slice(0,6);
+  if(!state.player)return null;const choices=[];for(const e of state.data.equipmentFlat){const x=e.obj;for(const [kind,skill,level] of [["equip",x.equipSkill,x.equipLevel],["craft",x.craftSkill,x.craftLevel]]){if(!skill||level==null)continue;const rec=playerSkill(skill);if(!rec||rec.level>=level)continue;choices.push({delta:level-rec.level,name:e.name,kind,skill,need:level,have:rec.level})}}choices.sort((a,b)=>a.delta-b.delta||a.need-b.need||a.name.localeCompare(b.name));return choices.slice(0,6);
 }
 function skillReadyQuests(){
-  if(!state.player) return [];
-  const out=[];
-  for(const q of state.data.quests.records||[]){
-    const parsed=(q.requirements||[]).map(parseLevelRequirement).filter(Boolean);
-    if(!parsed.length) continue;
-    if(parsed.every(r=>playerSkill(r.skill)?.level>=r.level)) out.push(q);
-  }
-  return out.slice(0,6);
+  if(!state.player)return [];const out=[];for(const q of state.data.quests.records||[]){const parsed=(q.requirements||[]).map(parseLevelRequirement).filter(Boolean);if(!parsed.length)continue;if(parsed.every(r=>playerSkill(r.skill)?.level>=r.level))out.push(q)}return out.slice(0,6);
 }
 function playerAware(){
-  if(!state.player){
-    return `<h3>Load a player for personal suggestions</h3><p>The Companion can recommend from your skill levels once a public player profile is loaded or you enter levels using <b>Enter skill levels</b>.</p>
-      <p class="muted small">Bank/inventory/equipment/quest-state recommendations will become substantially richer when the official API is connected.</p>`;
+  if(!state.player)return `<h3>Load a player for personal suggestions</h3><p>I can make deterministic suggestions from known skill levels once you load a public profile or use <b>Enter skill levels</b>.</p><p class="muted small">Bank, inventory, equipment and quest state remain unknown until the official API is connected.</p>`;
+  const unlocks=nearestUnlocks()||[],quests=skillReadyQuests();return `${playerBasis()}<h3>What you could work toward next</h3><p>This is a stats-only suggestion set for ${esc(state.player.username||"this session")}. I won't pretend to know your bank, inventory, equipped gear or completed quests.</p>${unlocks.length?`<p><b>Nearest structured equipment/crafting unlocks:</b></p><ul>${unlocks.map(x=>`<li>${esc(x.name)} — ${esc(title(x.kind))}: ${esc(x.skill)} ${esc(x.need)}; ${esc(x.delta)} level${x.delta===1?"":"s"} away</li>`).join("")}</ul>`:"<p>No nearby structured equipment unlocks were found.</p>"}${quests.length?`<p><b>Quests whose structured skill requirements you meet:</b></p><ul>${quests.map(q=>`<li>${esc(q.name)}</li>`).join("")}</ul>`:""}<p class="muted small">“Skill-ready” is not the same as fully ready: items, access and completion state may still matter.</p>`;
+}
+function travelAnswer(areas){
+  const uniqueAreas=[];
+  for(const e of areas){
+    const a=e.obj||e;
+    if(a?.name&&!uniqueAreas.some(x=>norm(x.name)===norm(a.name)))uniqueAreas.push(a);
   }
-  const unlocks=nearestUnlocks()||[],quests=skillReadyQuests();
-  return `${playerBasis()}<h3>What you could work toward next</h3>
-    <p>This is a <b>stats-only</b> suggestion set for ${esc(state.player.username||'this session')}. It deliberately does not pretend to know your bank, inventory, equipment or completed quests yet.</p>
-    ${unlocks.length?`<p><b>Nearest equipment/crafting level unlocks:</b></p><ul>${unlocks.map(x=>`<li>${esc(x.name)} — ${esc(title(x.kind))}: ${esc(x.skill)} ${esc(x.need)}; you're ${esc(x.have)} (${esc(x.delta)} level${x.delta===1?"":"s"} away)</li>`).join("")}</ul>`:"<p>No nearby structured equipment unlocks were found from the current data.</p>"}
-    ${quests.length?`<p><b>Quests whose structured skill requirements you meet:</b></p><ul>${quests.map(q=>`<li>${esc(q.name)}</li>`).join("")}</ul>`:""}
-    <p class="muted small">“Skill-ready” is not the same as fully ready: item/access requirements and completion state may still matter.</p>
-    ${evidence([],["This recommendation is deterministic and based only on the loaded skill snapshot plus Companion requirement data."])}`;
+  if(uniqueAreas.length<2){
+    const dest=uniqueAreas[0]; if(!dest)return null;
+    const incoming=[];
+    for(const a of state.data.areas.records||[]){
+      for(const edge of a.externalConnections||[]){
+        if(norm(edge.area)===norm(dest.name))incoming.push({from:a,edge});
+      }
+    }
+    let html=`<h3>Getting to ${esc(dest.name)}</h3>`;
+    if(dest.gettingThere)html+=`<p>${esc(dest.gettingThere)}</p>`;
+    if(incoming.length){
+      html+=`<p><b>Documented direct approaches:</b></p><ul>`;
+      html+=incoming.map(h=>{
+        const roomName=h.edge.fromRoom?(state.roomById?.get(h.edge.fromRoom)?.room?.name||h.edge.fromRoom):null;
+        const req=h.edge.requirements?.length?` — ${esc(h.edge.requirements.join("; "))}`:"";
+        return `<li>${esc(h.from.name)} → ${esc(dest.name)} via ${esc(title(h.edge.method||"connection"))}${roomName?` from ${esc(roomName)}`:""}${req}</li>`;
+      }).join("");
+      html+=`</ul>`;
+    }else html+=`<p class="warn">No incoming area connection is structured in the current dataset.</p>`;
+    return html;
+  }
+  const [src,dst]=uniqueAreas;
+  const start=norm(src.name),goal=norm(dst.name),queue=[[start,[]]],seen=new Set([start]);
+  let path=null;
+  while(queue.length){
+    const [cur,steps]=queue.shift();
+    if(cur===goal){path=steps;break}
+    const fromArea=state.data.areas.records.find(a=>norm(a.name)===cur);
+    for(const edge of state.areaGraph.get(cur)||[]){
+      const next=norm(edge.area); if(seen.has(next))continue;
+      seen.add(next);
+      queue.push([next,[...steps,{from:fromArea,to:state.data.areas.records.find(a=>norm(a.name)===next),edge}]]);
+    }
+  }
+  if(!path)return `<h3>${esc(src.name)} → ${esc(dst.name)}</h3><p class="warn">I don't have a documented area-level route between those locations. I won't invent room adjacency.</p>`;
+  let html=`<h3>${esc(src.name)} → ${esc(dst.name)}</h3><p>I found this route using only explicit area connections:</p><ol>`;
+  html+=path.map(step=>{
+    const roomName=step.edge.fromRoom?(state.roomById?.get(step.edge.fromRoom)?.room?.name||step.edge.fromRoom):null;
+    const req=step.edge.requirements?.length?` — ${esc(step.edge.requirements.join("; "))}`:"";
+    return `<li><b>${esc(step.from.name)} → ${esc(step.to?.name||step.edge.area)}</b> via ${esc(title(step.edge.method||"connection"))}${roomName?` from ${esc(roomName)}`:""}${req}</li>`;
+  }).join("");
+  html+=`</ol><p class="muted small">This is an area-connection route, not a claim about undocumented room-to-room walking paths.</p>`;
+  return html;
+}
+function compareAnswer(entities){
+  const ms=entities.filter(e=>e.type==="monster").slice(0,2);if(ms.length===2){const [a,b]=ms.map(e=>e.obj);return `<h3>${esc(title(a.name))} vs ${esc(title(b.name))}</h3><table><tr><th></th><th>${esc(title(a.name))}</th><th>${esc(title(b.name))}</th></tr>${[["HP","hp"],["Damage","damage"],["Accuracy","accuracy"],["Defence","defence"],["Magic Defence","magic_defence"],["Weakness","weakness"]].map(([n,k])=>`<tr><td>${esc(n)}</td><td>${esc(a[k]??"None")}</td><td>${esc(b[k]??"None")}</td></tr>`).join("")}</table><p class="muted small">These are recorded stats only; I am not declaring an overall winner.</p>`}
+  return null;
 }
 function unknown(q){
-  const candidates=[];
-  for(const [type,records] of [["monster",state.data.monsters.records],["quest",state.data.quests.records],["area",state.data.areas.records],["skill",state.data.skills.records]]){
-    for(const r of records||[]){const s=entityScore(q,r.name);if(s>=30)candidates.push({s,type,name:r.name})}
-  }
-  candidates.sort((a,b)=>b.s-a.s);
-  return `<h3>I couldn't resolve that safely</h3><p>I don't have a supported interpretation of that question yet, so I won't fill the gap with guesses from another game.</p>
-    ${candidates.length?`<p>Possible matches:</p>${chips(candidates.slice(0,4).map(x=>`Tell me about ${x.name}`))}`:""}
-    <p class="muted small">Try an entity name plus an action, e.g. “gorilla drops”, “where is Giant Spider?”, “Saving Marin requirements”, or “beds in Everbrook”.</p>`;
+  const candidates=resolveEntities(q,{limit:4});return `<h3>I couldn't resolve that confidently</h3><p>I understood the wording as a FlatMMO question, but I couldn't connect it to a supported intent/entity combination without guessing.</p>${candidates.length?`<p>Possible matches:</p>${chips(candidates.map(x=>`Tell me about ${x.name}`))}`:""}<p class="muted small">You can ask naturally: “where can I mine graphite?”, “can I do Atlas Crown with Mining 40 and Crafting 48?”, “how do I get to Omboko from Everbrook?”, or “what does a gorilla drop?”</p>`;
 }
-
 function answer(raw){
-  const q=norm(raw);
-  if(!state.ready) return `<p class="warn">Knowledge is still loading.</p>`;
-  if(/\b(what should i do next|what do i do next|what should i work on|suggest.*next|recommend.*next)\b/.test(q)) return playerAware();
+  const q=norm(raw);if(!state.ready)return `<p class="warn">Knowledge is still loading.</p>`;
+  let entities=resolveEntities(q);entities=contextualize(q,entities);const intent=detectIntent(q,entities),overrides=extractStatedSkillLevels(raw),collection=genericCollection(q),directRule=ruleForQuestion(q);
+  if(intent==="player_next"){rememberContext(intent,entities,raw);return playerAware()}
+  if((intent==="count"||intent==="list")&&collection){rememberContext(intent,entities,raw);return collectionAnswer(collection,intent)}
+  if(directRule && (intent==="mechanics"||!entities.length)){rememberContext("mechanics",[{type:"rule",name:directRule.name,obj:directRule}],raw);return ruleAnswer(directRule)}
+  if(intent==="compare"){const v=compareAnswer(entities);if(v){rememberContext(intent,entities,raw);return v}}
 
-  if(/\b(sleep points?|sleep point|sleep)\b/.test(q) && !/\bbed|where\b/.test(q)) return ruleAnswer(rule("sleep.core"));
-  if(/\b(run|running|run energy|steps)\b/.test(q) && !getMonster(q)) return ruleAnswer(rule("agility.run"));
-  if(/\bdodge\b/.test(q)) return ruleAnswer(rule("agility.dodge"));
-  if(/\b(defence|defense|magic defence|magic defense)\b/.test(q) && /\b(melee|archery|magic|combat)\b/.test(q) && !getMonster(q)) return ruleAnswer(rule("combat.defence"));
+  const quests=entities.filter(e=>e.type==="quest"),monsters=entities.filter(e=>e.type==="monster"),areas=entities.filter(e=>e.type==="area"),skills=entities.filter(e=>e.type==="skill"),equipment=entities.filter(e=>e.type==="equipment"),rooms=entities.filter(e=>e.type==="room"),npcs=entities.filter(e=>e.type==="npc"),resources=entities.filter(e=>e.type==="resource"||e.type==="item"),rules=entities.filter(e=>e.type==="rule"),mechanics=entities.filter(e=>e.type==="mechanic");
 
-  const area=getArea(q);
-  if(/\b(bed|beds|sleep)\b/.test(q) && (area || /\bwhere\b/.test(q))) return bedsAnswer(area);
-  if(area && /\b(monster|monsters|enemy|enemies)\b/.test(q)) return monstersInArea(area);
-
-  const m=getMonster(q);
-  if(m){
-    if(/\b(drop|drops|loot)\b/.test(q)) return monsterDrops(m);
-    if(/\b(where|location|find)\b/.test(q)) return monsterWhere(m);
-    if(/\b(best|combat|fight|style|weak|weakness|recommended|level)\b/.test(q)) return monsterCombat(m);
-    return monsterProfile(m);
-  }
-
-  if(/\b(drop|drops|source|sources|where|get|find|how)\b/.test(q)){
-    const s=itemSources(q); if(s) return s.html;
-  }
-
-  const quest=getQuest(q);
-  if(quest) return questAnswer(quest,/\b(can i|ready|requirements?|do)\b/.test(q));
-
-  if(area) return areaAnswer(area);
-
-  const skill=getSkill(q);
-  if(skill) return skillAnswer(skill);
-
-  const eq=getEquipment(q);
-  if(eq) return equipmentAnswer(eq,q);
-
-  return unknown(q);
+  if(intent==="travel"&&areas.length){const v=travelAnswer(areas);rememberContext(intent,areas,raw);if(v)return v}
+  if(intent==="beds"&&areas[0]){rememberContext(intent,areas,raw);return bedsAnswer(areas[0].obj)}
+  if(intent==="monsters_in_area"&&areas[0]){rememberContext(intent,areas,raw);return monstersInArea(areas[0].obj)}
+  if(quests[0]){const ready=intent==="requirements"||/\b(can i|ready|requirements?|need)\b/.test(q);rememberContext(intent,quests,raw);return questAnswer(quests[0].obj,ready,overrides)}
+  if(monsters[0]){rememberContext(intent,monsters,raw);if(intent==="drops")return monsterDrops(monsters[0].obj);if(intent==="locate")return monsterWhere(monsters[0].obj);if(intent==="requirements"||intent==="mechanics"||/\b(fight|combat|weak|best|recommended|dps|hit chance)\b/.test(q))return monsterCombat(monsters[0].obj);return monsterProfile(monsters[0].obj)}
+  if(resources[0]&&(intent==="locate"||intent==="drops"||/\b(get|obtain|source|mine|fish|chop|dig)\b/.test(q))){rememberContext(intent,resources,raw);return resourceAnswer(resources[0].name)}
+  if(rooms[0]){rememberContext(intent,rooms,raw);return roomAnswer(rooms[0])}
+  if(npcs[0]){rememberContext(intent,npcs,raw);return npcAnswer(npcs[0])}
+  const service=serviceAnswer(q,areas[0]?.obj||null);if(service && (intent==="locate"||/\b(service|shop|store|bank|travel|teleport)\b/.test(q))){rememberContext("service",areas,raw);return service}
+  if(equipment[0]){rememberContext(intent,equipment,raw);return equipmentAnswer(equipment[0].obj,q,overrides)}
+  if(skills[0]){const key=norm(skills[0].name),level=overrides[key];rememberContext(intent,skills,raw);if(level!=null&&(intent==="progression"||/\b(at|level|equip|make|unlock|can i)\b/.test(q)))return skillProgressionAnswer(skills[0].obj,level);return skillAnswer(skills[0].obj)}
+  if(rules[0]){rememberContext("mechanics",rules,raw);return ruleAnswer(rules[0].obj)}
+  if(mechanics[0]){rememberContext("mechanics",mechanics,raw);return mechanicAnswer(mechanics[0].obj)}
+  if(areas[0]){rememberContext(intent,areas,raw);return areaAnswer(areas[0].obj)}
+  if(collection&&(intent==="info"||intent==="mechanics")){rememberContext(intent,entities,raw);return collectionAnswer(collection,"count")}
+  rememberContext(intent,entities,raw);return unknown(q);
 }
 
 function submitQuestion(text,{record=true}={}){

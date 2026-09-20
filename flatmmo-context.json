@@ -42,9 +42,9 @@
       "resources": "61 structured resource/activity nodes across 44 rooms",
       "mechanicsRules": "12 explicit rule/readiness records from flatmmo-rules.json",
       "playerIntegration": "Optional/disposable browser storage. Manual levels are unverified and may be partial; XP is unknown. Official API remains pending. No individual player snapshot is embedded in this public context.",
-      "humanUi": "Deterministic conversational assistant v1.6.1: FlatMMO-inspired charcoal, brown, cream and green styling; manual skill form uses scrolling fields and a persistent action footer. Player behaviour remains v1.6."
+      "humanUi": "Deterministic conversational assistant v1.7: browser-side intent/entity interpretation, structured query planning, short follow-up context, temporary inline skill levels, and conversational answer composition. FlatMMO facts still come from the structured knowledge layer; no LLM is required."
     },
-    "release": "visual-polish-v1.6.1",
+    "release": "conversational-engine-v1.7",
     "updatePolicy": "Manually maintained static snapshot. The deployment workflow publishes committed files; it does not refresh game data or player snapshots. AI retrieval is optional/best-effort."
   },
   "instructions": [

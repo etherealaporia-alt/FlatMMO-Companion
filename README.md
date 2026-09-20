@@ -15,7 +15,7 @@ https://etherealaporia-alt.github.io/FlatMMO-Companion/flatmmo-context.json
 
 The `v2-online` branch is the active development branch. Project data is deliberately kept at the repository root because the mobile maintenance workflow flattens archive directory structures.
 
-The human UI is a deterministic conversational assistant. It can query the structured FlatMMO knowledge graph, retain recent session state with optional/disposable `localStorage`, create a portable `#player=<username>` link, and perform stats-aware requirement checks using public skill data or explicitly labelled user-entered levels.
+The human UI is a deterministic conversational assistant. v1.7 adds a browser-side natural-language interpreter that resolves intent, entities and limited follow-up context before querying the structured FlatMMO knowledge graph. It can answer ordinary phrasing about quests, skills, monsters, areas, rooms, NPCs, resource locations, item sources, travel, requirements and known material calculations. It also retains recent session state with optional/disposable `localStorage`, creates a portable `#player=<username>` link, and performs stats-aware requirement checks using public skill data, explicitly labelled user-entered levels, or temporary levels stated in a question.
 
 The current public-profile loader is interim and may be blocked by normal browser cross-origin policy. It fails cleanly. The player-provider boundary is already isolated so an official player API can replace the loader without redesigning the assistant.
 
@@ -38,6 +38,10 @@ Human-side player support:
 - portable player link
 - interim public skill-level/XP loading when browser policy permits
 - stats-only requirement and nearby-unlock reasoning
+- conversational intent/entity resolution across quests, monsters, skills, areas, rooms, NPCs, resources/items, equipment and mechanics
+- short follow-up references such as “it”, “there” and requirement/location follow-ups
+- deterministic area-level route finding from explicit world connections
+- known production-chain expansion for supported material calculations
 
 Still pending or intentionally incomplete:
 - official player API integration for reliable player snapshots
@@ -74,3 +78,12 @@ The Companion takes visual cues from FlatMMO's public website: charcoal panels, 
 The manual-level dialog keeps its header and action footer outside the scrolling field area. Save and Cancel stay visible within the dialog. Phone widths use two columns, larger inputs and touch targets; dynamic viewport height and safe-area padding help on smaller screens. Real-device keyboard behaviour still needs checking.
 
 The assistant JavaScript and game data are unchanged from v1.6. Player-state logic checks pass. The unpublished preview could not be rendered in cloud Chrome because local-file URLs are blocked; check the deployed layout after upload.
+
+
+## v1.7 conversational query engine
+
+v1.7 replaces the narrow entity-card dispatcher with a deterministic natural-language query layer. Questions are interpreted as an intent plus one or more structured entities before the answer is composed. The engine indexes monsters, quests, skills, areas, internal rooms, NPCs, resources/items, equipment, mechanics and readiness rules. Supported intents include information, location/acquisition, drops, requirements/readiness, walkthroughs, materials, progression, travel, counts/lists, comparisons and player-aware next-step queries.
+
+Short follow-ups can reuse recent conversational context, so sequences such as `What does a gorilla drop?` followed by `Where is it?` remain on the same subject. A question can also supply temporary levels such as `Mining 40 and Crafting 48`; those values are used for that answer only and do not overwrite the saved player snapshot.
+
+The interpreter remains deterministic and local to the browser. It is not an LLM and does not invent FlatMMO facts. Ambiguous or unsupported questions fall back to a clarification-style response rather than borrowing mechanics from another game. Combat calculations remain gated by the same readiness rules as before.

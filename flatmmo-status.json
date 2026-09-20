@@ -1,7 +1,7 @@
 {
   "schemaVersion": 5,
   "generated": "2026-09-19",
-  "release": "visual-polish-v1.6.1",
+  "release": "conversational-engine-v1.7",
   "layout": "flat-root",
   "branch": "v2-online",
   "counts": {
@@ -26,7 +26,7 @@
     "roomsWithResourceNodes": 44
   },
   "humanUi": {
-    "mode": "deterministic conversational assistant",
+    "mode": "deterministic conversational assistant with intent/entity query planning",
     "playerUsername": true,
     "localStorage": "optional and disposable; stores username, latest normalized player snapshot (public or user-entered) and recent questions when available",
     "portablePlayerLink": "#player=<username>",
@@ -35,7 +35,10 @@
     "manualSkills": "Optional username; enter known whole-number levels; blanks and XP stay unknown. Clearly labelled user-entered, not verified.",
     "refreshFailure": "Retain previous same-player snapshot with warning and timestamp; never reuse across different usernames; ignore superseded responses.",
     "visualStyle": "FlatMMO-inspired charcoal panels, brown secondary controls, green primary actions, cream text and monospace headings; no external images/fonts required.",
-    "manualFormLayout": "Bounded dialog with independently scrolling fields and persistent Save/Cancel footer; two skill columns at phone widths."
+    "manualFormLayout": "Bounded dialog with independently scrolling fields and persistent Save/Cancel footer; two skill columns at phone widths.",
+    "queryEngine": "v1.7 browser-side natural-language interpreter: intent detection, global entity resolution, short follow-up context, structured query planning and conversational composition; no LLM required",
+    "conversationContext": "Tracks the recent resolved subject/intent in memory for short follow-ups such as it/there/requirements; disposable with the session",
+    "inlineLevels": "Skill levels explicitly stated in a question may be used for that answer only; they do not overwrite the saved/manual player snapshot"
   },
   "coverage": {
     "combatStyles": [
@@ -102,8 +105,9 @@
     "The interim public-profile loader can be blocked by browser cross-origin policy; official player API integration is pending.",
     "Exact combat hit/damage formulas remain unresolved, so exact DPS, kill time, survivability and recommended combat levels are intentionally blocked.",
     "Agility level 1-19 Run-step progression and exact zero-Sleep behavior by activity remain pending observations.",
-    "Known source conflicts remain retained in verification notes."
+    "Known source conflicts remain retained in verification notes.",
+    "The v1.7 natural-language interpreter is deterministic and finite; unusual or genuinely ambiguous phrasing may still require a more specific question."
   ],
-  "aiContextSha256": "3d9ec267a3b9511c5608270749fb527d82d8bd4d5d59732bfa258dd1f8e040bb",
+  "aiContextSha256": "814d369e09df681b53774efb33f61270fd4547cb79d64ec10a2aa099fc6e6e60",
   "updatePolicy": "Manually maintained static snapshot. The deployment workflow publishes committed files; it does not refresh game data or player snapshots. AI retrieval is optional/best-effort."
 }
