@@ -489,7 +489,7 @@ async function loadAll(){
   restoreSession();
 }
 function buildIndexes(){
-  const dropMap=new Map(), resourceMap=new Map(), serviceMap=new Map(), roomById=new Map(), npcById=new Map(), productionMap=new Map(), areaGraph=new Map();
+  const dropMap=new Map(), resourceMap=new Map(), acquisitionMap=new Map(), serviceMap=new Map(), roomById=new Map(), npcById=new Map(), productionMap=new Map(), areaGraph=new Map();
   const catalog=[];
   const add=(type,name,obj,extra={})=>{
     if(!name)return;
@@ -497,14 +497,42 @@ function buildIndexes(){
     catalog.push({type,name:String(name),obj,aliases,area:extra.area||null,room:extra.room||null});
   };
   const pushMap=(map,key,value)=>{key=norm(key);if(!key)return;if(!map.has(key))map.set(key,[]);map.get(key).push(value)};
+  const rewardItemName=text=>{
+    let s=String(text||"").trim();
+    if(!s||/\bXP\b|\baccess\b|\bability\b|\bsystem\b|\bsupply\b|more rooms/i.test(s))return null;
+    s=s.replace(/^[0-9,]+\s+/,"").trim();
+    return s||null;
+  };
+  const npcItemSource=npc=>{
+    const d=String(npc.details||"").trim(); if(!d)return null;
+    let m=d.match(/^Sells\/unlocks\s+(.+?)(?:\s+for\s+[0-9,]+\s+Coins)?\.?$/i);
+    if(!m)m=d.match(/^Sells\s+(.+?)(?:\s+for\s+[0-9,]+\s+Coins)?\.?$/i);
+    if(m){
+      const item=m[1].replace(/\.$/,"").trim();
+      if(/\band\b|same items|related items|tools|raw fish/i.test(item))return null;
+      return {item,method:"shop"};
+    }
+    m=d.match(/^Makes\s+(.+?)\s+from\s+/i);
+    if(m)return {item:m[1].trim(),method:"craft_service"};
+    m=d.match(/^Trades\s+.+?\s+for\s+(.+?)\.?$/i);
+    if(m)return {item:m[1].replace(/\.$/,"").trim(),method:"trade"};
+    return null;
+  };
 
   for(const m of state.data.monsters.records||[]){
     add("monster",title(m.name),m,{aliases:[m.name]});
     for(const d of m.drops||[]){
-      const item=title(d.item); pushMap(dropMap,item,{monster:m,drop:d});
+      const item=title(d.item),src={kind:"monster_drop",monster:m,drop:d};
+      pushMap(dropMap,item,{monster:m,drop:d}); pushMap(acquisitionMap,item,src);
     }
   }
-  for(const q of state.data.quests.records||[]) add("quest",q.name,q);
+  for(const q of state.data.quests.records||[]){
+    add("quest",q.name,q);
+    for(const reward of q.rewards||[]){
+      const item=rewardItemName(reward);
+      if(item)pushMap(acquisitionMap,item,{kind:"quest_reward",quest:q,reward});
+    }
+  }
   for(const sk of state.data.skills.records||[]) add("skill",sk.name,sk,{aliases:sk.wikiPageName?[sk.wikiPageName]:[]});
   for(const e of state.data.equipmentFlat||[]) add("equipment",e.name,e,{aliases:[e.family,e.kind].filter(Boolean)});
   for(const m of state.data.mechanics.records||[]) add("mechanic",m.name,m,{aliases:[m.id]});
@@ -521,6 +549,7 @@ function buildIndexes(){
       for(const node of room.resourceNodes||[]){
         if(node.resource){
           pushMap(resourceMap,node.resource,{area:a,room,node});
+          pushMap(acquisitionMap,node.resource,{kind:"world_resource",area:a,room,node});
         }
       }
     }
@@ -529,31 +558,51 @@ function buildIndexes(){
       const room=roomById.get(npc.roomId)?.room||null;
       add("npc",npc.name,npc,{area:a,room,aliases:[npc.id]});
       for(const fn of npc.functions||[]) pushMap(serviceMap,fn,{area:a,room,npc,kind:"npc-function",value:fn});
+      const itemSource=npcItemSource(npc);
+      if(itemSource)pushMap(acquisitionMap,itemSource.item,{kind:"npc_item",method:itemSource.method,area:a,room,npc,details:npc.details});
+    }
+  }
+
+  for(const e of state.data.equipmentFlat||[]){
+    const mats=e.obj?.materials||e.obj?.setMaterialTotals||{};
+    for(const k of Object.keys(mats)) if(!catalog.some(x=>x.type==="item"&&norm(x.name)===norm(title(k)))) add("item",title(k),{name:title(k),key:norm(title(k))});
+    if(Object.keys(mats).length)pushMap(acquisitionMap,e.name,{kind:"craft_recipe",equipment:e,materials:mats});
+    if(e.kind==="production" && e.obj?.materials) productionMap.set(norm(e.name),e.obj);
+  }
+  for(const [family,recipes] of Object.entries(state.data.equipment?.productionChains||{})){
+    const rows=Array.isArray(recipes)?recipes:[recipes];
+    for(const rec of rows||[]){
+      if(!rec?.name)continue;
+      if(rec.materials){
+        productionMap.set(norm(rec.name),rec);
+        if(!(state.data.equipmentFlat||[]).some(e=>norm(e.name)===norm(rec.name)))pushMap(acquisitionMap,rec.name,{kind:"production_recipe",family,recipe:rec});
+      }
     }
   }
 
   for(const [key,hits] of dropMap) add("item",title(key),{name:title(key),key,hits});
   for(const [key,hits] of resourceMap) add("resource",title(key),{name:title(key),key,hits});
-
-  for(const e of state.data.equipmentFlat||[]){
-    const mats=e.obj?.materials||e.obj?.setMaterialTotals||{};
-    for(const k of Object.keys(mats)) if(!catalog.some(x=>x.type==="item"&&norm(x.name)===norm(title(k)))) add("item",title(k),{name:title(k),key:norm(title(k))});
-    if(e.kind==="production" && e.obj?.materials) productionMap.set(norm(e.name),e.obj);
+  for(const [key,hits] of acquisitionMap){
+    if(!catalog.some(x=>["item","resource","equipment"].includes(x.type)&&norm(x.name)===key))add("item",title(key),{name:title(key),key,hits});
   }
 
-  state.dropMap=dropMap; state.resourceMap=resourceMap; state.serviceMap=serviceMap;
+  state.dropMap=dropMap; state.resourceMap=resourceMap; state.acquisitionMap=acquisitionMap; state.serviceMap=serviceMap;
   state.roomById=roomById; state.npcById=npcById; state.productionMap=productionMap; state.areaGraph=areaGraph; state.entityCatalog=catalog;
 }
 
 const QUERY_STOP=new Set("what where when which who why how is are was were do does did can could should would i me my we our the a an to from for of in on at with about tell show give list find get need want please there here it its that this those these and or versus vs into through all any every".split(" "));
 function contentTokens(s){return norm(s).split(" ").filter(x=>x.length>1&&!QUERY_STOP.has(x))}
+function hasWholePhrase(haystack,needle){
+  const h=` ${norm(haystack)} `,n=` ${norm(needle)} `;
+  return n.trim().length>0 && h.includes(n);
+}
 function catalogScore(q,e){
   const nq=norm(q); let best=0;
   for(const a of e.aliases||[]){
     if(!a)continue;
     if(nq===a)best=Math.max(best,160+a.length/10);
-    else if(nq.includes(a) && a.length>=3)best=Math.max(best,125+Math.min(20,a.length/2));
-    else if(a.includes(nq) && nq.length>=4)best=Math.max(best,85+Math.min(15,nq.length/2));
+    else if(a.length>=3 && hasWholePhrase(nq,a))best=Math.max(best,125+Math.min(20,a.length/2));
+    else if(nq.length>=4 && hasWholePhrase(a,nq))best=Math.max(best,85+Math.min(15,nq.length/2));
     const qt=contentTokens(nq),at=contentTokens(a); if(qt.length&&at.length){
       const aset=new Set(at),common=qt.filter(t=>aset.has(t)).length;
       if(common)best=Math.max(best,35+common*20+(common===at.length?15:0));
@@ -578,9 +627,17 @@ function rememberContext(intent,entities,raw){
   const primary=keep[0]; if(primary?.obj)state.lastEntity={type:primary.type,obj:primary.obj};
 }
 function contextualize(q,entities){
-  if(entities.length)return entities;
-  const follow=/\b(it|its|that|this|there|them|those|same|again)\b/.test(q) || (/\b(requirements?|level|drop|drops|where|how|what about|reward|materials?|make|craft|fight|weak)\b/.test(q)&&contentTokens(q).length<=5);
-  return follow?(state.context?.entities||[]):[];
+  const prior=state.context?.entities||[];
+  const pronounFollow=/\b(it|its|that|this|there|them|those|same|again)\b/.test(q);
+  const shortFollow=/\b(requirements?|level|drop|drops|where|how|what about|reward|materials?|make|craft|fight|weak)\b/.test(q)&&contentTokens(q).length<=5;
+  const alternativeFollow=/\b(other|another|alternative|alternatives|else|instead|besides|without|ways?)\b/.test(q)&&contentTokens(q).length<=7;
+  if(!(pronounFollow||shortFollow||alternativeFollow))return entities;
+  const concreteTypes=new Set(["monster","quest","area","skill","equipment","room","npc","resource","item"]);
+  const explicitConcrete=entities.some(e=>concreteTypes.has(e.type));
+  if(explicitConcrete||!prior.length)return entities;
+  const seen=new Set(),merged=[];
+  for(const e of [...prior,...entities]){const k=`${e.type}:${norm(e.name)}`;if(!seen.has(k)){seen.add(k);merged.push(e)}}
+  return merged;
 }
 function extractStatedSkillLevels(q){
   const out={};
@@ -595,6 +652,7 @@ function extractStatedSkillLevels(q){
 }
 function detectIntent(q,entities){
   if(/\b(what should i do next|what do i do next|what should i work on|suggest.*next|recommend.*next)\b/.test(q))return "player_next";
+  if(/\b(other|another|alternative|alternatives|else|instead|besides|without|ways?)\b/.test(q) && ["locate","drops"].includes(state.context?.intent))return "locate";
   if(/\b(how many|count|number of)\b/.test(q))return "count";
   if(/\b(list|show me all|which .* are there|what .* are there)\b/.test(q))return "list";
   if(/\b(walkthrough|step by step|start to finish|how (?:do|can) i (?:complete|finish)|quest steps)\b/.test(q))return "walkthrough";
@@ -690,12 +748,19 @@ function ruleAnswer(r){
 function mechanicAnswer(m){return `<h3>${esc(m.name)}</h3><p>${esc(m.summary||"")}</p>${evidence([m.source].filter(Boolean))}`}
 function resourceLocations(name){return state.resourceMap?.get(norm(name))||[]}
 function dropSources(name){return state.dropMap?.get(norm(name))||[]}
-function resourceAnswer(name){
-  const nodes=resourceLocations(name),drops=dropSources(name),bits=[];
-  if(nodes.length){bits.push(`<p><b>World/resource locations:</b></p><ul>${nodes.map(h=>{const n=h.node;const req=n.level!=null?` · ${esc(n.skill||"Level")} ${esc(n.level)}`:"";const tool=n.tool?` · tool: ${esc(n.tool)}`:"";return `<li>${esc(h.area.name)} → ${esc(h.room.name)}${req}${tool}</li>`}).join("")}</ul>`)}
-  if(drops.length){bits.push(`<p><b>Monster drops:</b></p><ul>${drops.map(h=>`<li>${esc(title(h.monster.name))} — ${esc(fmtDrop(h.drop))}</li>`).join("")}</ul>`)}
-  if(!bits.length)return `<h3>${esc(title(name))}</h3><p class="warn">I can identify that name, but I don't have a structured acquisition source for it yet.</p>`;
-  return `<h3>How to get ${esc(title(name))}</h3>${bits.join("")}${evidence([], ["World nodes and monster drops are reported independently; missing source types are not assumed absent from the game."])}`;
+function acquisitionSources(name){return state.acquisitionMap?.get(norm(name))||[]}
+function resourceAnswer(name,q=""){
+  const all=acquisitionSources(name),avoidCombat=/\b(other than combat|besides combat|without combat|avoid combat|non combat|other than fighting|besides fighting|without fighting|avoid fighting)\b/.test(norm(q));
+  const sources=avoidCombat?all.filter(x=>x.kind!=="monster_drop"):all,bits=[];
+  const nodes=sources.filter(x=>x.kind==="world_resource"),drops=sources.filter(x=>x.kind==="monster_drop"),recipes=sources.filter(x=>x.kind==="craft_recipe"||x.kind==="production_recipe"),rewards=sources.filter(x=>x.kind==="quest_reward"),npcs=sources.filter(x=>x.kind==="npc_item");
+  if(nodes.length)bits.push(`<p><b>World/resource locations:</b></p><ul>${nodes.map(h=>{const n=h.node,req=n.level!=null?` · ${esc(n.skill||"Level")} ${esc(n.level)}`:"",tool=n.tool?` · tool: ${esc(n.tool)}`:"";return `<li>${esc(h.area.name)} → ${esc(h.room.name)}${req}${tool}</li>`}).join("")}</ul>`);
+  if(recipes.length)bits.push(`<p><b>Crafting/production:</b></p><ul>${recipes.map(h=>{const rec=h.equipment?.obj||h.recipe||{},mats=h.materials||rec.materials||{},skill=rec.craftSkill||rec.skill,level=rec.craftLevel??rec.level;return `<li>${esc(h.equipment?.name||rec.name||title(name))}${skill?` — ${esc(skill)}${level!=null?` ${esc(level)}`:""}`:""}${Object.keys(mats).length?` · ${esc(Object.entries(mats).map(([k,v])=>`${title(k)} ×${v}`).join(", "))}`:""}</li>`}).join("")}</ul>`);
+  if(rewards.length)bits.push(`<p><b>Quest rewards:</b></p><ul>${rewards.map(h=>`<li>${esc(h.quest.name)} — ${esc(h.reward)}</li>`).join("")}</ul>`);
+  if(npcs.length)bits.push(`<p><b>Shops/trades/services:</b></p><ul>${npcs.map(h=>`<li>${esc(h.area.name)}${h.room?` → ${esc(h.room.name)}`:""} — ${esc(h.npc.name)}: ${esc(h.details)}</li>`).join("")}</ul>`);
+  if(drops.length)bits.push(`<p><b>Monster drops:</b></p><ul>${drops.map(h=>`<li>${esc(title(h.monster.name))} — ${esc(fmtDrop(h.drop))}</li>`).join("")}</ul>`);
+  if(avoidCombat&&!sources.length&&all.some(x=>x.kind==="monster_drop"))return `<h3>Non-combat sources for ${esc(title(name))}</h3><p>I don't currently have an <b>item-specific non-combat source recorded</b> for ${esc(title(name))}. The item-specific sources in the Companion are monster drops.</p><p class="muted small">That means “not documented in the Companion,” not proof that no non-combat method exists in FlatMMO.</p>${evidence([], ["The acquisition index checks structured world/resource nodes, crafting/production recipes, quest rewards, explicit item-named NPC shops/trades/services, and monster drops. Generic shop descriptions are not treated as complete inventories."])}`;
+  if(!bits.length)return `<h3>${esc(title(name))}</h3><p class="warn">I can identify that name, but I don't have an item-specific structured acquisition source for it yet.</p>${evidence([],["Generic shop/service descriptions are not treated as proof that a specific item is sold there."])}`;
+  return `<h3>${avoidCombat?`Non-combat sources for ${esc(title(name))}`:`How to get ${esc(title(name))}`}</h3>${bits.join("")}${evidence([], ["The acquisition index combines structured world nodes, crafting/production recipes, quest rewards, explicit item-named NPC shops/trades/services, and monster drops. Generic shop descriptions are kept as location/service evidence, not invented inventories."])}`;
 }
 function npcAnswer(e){
   const n=e.obj,room=e.room||state.roomById?.get(n.roomId)?.room,area=e.area||state.roomById?.get(n.roomId)?.area;
@@ -845,7 +910,7 @@ function answer(raw){
   if(intent==="monsters_in_area"&&areas[0]){rememberContext(intent,areas,raw);return monstersInArea(areas[0].obj)}
   if(quests[0]){const ready=intent==="requirements"||/\b(can i|ready|requirements?|need)\b/.test(q);rememberContext(intent,quests,raw);return questAnswer(quests[0].obj,ready,overrides)}
   if(monsters[0]){rememberContext(intent,monsters,raw);if(intent==="drops")return monsterDrops(monsters[0].obj);if(intent==="locate")return monsterWhere(monsters[0].obj);if(intent==="requirements"||intent==="mechanics"||/\b(fight|combat|weak|best|recommended|dps|hit chance)\b/.test(q))return monsterCombat(monsters[0].obj);return monsterProfile(monsters[0].obj)}
-  if(resources[0]&&(intent==="locate"||intent==="drops"||/\b(get|obtain|source|mine|fish|chop|dig)\b/.test(q))){rememberContext(intent,resources,raw);return resourceAnswer(resources[0].name)}
+  if(resources[0]&&(intent==="locate"||intent==="drops"||/\b(get|obtain|source|mine|fish|chop|dig)\b/.test(q))){rememberContext(intent,resources,raw);return resourceAnswer(resources[0].name,q)}
   if(rooms[0]){rememberContext(intent,rooms,raw);return roomAnswer(rooms[0])}
   if(npcs[0]){rememberContext(intent,npcs,raw);return npcAnswer(npcs[0])}
   const service=serviceAnswer(q,areas[0]?.obj||null);if(service && (intent==="locate"||/\b(service|shop|store|bank|travel|teleport)\b/.test(q))){rememberContext("service",areas,raw);return service}

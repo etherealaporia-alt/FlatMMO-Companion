@@ -87,3 +87,10 @@ v1.7 replaces the narrow entity-card dispatcher with a deterministic natural-lan
 Short follow-ups can reuse recent conversational context, so sequences such as `What does a gorilla drop?` followed by `Where is it?` remain on the same subject. A question can also supply temporary levels such as `Mining 40 and Crafting 48`; those values are used for that answer only and do not overwrite the saved player snapshot.
 
 The interpreter remains deterministic and local to the browser. It is not an LLM and does not invent FlatMMO facts. Ambiguous or unsupported questions fall back to a clarification-style response rather than borrowing mechanics from another game. Combat calculations remain gated by the same readiness rules as before.
+
+
+## v1.7.1 conversational follow-up hotfix
+
+v1.7.1 tightens entity matching and follow-up context. Short entity names now match whole normalized words/phrases, preventing names such as `Bat` from matching inside unrelated words such as `combat`. Elliptical alternative-source follow-ups such as `Any ways other than combat?` can inherit the previous item/resource subject and acquisition intent.
+
+The acquisition index now combines item-specific sources from structured world/resource nodes, crafting and production recipes, quest rewards, explicit item-named NPC shops/trades/services, and monster drops. Generic shop descriptions remain service/location evidence rather than being treated as complete inventories. If only combat sources are recorded for an item, the Companion says that no item-specific non-combat source is currently documented rather than inventing one or claiming none exists in the game.

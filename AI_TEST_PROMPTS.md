@@ -1,4 +1,4 @@
-# FlatMMO Companion v1.7 — Regression Tests
+# FlatMMO Companion v1.7.1 — Regression Tests
 
 These tests cover both the public AI grounding layer and the deterministic human Companion.
 
@@ -262,7 +262,7 @@ Expected:
 - No.
 - `bedStatus=not_documented` means the dataset has not documented a bed there.
 
-# Human Companion v1.7 tests
+# Human Companion v1.7.1 tests
 
 
 ## Conversational query-engine tests
@@ -323,6 +323,31 @@ Prompts in sequence:
 Expected:
 - The second prompt resolves `it` to Gorilla.
 - The location answer uses exact room links where available.
+
+### Alternative-source follow-up / whole-word entity regression
+Prompts in sequence:
+1. `Where can I get green leaf seeds?`
+2. `Any ways other than combat?`
+
+Expected:
+- The second prompt remains about Green Leaf Seeds.
+- The word `combat` must not resolve the monster Bat.
+- If no non-combat source is structured, say that no non-combat source is currently recorded; do not claim none exists in FlatMMO.
+- Do not repeat monster drops when the user explicitly asks for a non-combat alternative.
+
+### Multi-source acquisition index
+Prompts:
+- `How do I get Paper?`
+- `Where can I get Stone Boots?`
+- `How do I get a Cactus Seed?`
+- `How do I make an Iron Bar?`
+
+Expected:
+- Paper reports the Omboko Paper Maker service and its documented 100 Bamboo Strips + 1,000 Coins requirement.
+- Stone Boots reports both the explicit Hell shop source and the recorded Hell Goblin monster drop.
+- Cactus Seed reports the Desert Temple 2 quest reward.
+- Iron Bar reports the structured Forging 5 production recipe: 1 Iron Ore + 1 Coal.
+- Generic shop labels are not treated as proof that a specific item is sold there.
 
 ### Material expansion
 Prompt:

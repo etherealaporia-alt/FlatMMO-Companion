@@ -7,7 +7,7 @@
 <link rel="canonical" href="https://etherealaporia-alt.github.io/FlatMMO-Companion/ai.html">
 <style>:root{color-scheme:dark}body{margin:0;background:#0d1117;color:#eef2f7;font-family:system-ui,-apple-system,Segoe UI,sans-serif}main{max-width:1100px;margin:auto;padding:28px 18px 64px}h1{margin-bottom:.3rem}.muted{color:#9ba9bb}.card{background:#151b25;border:1px solid #283448;border-radius:14px;padding:16px;margin:14px 0}a{color:#73b8ff}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#101620;border:1px solid #283448;border-radius:12px;padding:16px;font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}</style>
 </head><body><main>
-<h1>FlatMMO Companion AI Context</h1><p class="muted">v1.7 · deterministic knowledge layer · generated 2026-09-19</p>
+<h1>FlatMMO Companion AI Context</h1><p class="muted">v1.7.1 · deterministic knowledge layer · generated 2026-09-20</p>
 <section class="card">
 <p><strong>Critical rule:</strong> FlatMMO is independent. Missing facts must not be filled with RuneScape or other-game mechanics.</p>
 <p><strong>Calculation rule:</strong> use the mechanics-rule status before calculating. Partial or unknown combat formulas do not support exact hit chance, DPS, kill time, survivability, or recommended levels.</p>
@@ -16,12 +16,12 @@
 <p><strong>Player data:</strong> the human Companion may load public skill stats by username, but this public grounding page contains no individual player's live/private snapshot.</p>
 <p><a href="flatmmo-context.json">Canonical JSON</a> · <a href="flatmmo-context.txt">Text fallback</a> · <a href="flatmmo-rules.json">Mechanics rules</a> · <a href="flatmmo-overrides.json">Observed overrides</a></p>
 <p><strong>Player fallback:</strong> manually entered levels are unverified; missing skills and XP remain unknown. A failed refresh can retain older levels for the same username, clearly marked.</p>
-<p><strong>Human UI:</strong> v1.7 interprets conversational questions locally with deterministic intent/entity routing; the structured FlatMMO data remains authoritative.</p>
+<p><strong>Human UI:</strong> v1.7.1 interprets conversational questions locally, preserves short follow-up context, and checks item-specific acquisition sources across world nodes, crafting/production, quest rewards, explicit NPC shops/trades/services, and monster drops. Generic shop descriptions are not treated as inventories.</p>
 </section><pre>{
   "meta": {
     "id": "flatmmo-companion-ai-context",
     "schemaVersion": "1.6",
-    "generated": "2026-09-19",
+    "generated": "2026-09-20",
     "game": "FlatMMO",
     "canonicalPage": "https://etherealaporia-alt.github.io/FlatMMO-Companion/ai.html",
     "canonicalJson": "https://etherealaporia-alt.github.io/FlatMMO-Companion/flatmmo-context.json",
@@ -61,9 +61,9 @@
       "resources": "61 structured resource/activity nodes across 44 rooms",
       "mechanicsRules": "12 explicit rule/readiness records from flatmmo-rules.json",
       "playerIntegration": "Optional/disposable browser storage. Manual levels are unverified and may be partial; XP is unknown. Official API remains pending. No individual player snapshot is embedded in this public context.",
-      "humanUi": "Deterministic conversational assistant v1.7: browser-side intent/entity interpretation, structured query planning, short follow-up context, temporary inline skill levels, and conversational answer composition. FlatMMO facts still come from the structured knowledge layer; no LLM is required."
+      "humanUi": "Deterministic conversational assistant v1.7.1: browser-side intent/entity interpretation, whole-word/phrase entity matching, structured query planning, short follow-up context including alternative-source follow-ups, temporary inline skill levels, multi-source item acquisition indexing (world/resource nodes, crafting/production, quest rewards, explicit item-named NPC shops/trades/services, and monster drops), and conversational answer composition. FlatMMO facts still come from the structured knowledge layer; no LLM is required."
     },
-    "release": "conversational-engine-v1.7",
+    "release": "conversational-engine-v1.7.1",
     "updatePolicy": "Manually maintained static snapshot. The deployment workflow publishes committed files; it does not refresh game data or player snapshots. AI retrieval is optional/best-effort."
   },
   "instructions": [
