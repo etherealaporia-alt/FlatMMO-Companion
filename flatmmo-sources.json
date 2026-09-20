@@ -1,6 +1,6 @@
 {
   "schemaVersion": 4,
-  "generated": "2026-09-16",
+  "generated": "2026-09-20",
   "permissionContext": {
     "wiki": "Liam/Dounford explicitly approved caching wiki data for the described public AI-companion use, with polite update checking rather than bot-like repeated fetching.",
     "updateCadence": "Daily recentchanges check approved; query only the interval since the last successful check.",
@@ -27,8 +27,8 @@
       "authority": "community_verified",
       "url": "https://flatmmo.wiki/index.php/Quests",
       "usage": "deep normalized facts/procedures/progression",
-      "lastChecked": "2026-09-15",
-      "ingestion": "full-rendered-page normalization"
+      "lastChecked": "2026-09-20",
+      "ingestion": "item-centric acquisition/use normalization plus existing domain normalization"
     },
     {
       "id": "wiki.melee",
@@ -83,24 +83,24 @@
       "authority": "community_verified",
       "url": "https://flatmmo.wiki/index.php/Forging",
       "usage": "deep normalized facts/procedures/progression",
-      "lastChecked": "2026-09-15",
-      "ingestion": "full-rendered-page normalization"
+      "lastChecked": "2026-09-20",
+      "ingestion": "item-centric acquisition/use normalization plus existing domain normalization"
     },
     {
       "id": "wiki.crafting",
       "authority": "community_verified",
       "url": "https://flatmmo.wiki/index.php/Crafting",
       "usage": "deep normalized facts/procedures/progression",
-      "lastChecked": "2026-09-15",
-      "ingestion": "full-rendered-page normalization"
+      "lastChecked": "2026-09-20",
+      "ingestion": "item-centric acquisition/use normalization plus existing domain normalization"
     },
     {
       "id": "wiki.enchantment",
       "authority": "community_verified",
       "url": "https://flatmmo.wiki/index.php/Enchantment",
       "usage": "deep normalized facts/procedures/progression",
-      "lastChecked": "2026-09-15",
-      "ingestion": "full-rendered-page normalization"
+      "lastChecked": "2026-09-20",
+      "ingestion": "item-centric acquisition/use normalization plus existing domain normalization"
     },
     {
       "id": "wiki.fishing",
@@ -113,8 +113,8 @@
       "authority": "community_verified",
       "url": "https://flatmmo.wiki/index.php/Farming",
       "usage": "deep normalized facts/procedures/progression",
-      "lastChecked": "2026-09-15",
-      "ingestion": "full-rendered-page normalization"
+      "lastChecked": "2026-09-20",
+      "ingestion": "item-centric acquisition/use normalization plus existing domain normalization"
     },
     {
       "id": "wiki.woodcutting",
@@ -132,21 +132,25 @@
       "id": "wiki.cooking",
       "authority": "community_verified",
       "url": "https://flatmmo.wiki/index.php/Cooking",
-      "usage": "normalized facts/procedures"
+      "usage": "normalized facts/procedures",
+      "lastChecked": "2026-09-20",
+      "ingestion": "item-centric acquisition/use normalization plus existing domain normalization"
     },
     {
       "id": "wiki.brewing",
       "authority": "community_verified",
       "url": "https://flatmmo.wiki/index.php/Brewing",
       "usage": "deep normalized facts/procedures/progression",
-      "lastChecked": "2026-09-15",
-      "ingestion": "full-rendered-page normalization"
+      "lastChecked": "2026-09-20",
+      "ingestion": "item-centric acquisition/use normalization plus existing domain normalization"
     },
     {
       "id": "wiki.stealing",
       "authority": "community_verified",
       "url": "https://flatmmo.wiki/index.php/Stealing",
-      "usage": "normalized facts/procedures"
+      "usage": "normalized facts/procedures",
+      "lastChecked": "2026-09-20",
+      "ingestion": "item-centric acquisition/use normalization plus existing domain normalization"
     },
     {
       "id": "wiki.agility",
@@ -216,7 +220,9 @@
       "id": "wiki.bundles",
       "authority": "community_verified",
       "url": "https://flatmmo.wiki/index.php/Bundles",
-      "usage": "normalized facts/procedures"
+      "usage": "normalized facts/procedures",
+      "lastChecked": "2026-09-20",
+      "ingestion": "item-centric acquisition/use normalization plus existing domain normalization"
     },
     {
       "id": "wiki.sigils",
@@ -228,7 +234,9 @@
       "id": "wiki.shops",
       "authority": "community_verified",
       "url": "https://flatmmo.wiki/index.php/Shops",
-      "usage": "normalized facts/procedures"
+      "usage": "normalized facts/procedures",
+      "lastChecked": "2026-09-20",
+      "ingestion": "item-centric acquisition/use normalization plus existing domain normalization"
     },
     {
       "id": "wiki.pets",
@@ -264,7 +272,9 @@
       "id": "wiki.spirits",
       "authority": "community_verified",
       "url": "https://flatmmo.wiki/index.php/Spirits",
-      "usage": "normalized facts/procedures"
+      "usage": "normalized facts/procedures",
+      "lastChecked": "2026-09-20",
+      "ingestion": "item-centric acquisition/use normalization plus existing domain normalization"
     },
     {
       "id": "wiki.archeology",
@@ -407,9 +417,25 @@
       "authority": "community_verified",
       "url": "https://flatmmo.wiki/index.php/Hats",
       "usage": "normalized facts/procedures"
+    },
+    {
+      "id": "wiki.community_events",
+      "authority": "community_verified",
+      "url": "https://flatmmo.wiki/index.php/Community_Events",
+      "usage": "item reward pools for community events",
+      "lastChecked": "2026-09-20",
+      "ingestion": "item-centric acquisition normalization"
+    },
+    {
+      "id": "wiki.badges",
+      "authority": "community_verified",
+      "url": "https://flatmmo.wiki/index.php/Badges",
+      "usage": "badge acquisition methods where not already represented by stronger item-specific sources",
+      "lastChecked": "2026-09-20",
+      "ingestion": "item-centric acquisition normalization"
     }
   ],
-  "ingestionNote": "2026-09-16 v1.3 entity-link pass added quest-step-to-room/NPC/monster relationships, monster-to-room relationships, room reverse links, bedStatus semantics, and conservative structured resource nodes. No missing relationships were filled from RuneScape or unsupported inference.",
+  "ingestionNote": "v1.8 adds a first-class item/acquisition graph. Explicit item rows are normalized across existing structured data plus Shops, Stealing, Farming, Brewing, Cooking, Enchantment, Spirits, Community Events, Bundles and Badges. Unknown values remain unknown.",
   "derivedRelationshipPolicy": {
     "authority": "derived",
     "basis": "v1.3 cross-links are deterministic joins across the already sourced v1.2 world model, quest procedures, and monster records.",

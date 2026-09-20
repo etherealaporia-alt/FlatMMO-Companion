@@ -15,7 +15,7 @@ https://etherealaporia-alt.github.io/FlatMMO-Companion/flatmmo-context.json
 
 The `v2-online` branch is the active development branch. Project data is deliberately kept at the repository root because the mobile maintenance workflow flattens archive directory structures.
 
-The human UI is a deterministic conversational assistant. v1.7 adds a browser-side natural-language interpreter that resolves intent, entities and limited follow-up context before querying the structured FlatMMO knowledge graph. It can answer ordinary phrasing about quests, skills, monsters, areas, rooms, NPCs, resource locations, item sources, travel, requirements and known material calculations. It also retains recent session state with optional/disposable `localStorage`, creates a portable `#player=<username>` link, and performs stats-aware requirement checks using public skill data, explicitly labelled user-entered levels, or temporary levels stated in a question.
+The human UI is a deterministic conversational assistant. v1.8 keeps the browser-side natural-language interpreter and adds a first-class item/acquisition graph instead of reconstructing items from scattered mentions at query time. It can answer ordinary phrasing about quests, skills, monsters, areas, rooms, NPCs, shops, Stealing, Farming, item sources/uses, travel, requirements and known material calculations. It retains recent session state with optional/disposable `localStorage`, creates a portable `#player=<username>` link, and performs stats-aware requirement checks using public skill data, explicitly labelled user-entered levels, or temporary levels stated in a question.
 
 The current public-profile loader is interim and may be blocked by normal browser cross-origin policy. It fails cleanly. The player-provider boundary is already isolated so an official player API can replace the loader without redesigning the assistant.
 
@@ -30,6 +30,9 @@ Included:
 - explicit mechanics/calculation-readiness rules
 - areas, rooms, services, NPCs and resource nodes
 - equipment, weapons, crafting requirements and production relationships
+- **588 first-class item records with 1,168 normalized acquisition routes and 199 items with structured uses**
+- explicit shop inventories/prices where item rows are documented
+- Stealing pickpockets, stalls and chest sources; Farming seed/crop relationships; spirit/event/bundle rewards
 - monster/quest/location cross-links
 
 Human-side player support:
@@ -42,6 +45,9 @@ Human-side player support:
 - short follow-up references such as “it”, “there” and requirement/location follow-ups
 - deterministic area-level route finding from explicit world connections
 - known production-chain expansion for supported material calculations
+- item-centric acquisition filtering: buy, steal, farm, craft and non-combat requests
+- structured item-use queries such as “what can I make with Graphite?”
+- item-specific shop inventory answers such as “what does the Omboko shop sell?”
 
 Still pending or intentionally incomplete:
 - official player API integration for reliable player snapshots
@@ -94,3 +100,12 @@ The interpreter remains deterministic and local to the browser. It is not an LLM
 v1.7.1 tightens entity matching and follow-up context. Short entity names now match whole normalized words/phrases, preventing names such as `Bat` from matching inside unrelated words such as `combat`. Elliptical alternative-source follow-ups such as `Any ways other than combat?` can inherit the previous item/resource subject and acquisition intent.
 
 The acquisition index now combines item-specific sources from structured world/resource nodes, crafting and production recipes, quest rewards, explicit item-named NPC shops/trades/services, and monster drops. Generic shop descriptions remain service/location evidence rather than being treated as complete inventories. If only combat sources are recorded for an item, the Companion says that no item-specific non-combat source is currently documented rather than inventing one or claiming none exists in the game.
+
+
+## v1.8 knowledge expansion
+
+v1.8 moves item knowledge into `flatmmo-items.json`, a first-class acquisition/use graph with **588 item records**, **1,168 normalized acquisition routes**, and **199 items with structured uses**. Existing monster drops, world resource nodes and production recipes are retained, then expanded with explicit shop rows, Stealing pickpockets/stalls/chests, Farming crop relationships, quest rewards, spirit reward pools, community-event rewards, starter-bundle rewards and explicit NPC services/trades.
+
+The source policy is intentionally conservative. A generic statement such as “sells fishing-related items” is not treated as a complete inventory; the Companion uses explicit item rows. Unknown stall odds remain unknown, zero-stock shop rows stay visible as source-state information, and unlabeled Prospector price units are not silently assumed to be Coins.
+
+The human query engine now uses this graph for ordinary questions such as `Where can I get Green Leaf Seeds?`, `Any ways other than combat?`, `Where can I buy a Shovel?`, `What does the Omboko shop sell?`, and `What can I make with Graphite?`. The item graph is broad, not exhaustive: a missing source or use means **not documented in this snapshot**, not that FlatMMO has none.

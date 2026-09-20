@@ -23,7 +23,8 @@ Current domains:
 - mechanics/readiness rules: https://etherealaporia-alt.github.io/FlatMMO-Companion/flatmmo-rules.json
 - areas: https://etherealaporia-alt.github.io/FlatMMO-Companion/flatmmo-areas.json
 - equipment: https://etherealaporia-alt.github.io/FlatMMO-Companion/flatmmo-equipment.json
+- first-class items/acquisition graph: https://etherealaporia-alt.github.io/FlatMMO-Companion/flatmmo-items.json
 - sources: https://etherealaporia-alt.github.io/FlatMMO-Companion/flatmmo-sources.json
 - status: https://etherealaporia-alt.github.io/FlatMMO-Companion/flatmmo-status.json
 
-The canonical JSON context merges the two observation-backed quest placeholders into the 19 core quest records for 21 named quests.
+The canonical JSON context merges the two observation-backed quest placeholders into the 19 core quest records for 21 named quests. v1.8 also embeds 588 first-class item records with 1,168 normalized acquisition routes and 199 items with structured uses.

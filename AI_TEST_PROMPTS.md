@@ -1,4 +1,4 @@
-# FlatMMO Companion v1.7.1 — Regression Tests
+# FlatMMO Companion v1.8 — Regression Tests
 
 These tests cover both the public AI grounding layer and the deterministic human Companion.
 
@@ -508,3 +508,77 @@ Expected:
 - No exact recommended level or DPS is invented.
 - Recorded monster/player facts may be compared.
 - Missing combat formulas are stated as the blocker.
+
+
+# Human Companion v1.8 item-knowledge tests
+
+## Green Leaf Seeds non-combat follow-up
+Prompts in sequence:
+1. `Where can I get green leaf seeds?`
+2. `Any ways other than combat?`
+
+Expected:
+- First answer may include Silkfang, Farmer and Master Farmer monster drops where recorded.
+- It also includes the **Farmer pickpocket** source at Stealing 10.
+- The follow-up keeps Green Leaf Seeds as the subject and excludes monster-drop routes.
+- The Farmer pickpocket route remains, with the current rarity label Uncommon / 1 in 100.
+
+## Shop-specific acquisition
+Prompt:
+`Where can I buy a shovel?`
+
+Expected:
+- Return explicit shop rows, including 24-Coin Shovel rows where documented.
+- Do not substitute monster drops or pickpocket sources when the user specifically asks to buy.
+
+## Shop inventory
+Prompt:
+`What does the Omboko shop sell?`
+
+Expected:
+- Return the explicit Omboko General Store inventory from item rows (Bamboo, Matches, Banana, Deep Jungle Map, Machete, Grass Badge, Omboko Axe, Paper).
+- Preserve zero-stock information for Omboko Axe rather than implying current availability.
+- Do not include General Store inventories from Everbrook, Mystic Vale or Frostvale in the Omboko-specific answer.
+
+## Item uses
+Prompt:
+`What can I make with Graphite?`
+
+Expected:
+- Report Graphite Bucket as a structured Crafting use requiring 10 Graphite at Crafting 70.
+- Do not confuse “where to get Graphite” with “what Graphite is used for.”
+
+## Multi-source Stardust
+Prompts:
+- `How do I get Stardust?`
+- `What is Stardust used for?`
+
+Expected:
+- Acquisition answer can combine Farming, Stealing/chests, monster drops and gem-to-Stardust conversions where structured.
+- Use answer lists structured Enchantment/equipment recipes and does not invent unrecorded uses.
+
+## Stealing progression
+Prompt:
+`Stealing 20, what can I steal?`
+
+Expected:
+- Show item-specific Stealing activities at or below level 20, including Citizen, Farmer, Everbrook Stall, Omboko Stall and eligible one-time chests.
+- Treat this as an unlock/source lookup, not an XP-rate recommendation.
+
+## Unknown source values
+Prompt:
+`What is the exact chance to get Paper from the Omboko Stall?`
+
+Expected:
+- The current stall table does not specify that exact chance; keep it unknown.
+- Do not borrow the chance from another stall/item.
+
+## Multi-output recipe quantities
+Prompts:
+- `How do I make Stardust with Crafting?`
+- `How many Arrow Shafts do different logs make?`
+
+Expected:
+- Crafting 80 converts 1 Magic Logs into 100 Stardust.
+- Arrow Shaft recipes preserve their different output quantities, including both Cactus Logs and Blessed Logs producing 16 shafts.
+- Do not collapse alternative recipes merely because level/output quantity match.

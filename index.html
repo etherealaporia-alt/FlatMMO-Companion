@@ -128,6 +128,7 @@ const FILES = {
   skills:"flatmmo-skills.json",
   areas:"flatmmo-areas.json",
   equipment:"flatmmo-equipment.json",
+  items:"flatmmo-items.json",
   mechanics:"flatmmo-mechanics.json",
   rules:"flatmmo-rules.json",
   overrides:"flatmmo-overrides.json"
@@ -580,13 +581,27 @@ function buildIndexes(){
     }
   }
 
-  for(const [key,hits] of dropMap) add("item",title(key),{name:title(key),key,hits});
-  for(const [key,hits] of resourceMap) add("resource",title(key),{name:title(key),key,hits});
-  for(const [key,hits] of acquisitionMap){
-    if(!catalog.some(x=>["item","resource","equipment"].includes(x.type)&&norm(x.name)===key))add("item",title(key),{name:title(key),key,hits});
+  // v1.8: the first-class item graph is authoritative for item acquisition/use questions.
+  // The legacy maps above remain useful for monster/room relationships, but item lookups no
+  // longer depend on reconstructing meaning from scattered text at runtime.
+  acquisitionMap.clear();
+  const itemByName=new Map(),shopIndex=new Map(),stealingIndex=[];
+  for(const item of state.data.items?.records||[]){
+    itemByName.set(norm(item.name),item);
+    add("item",item.name,item,{aliases:item.aliases||[]});
+    for(const acq of item.acquisition||[]){
+      pushMap(acquisitionMap,item.name,{kind:acq.type,item,source:acq});
+      if(acq.type==="shop" && acq.shop){
+        const shopKey=`${norm(acq.area||"")}|${norm(acq.shop)}`;
+        if(!shopIndex.has(shopKey))shopIndex.set(shopKey,{name:acq.shop,area:acq.area||null,items:[]});
+        shopIndex.get(shopKey).items.push({item:item.name,source:acq});
+      }
+      if(["pickpocket","stall","map_chest","rogue_chest"].includes(acq.type))stealingIndex.push({item:item.name,source:acq});
+    }
   }
+  for(const sh of shopIndex.values())add("shop",sh.name,sh,{area:sh.area||null,aliases:[sh.area?`${sh.area} ${sh.name}`:null,sh.area?`${sh.area} shop`:null].filter(Boolean)});
 
-  state.dropMap=dropMap; state.resourceMap=resourceMap; state.acquisitionMap=acquisitionMap; state.serviceMap=serviceMap;
+  state.dropMap=dropMap; state.resourceMap=resourceMap; state.acquisitionMap=acquisitionMap; state.itemByName=itemByName; state.shopIndex=shopIndex; state.stealingIndex=stealingIndex; state.serviceMap=serviceMap;
   state.roomById=roomById; state.npcById=npcById; state.productionMap=productionMap; state.areaGraph=areaGraph; state.entityCatalog=catalog;
 }
 
@@ -653,12 +668,14 @@ function extractStatedSkillLevels(q){
 function detectIntent(q,entities){
   if(/\b(what should i do next|what do i do next|what should i work on|suggest.*next|recommend.*next)\b/.test(q))return "player_next";
   if(/\b(other|another|alternative|alternatives|else|instead|besides|without|ways?)\b/.test(q) && ["locate","drops"].includes(state.context?.intent))return "locate";
+  if(/\bhow many\b/.test(q)&&/\b(materials?|ingredients?|bars?|ores?|coal|logs?|planks?|smelt|forge|craft|make|armour|armor)\b/.test(q))return "materials";
   if(/\b(how many|count|number of)\b/.test(q))return "count";
   if(/\b(list|show me all|which .* are there|what .* are there)\b/.test(q))return "list";
   if(/\b(walkthrough|step by step|start to finish|how (?:do|can) i (?:complete|finish)|quest steps)\b/.test(q))return "walkthrough";
   if(/\b(can i do|am i ready|ready for|requirements?|requirement|what do i need|what level do i need|eligible)\b/.test(q))return "requirements";
   if(/\b(get to|travel to|travel from|route to|route from|how do i reach|how can i reach|go from|go to)\b/.test(q))return "travel";
   if(/\b(drop|drops|loot|dropped by)\b/.test(q))return "drops";
+  if(/\b(used for|use it for|use this for|what can i make with|what can .* be used for|uses of|what is .* for)\b/.test(q))return "uses";
   if(/\b(materials?|ingredients?|from scratch|smelt|forge|craft|make|recipe|how many .* (?:bar|ore|coal|log|plank))\b/.test(q))return "materials";
   if(/\b(compare|versus|\bvs\b|difference between)\b/.test(q))return "compare";
   if(/\b(bed|beds|sleep in|rest in)\b/.test(q) && entities.some(e=>e.type==="area"))return "beds";
@@ -749,18 +766,92 @@ function mechanicAnswer(m){return `<h3>${esc(m.name)}</h3><p>${esc(m.summary||""
 function resourceLocations(name){return state.resourceMap?.get(norm(name))||[]}
 function dropSources(name){return state.dropMap?.get(norm(name))||[]}
 function acquisitionSources(name){return state.acquisitionMap?.get(norm(name))||[]}
+function itemRecord(name){return state.itemByName?.get(norm(name))||null}
+function itemMaterialsText(mats={}){return Object.entries(mats).map(([k,v])=>`${title(k)} ×${v}`).join(", ")}
+function sourceLine(h){
+  const a=h.source||{},type=h.kind||a.type;
+  if(type==="monster_drop"){
+    const amt=a.min==null?"":a.min===a.max?` ×${a.min}`:` ×${a.min}–${a.max}`;
+    const rarity=a.rarityDenominator==null?"":a.rarityDenominator===1?" · always":` · 1/${a.rarityDenominator}`;
+    return `${a.monster||"Monster"}${a.area?` (${a.area})`:""}${amt}${rarity}`;
+  }
+  if(type==="world_resource")return `${a.area||"Unknown area"}${a.room?` → ${a.room}`:""}${a.skill&&a.level!=null?` · ${a.skill} ${a.level}`:""}${a.tool?` · tool: ${a.tool}`:""}${a.activity?` · ${title(a.activity)}`:""}`;
+  if(type==="shop"){
+    const shownPrice=a.price!=null?fmtNumber(a.price):(a.priceText??"?");
+    const price=a.currency?`${shownPrice} ${a.currency}`:a.priceText!=null?`price ${shownPrice} (currency not labelled in source)`:"price not recorded";
+    const stock=a.maxStock!=null?` · stock ${a.maxStock}`:"";
+    return `${a.area?`${a.area} → `:""}${a.shop||"Shop"} — ${price}${stock}${a.access?` · ${a.access}`:""}`;
+  }
+  if(type==="pickpocket")return `${a.victim||"NPC"}${a.area?` — ${a.area}${a.location?` (${a.location})`:""}`:""} · Stealing ${a.level??"?"}${a.rarity?` · ${a.rarity}${a.rarityDenominator?` (1/${a.rarityDenominator})`:""}`:""}`;
+  if(type==="stall")return `${a.stall||"Stall"}${a.area?` — ${a.area}${a.location?` (${a.location})`:""}`:""} · Stealing ${a.level??"?"}${a.dropChance?` · ${a.dropChance}`:" · drop chance not documented"}${a.access?` · ${a.access}`:""}`;
+  if(type==="map_chest")return `${a.chest||a.location||"Chest"} · Stealing ${a.level??"?"}${a.oneTime?" · one-time chest":""}`;
+  if(type==="rogue_chest")return `${a.activity||"Rogue chest"}${a.area?` — ${a.area}`:""}${a.levelRange?` · Stealing ${a.levelRange}`:""}`;
+  if(type==="farming")return `Farming ${a.level??"?"} from ${a.seed||"seed"}${a.growthTime?` · ${a.growthTime}`:""}${a.yieldPerHarvest?` · ${a.yieldPerHarvest}/harvest`:""}`;
+  if(["production","smelting","enchantment","brewing","cooking","conversion"].includes(type))return `${a.skill||title(type)}${a.level!=null?` ${a.level}`:""}${a.materials?` · ${itemMaterialsText(a.materials)}`:""}${a.outputQuantity&&a.outputQuantity!==1?` → ×${a.outputQuantity}`:""}${a.location?` · ${a.location}`:""}`;
+  if(type==="quest_reward")return `${a.quest||"Quest"}${a.quantity?` · ×${a.quantity}`:""}`;
+  if(type==="spirit_reward")return `${a.spirit||"Spirit"}${a.area?` — ${a.area}`:""}${a.currency?` · redeem ${a.currency}`:""}`;
+  if(type==="event_reward")return `${a.event||"Community event"}`;
+  if(type==="bundle_reward")return `${a.bundle||"Bundle"}${a.milestoneTasks?` · ${a.milestoneTasks} tasks`:""}${a.quantity?` · ×${a.quantity}`:""}`;
+  if(type==="npc_service")return `${a.area?`${a.area} — `:""}${a.npc||"NPC service"}${a.materials?` · ${itemMaterialsText(a.materials)}`:""}`;
+  if(type==="npc_trade")return `${a.area?`${a.area} — `:""}${a.npc||"NPC trade"}${a.materials?` · exchange: ${itemMaterialsText(a.materials)}`:""}`;
+  if(type==="special_source")return a.method||a.note||"Special source";
+  return a.note||title(type||"source");
+}
+const ACQ_LABELS={world_resource:"World/resource locations",shop:"Shops",pickpocket:"Pickpocketing",stall:"Stealing stalls",map_chest:"One-time Stealing chests",rogue_chest:"Rogue chests",farming:"Farming",production:"Crafting/production",smelting:"Smelting",enchantment:"Enchantment",brewing:"Brewing",cooking:"Cooking",conversion:"Conversion",quest_reward:"Quest rewards",spirit_reward:"Spirit rewards",event_reward:"Community events",bundle_reward:"Bundle rewards",npc_service:"NPC services",npc_trade:"NPC trades",monster_drop:"Monster drops",special_source:"Special sources"};
+function acquisitionFilter(q,all){
+  const nq=norm(q),avoidCombat=/\b(other than combat|besides combat|without combat|avoid combat|non combat|other than fighting|besides fighting|without fighting|avoid fighting)\b/.test(nq);
+  let allowed=null;
+  if(/\b(buy|purchase|price|cost|sold|shop|store)\b/.test(nq))allowed=new Set(["shop"]);
+  else if(/\b(pickpocket)\b/.test(nq))allowed=new Set(["pickpocket"]);
+  else if(/\b(steal|stealing|stall|chest)\b/.test(nq))allowed=new Set(["pickpocket","stall","map_chest","rogue_chest"]);
+  else if(/\b(farm|farming|grow|plant)\b/.test(nq))allowed=new Set(["farming"]);
+  else if(/\b(craft|forge|smelt|brew|cook|make|recipe)\b/.test(nq))allowed=new Set(["production","smelting","enchantment","brewing","cooking","conversion","npc_service"]);
+  let out=allowed?all.filter(x=>allowed.has(x.kind)):all.slice();
+  if(avoidCombat)out=out.filter(x=>x.kind!=="monster_drop");
+  return {sources:out,avoidCombat,filtered:!!allowed};
+}
 function resourceAnswer(name,q=""){
-  const all=acquisitionSources(name),avoidCombat=/\b(other than combat|besides combat|without combat|avoid combat|non combat|other than fighting|besides fighting|without fighting|avoid fighting)\b/.test(norm(q));
-  const sources=avoidCombat?all.filter(x=>x.kind!=="monster_drop"):all,bits=[];
-  const nodes=sources.filter(x=>x.kind==="world_resource"),drops=sources.filter(x=>x.kind==="monster_drop"),recipes=sources.filter(x=>x.kind==="craft_recipe"||x.kind==="production_recipe"),rewards=sources.filter(x=>x.kind==="quest_reward"),npcs=sources.filter(x=>x.kind==="npc_item");
-  if(nodes.length)bits.push(`<p><b>World/resource locations:</b></p><ul>${nodes.map(h=>{const n=h.node,req=n.level!=null?` · ${esc(n.skill||"Level")} ${esc(n.level)}`:"",tool=n.tool?` · tool: ${esc(n.tool)}`:"";return `<li>${esc(h.area.name)} → ${esc(h.room.name)}${req}${tool}</li>`}).join("")}</ul>`);
-  if(recipes.length)bits.push(`<p><b>Crafting/production:</b></p><ul>${recipes.map(h=>{const rec=h.equipment?.obj||h.recipe||{},mats=h.materials||rec.materials||{},skill=rec.craftSkill||rec.skill,level=rec.craftLevel??rec.level;return `<li>${esc(h.equipment?.name||rec.name||title(name))}${skill?` — ${esc(skill)}${level!=null?` ${esc(level)}`:""}`:""}${Object.keys(mats).length?` · ${esc(Object.entries(mats).map(([k,v])=>`${title(k)} ×${v}`).join(", "))}`:""}</li>`}).join("")}</ul>`);
-  if(rewards.length)bits.push(`<p><b>Quest rewards:</b></p><ul>${rewards.map(h=>`<li>${esc(h.quest.name)} — ${esc(h.reward)}</li>`).join("")}</ul>`);
-  if(npcs.length)bits.push(`<p><b>Shops/trades/services:</b></p><ul>${npcs.map(h=>`<li>${esc(h.area.name)}${h.room?` → ${esc(h.room.name)}`:""} — ${esc(h.npc.name)}: ${esc(h.details)}</li>`).join("")}</ul>`);
-  if(drops.length)bits.push(`<p><b>Monster drops:</b></p><ul>${drops.map(h=>`<li>${esc(title(h.monster.name))} — ${esc(fmtDrop(h.drop))}</li>`).join("")}</ul>`);
-  if(avoidCombat&&!sources.length&&all.some(x=>x.kind==="monster_drop"))return `<h3>Non-combat sources for ${esc(title(name))}</h3><p>I don't currently have an <b>item-specific non-combat source recorded</b> for ${esc(title(name))}. The item-specific sources in the Companion are monster drops.</p><p class="muted small">That means “not documented in the Companion,” not proof that no non-combat method exists in FlatMMO.</p>${evidence([], ["The acquisition index checks structured world/resource nodes, crafting/production recipes, quest rewards, explicit item-named NPC shops/trades/services, and monster drops. Generic shop descriptions are not treated as complete inventories."])}`;
-  if(!bits.length)return `<h3>${esc(title(name))}</h3><p class="warn">I can identify that name, but I don't have an item-specific structured acquisition source for it yet.</p>${evidence([],["Generic shop/service descriptions are not treated as proof that a specific item is sold there."])}`;
-  return `<h3>${avoidCombat?`Non-combat sources for ${esc(title(name))}`:`How to get ${esc(title(name))}`}</h3>${bits.join("")}${evidence([], ["The acquisition index combines structured world nodes, crafting/production recipes, quest rewards, explicit item-named NPC shops/trades/services, and monster drops. Generic shop descriptions are kept as location/service evidence, not invented inventories."])}`;
+  const all=acquisitionSources(name),{sources,avoidCombat,filtered}=acquisitionFilter(q,all),bits=[];
+  const order=["world_resource","farming","shop","npc_service","npc_trade","pickpocket","stall","map_chest","rogue_chest","production","smelting","enchantment","brewing","cooking","conversion","quest_reward","spirit_reward","event_reward","bundle_reward","special_source","monster_drop"];
+  const by=new Map();for(const h of sources){if(!by.has(h.kind))by.set(h.kind,[]);by.get(h.kind).push(h)}
+  for(const kind of order){const rows=by.get(kind)||[];if(!rows.length)continue;const shown=rows.slice(0,30);bits.push(`<p><b>${esc(ACQ_LABELS[kind]||title(kind))}:</b></p><ul>${shown.map(h=>`<li>${esc(sourceLine(h))}</li>`).join("")}</ul>${rows.length>shown.length?`<p class="muted small">${rows.length-shown.length} more recorded ${esc((ACQ_LABELS[kind]||kind).toLowerCase())} omitted from this compact answer.</p>`:""}`)}
+  const item=itemRecord(name),sourceUrls=unique((sources.length?sources:all).map(h=>h.source?.source).filter(Boolean));
+  if(!bits.length){
+    if(avoidCombat&&all.some(x=>x.kind==="monster_drop"))return `<h3>Non-combat sources for ${esc(title(name))}</h3><p>I don't currently have an <b>item-specific non-combat source recorded</b> for ${esc(title(name))}.</p><p class="muted small">That means “not documented in the Companion,” not proof that no non-combat method exists in FlatMMO.</p>${evidence(sourceUrls,["v1.8 checks the first-class item graph across shops, Stealing, Farming, production, quests, spirits, events, bundles, world nodes and monster drops."])}`;
+    return `<h3>${esc(title(name))}</h3><p class="warn">I can identify that item, but I don't have a matching item-specific source for the method you asked about.</p>${all.length?`<p class="muted small">There are ${all.length} other recorded acquisition route${all.length===1?"":"s"}; ask “how do I get ${esc(title(name))}?” to see them.</p>`:""}${evidence(sourceUrls,["Missing source types are not treated as proof that the method does not exist in the game."])}`;
+  }
+  const heading=avoidCombat?`Non-combat sources for ${title(name)}`:filtered?`Matching sources for ${title(name)}`:`How to get ${title(name)}`;
+  const useHint=item?.uses?.length?chips([`What is ${title(name)} used for?`]):"";
+  return `<h3>${esc(heading)}</h3>${bits.join("")}${useHint}${evidence(sourceUrls,["Item-specific sources are normalized in flatmmo-items.json. Unknown rates, prices or source types remain explicitly unknown rather than guessed."])}`;
+}
+function itemUseAnswer(name){
+  const item=itemRecord(name);if(!item)return `<h3>${esc(title(name))}</h3><p class="warn">I don't have a first-class item record for that yet.</p>`;
+  const uses=item.uses||[];if(!uses.length)return `<h3>Uses for ${esc(item.name)}</h3><p>I don't currently have a structured use recorded for this item.</p><p class="muted small">That is a knowledge gap, not proof the item has no use.</p>`;
+  const material=uses.filter(x=>x.type==="material_for"),grow=uses.filter(x=>x.type==="plant_to_grow"||x.type==="plant_tree"),bits=[];
+  if(material.length)bits.push(`<p><b>Used as a material for:</b></p><ul>${material.slice(0,35).map(u=>`<li>${esc(u.output)}${u.quantity!=null?` — needs ${esc(u.quantity)}`:""}${u.skill?` · ${esc(u.skill)}${u.level!=null?` ${esc(u.level)}`:""}`:""}</li>`).join("")}</ul>${material.length>35?`<p class="muted small">${material.length-35} additional structured recipe uses omitted from this compact answer.</p>`:""}`);
+  if(grow.length)bits.push(`<p><b>Farming:</b></p><ul>${grow.map(u=>`<li>Plant to grow ${esc(u.output)}${u.level!=null?` · Farming ${esc(u.level)}`:""}${u.growthTime?` · ${esc(u.growthTime)}`:""}</li>`).join("")}</ul>`);
+  const urls=unique(uses.map(u=>u.source).filter(Boolean));
+  return `<h3>Uses for ${esc(item.name)}</h3>${bits.join("")}${chips([`How do I get ${item.name}?`])}${evidence(urls,["Only structured uses are listed; undocumented uses are not assumed absent."])}`;
+}
+function itemOverviewAnswer(name){
+  const item=itemRecord(name);if(!item)return resourceAnswer(name,"");
+  return `<h3>${esc(item.name)}</h3><p>I have <b>${item.acquisition?.length||0}</b> recorded acquisition route${item.acquisition?.length===1?"":"s"} and <b>${item.uses?.length||0}</b> structured use${item.uses?.length===1?"":"s"} for this item.</p>${chips([`How do I get ${item.name}?`,`What is ${item.name} used for?`])}`;
+}
+function shopInventoryAnswer(areaOrShop){
+  const isArea=areaOrShop?.type==="area",isShop=areaOrShop?.type==="shop";
+  const areaName=isArea?areaOrShop.name:(isShop?(areaOrShop.area||areaOrShop.obj?.area||null):areaOrShop?.area||null);
+  const shopName=isShop?areaOrShop.name:null;
+  let shops=[...state.shopIndex.values()].filter(sh=>(!areaName||norm(sh.area)===norm(areaName))&&(!shopName||norm(sh.name)===norm(shopName)));
+  if(!shops.length)return `<h3>Shop inventory</h3><p class="warn">I don't have an item-specific shop inventory matching that location yet.</p>`;
+  const heading=shopName&&areaName?`${areaName} → ${shopName}`:shopName||`Shops in ${areaName}`;
+  return `<h3>${esc(heading)}</h3>${shops.map(sh=>`<p><b>${esc(sh.area?`${sh.area} → ${sh.name}`:sh.name)}</b></p><ul>${sh.items.sort((a,b)=>a.item.localeCompare(b.item)).map(x=>`<li>${esc(x.item)} — ${esc(sourceLine({kind:"shop",source:x.source}))}</li>`).join("")}</ul>`).join("")}`;
+}
+function stealingProgressionAnswer(level){
+  const by=new Map();
+  for(const row of state.stealingIndex||[]){const a=row.source,lvl=Number(a.level);if(!Number.isFinite(lvl)||lvl>level||!['pickpocket','stall','map_chest'].includes(a.type))continue;const key=`${a.type}|${a.victim||a.stall||a.chest||a.location||'activity'}|${lvl}`;if(!by.has(key))by.set(key,{type:a.type,name:a.victim||a.stall||a.chest||a.location||'Activity',level:lvl,area:a.area,items:[]});by.get(key).items.push(row.item)}
+  const rows=[...by.values()].sort((a,b)=>a.level-b.level||a.name.localeCompare(b.name));
+  if(!rows.length)return `<h3>Stealing ${esc(level)}</h3><p>No item-specific Stealing activities are indexed at or below that level.</p>`;
+  return `<h3>Stealing options by level ${esc(level)}</h3><p>These item-specific activities are recorded at or below Stealing ${esc(level)}:</p><ul>${rows.map(r=>`<li><b>${esc(r.name)}</b> — level ${esc(r.level)}${r.area?` · ${esc(r.area)}`:""}: ${esc(unique(r.items).slice(0,12).join(", "))}${unique(r.items).length>12?"…":""}</li>`).join("")}</ul><p class="muted small">This is an unlock/source index, not an XP-rate recommendation.</p>`;
 }
 function npcAnswer(e){
   const n=e.obj,room=e.room||state.roomById?.get(n.roomId)?.room,area=e.area||state.roomById?.get(n.roomId)?.area;
@@ -903,19 +994,26 @@ function answer(raw){
   if(directRule && (intent==="mechanics"||!entities.length)){rememberContext("mechanics",[{type:"rule",name:directRule.name,obj:directRule}],raw);return ruleAnswer(directRule)}
   if(intent==="compare"){const v=compareAnswer(entities);if(v){rememberContext(intent,entities,raw);return v}}
 
-  const quests=entities.filter(e=>e.type==="quest"),monsters=entities.filter(e=>e.type==="monster"),areas=entities.filter(e=>e.type==="area"),skills=entities.filter(e=>e.type==="skill"),equipment=entities.filter(e=>e.type==="equipment"),rooms=entities.filter(e=>e.type==="room"),npcs=entities.filter(e=>e.type==="npc"),resources=entities.filter(e=>e.type==="resource"||e.type==="item"),rules=entities.filter(e=>e.type==="rule"),mechanics=entities.filter(e=>e.type==="mechanic");
+  const quests=entities.filter(e=>e.type==="quest"),monsters=entities.filter(e=>e.type==="monster"),areas=entities.filter(e=>e.type==="area"),skills=entities.filter(e=>e.type==="skill"),equipment=entities.filter(e=>e.type==="equipment"),rooms=entities.filter(e=>e.type==="room"),npcs=entities.filter(e=>e.type==="npc"),resources=entities.filter(e=>e.type==="resource"||e.type==="item"),shops=entities.filter(e=>e.type==="shop"),rules=entities.filter(e=>e.type==="rule"),mechanics=entities.filter(e=>e.type==="mechanic");
 
   if(intent==="travel"&&areas.length){const v=travelAnswer(areas);rememberContext(intent,areas,raw);if(v)return v}
   if(intent==="beds"&&areas[0]){rememberContext(intent,areas,raw);return bedsAnswer(areas[0].obj)}
   if(intent==="monsters_in_area"&&areas[0]){rememberContext(intent,areas,raw);return monstersInArea(areas[0].obj)}
   if(quests[0]){const ready=intent==="requirements"||/\b(can i|ready|requirements?|need)\b/.test(q);rememberContext(intent,quests,raw);return questAnswer(quests[0].obj,ready,overrides)}
   if(monsters[0]){rememberContext(intent,monsters,raw);if(intent==="drops")return monsterDrops(monsters[0].obj);if(intent==="locate")return monsterWhere(monsters[0].obj);if(intent==="requirements"||intent==="mechanics"||/\b(fight|combat|weak|best|recommended|dps|hit chance)\b/.test(q))return monsterCombat(monsters[0].obj);return monsterProfile(monsters[0].obj)}
-  if(resources[0]&&(intent==="locate"||intent==="drops"||/\b(get|obtain|source|mine|fish|chop|dig)\b/.test(q))){rememberContext(intent,resources,raw);return resourceAnswer(resources[0].name,q)}
+  if(shops[0]&&/\b(sell|sells|stock|inventory|buy|shop|store)\b/.test(q)){rememberContext("shop",shops,raw);return shopInventoryAnswer(shops[0])}
+  if(areas[0]&&/\b(shop|store)\b/.test(q)&&/\b(sell|sells|stock|inventory|buy|what)\b/.test(q)){rememberContext("shop",areas,raw);return shopInventoryAnswer(areas[0])}
+  // A compound materials question about a named equipment item/set should use that
+  // structured recipe before incidental ingredient entities such as Coal or Iron Ore.
+  if(equipment[0]&&intent==="materials"){rememberContext(intent,equipment,raw);return equipmentAnswer(equipment[0].obj,q,overrides)}
+  if(resources[0]&&intent==="uses"){rememberContext(intent,resources,raw);return itemUseAnswer(resources[0].name)}
+  if(resources[0]&&(intent==="locate"||intent==="drops"||intent==="materials"||/\b(get|obtain|source|mine|fish|chop|dig|buy|steal|farm|grow|craft|make|brew|cook|smelt|forge)\b/.test(q))){rememberContext(intent==="drops"?"locate":intent,resources,raw);return resourceAnswer(resources[0].name,q)}
+  if(resources[0]&&intent==="info"){rememberContext(intent,resources,raw);return itemOverviewAnswer(resources[0].name)}
   if(rooms[0]){rememberContext(intent,rooms,raw);return roomAnswer(rooms[0])}
   if(npcs[0]){rememberContext(intent,npcs,raw);return npcAnswer(npcs[0])}
   const service=serviceAnswer(q,areas[0]?.obj||null);if(service && (intent==="locate"||/\b(service|shop|store|bank|travel|teleport)\b/.test(q))){rememberContext("service",areas,raw);return service}
   if(equipment[0]){rememberContext(intent,equipment,raw);return equipmentAnswer(equipment[0].obj,q,overrides)}
-  if(skills[0]){const key=norm(skills[0].name),level=overrides[key];rememberContext(intent,skills,raw);if(level!=null&&(intent==="progression"||/\b(at|level|equip|make|unlock|can i)\b/.test(q)))return skillProgressionAnswer(skills[0].obj,level);return skillAnswer(skills[0].obj)}
+  if(skills[0]){const key=norm(skills[0].name),level=overrides[key];rememberContext(intent,skills,raw);if(norm(skills[0].name)==="stealing"&&level!=null&&/\b(steal|pickpocket|stall|chest|unlock|can i)\b/.test(q))return stealingProgressionAnswer(level);if(level!=null&&(intent==="progression"||/\b(at|level|equip|make|unlock|can i)\b/.test(q)))return skillProgressionAnswer(skills[0].obj,level);return skillAnswer(skills[0].obj)}
   if(rules[0]){rememberContext("mechanics",rules,raw);return ruleAnswer(rules[0].obj)}
   if(mechanics[0]){rememberContext("mechanics",mechanics,raw);return mechanicAnswer(mechanics[0].obj)}
   if(areas[0]){rememberContext(intent,areas,raw);return areaAnswer(areas[0].obj)}
