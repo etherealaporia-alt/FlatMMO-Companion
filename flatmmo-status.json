@@ -1,7 +1,7 @@
 {
-  "schemaVersion": 6,
+  "schemaVersion": 7,
   "generated": "2026-09-20",
-  "release": "reasoning-engine-v1.9",
+  "release": "unified-conversation-graph-v2.0",
   "layout": "flat-root",
   "branch": "v2-online",
   "counts": {
@@ -49,10 +49,59 @@
       "spirit_reward": 43,
       "stall": 74,
       "world_resource": 53
+    },
+    "relationshipGraphNodes": 1574,
+    "relationshipGraphEdges": 7380,
+    "relationshipGraphUnresolvedTextReferences": 1,
+    "relationshipGraphNodeTypes": {
+      "acquisition_source": 523,
+      "area": 14,
+      "concept": 5,
+      "item": 588,
+      "mechanic": 20,
+      "monster": 82,
+      "npc": 71,
+      "quest": 21,
+      "room": 193,
+      "rule": 12,
+      "shop": 27,
+      "skill": 18
+    },
+    "relationshipGraphEdgeTypes": {
+      "acquired_via": 1168,
+      "area_connection": 27,
+      "contains_monster": 82,
+      "contains_npc": 142,
+      "contains_room": 193,
+      "dropped_by": 363,
+      "drops_item": 363,
+      "in_area": 193,
+      "located_in_area": 24,
+      "located_in_room": 153,
+      "occurs_in_area": 29,
+      "provides_item": 1168,
+      "provides_resource": 53,
+      "requires_item": 533,
+      "requires_material": 560,
+      "requires_skill": 382,
+      "rewards_item": 15,
+      "room_connection": 50,
+      "sells_item": 138,
+      "sold_by": 138,
+      "source_actor": 122,
+      "source_in_area": 162,
+      "source_in_room": 53,
+      "step_in_area": 112,
+      "step_in_room": 59,
+      "step_with_monster": 7,
+      "step_with_npc": 42,
+      "used_by_skill": 431,
+      "used_to_make": 565,
+      "world_resource_at": 53
     }
   },
   "humanUi": {
-    "mode": "deterministic conversational reasoning assistant backed by the first-class item/acquisition graph",
+    "mode": "deterministic conversational companion with unified typed relationship graph, topic-thread memory and semantic repair",
     "playerUsername": true,
     "localStorage": "optional and disposable; stores username, latest normalized player snapshot (public or user-entered) and recent questions when available",
     "portablePlayerLink": "#player=<username>",
@@ -62,15 +111,23 @@
     "refreshFailure": "Retain previous same-player snapshot with warning and timestamp; never reuse across different usernames; ignore superseded responses.",
     "visualStyle": "FlatMMO-inspired charcoal panels, brown secondary controls, green primary actions, cream text and monospace headings; no external images/fonts required.",
     "manualFormLayout": "Bounded dialog with independently scrolling fields and persistent Save/Cancel footer; two skill columns at phone widths.",
-    "queryEngine": "v1.9 browser-side structured query interpreter: candidate entity resolution, goals, composable constraints, query planning, graph traversal, deterministic deductions and conversational composition; no LLM required",
-    "conversationContext": "Keeps a bounded semantic turn stack in memory, including subject, goal, source-role references and applicable constraints, so follow-ups can inherit or explicitly replace prior context; disposable with the session",
+    "queryEngine": "v2.0 browser-side structured interpreter: explicit-current-subject priority, typed topic threads, composable constraints/result sets, unified relationship traversal, deterministic deductions, semantic repair and conversational composition; no LLM required",
+    "conversationContext": "Keeps up to 12 semantic topic threads with up to 36 turns each plus 120 replayable recent user questions. Explicit current subjects outrank memory; context may fill omissions but may not replace a clearly stated new subject.",
     "inlineLevels": "Skill levels explicitly stated in a question may be used for that answer only; they do not overwrite the saved/manual player snapshot",
     "acquisitionIndex": "flatmmo-items.json is authoritative for item-specific acquisition/use questions. It normalizes monster drops, world nodes, production, shops, Stealing, Farming, quests, spirits, events, bundles and explicit NPC services/trades; unknown rates/currencies stay unknown.",
     "reasoningEngine": "Builds a structured query object from the question, applies method/area/skill/price/access constraints, plans a deterministic graph query, and records an explicit user-visible reasoning trace",
     "constraintReasoning": "Supports acquisition-method include/exclude constraints, non-combat/non-quest/no-spend filters, area filters, stated skill levels, numeric shop-price caps and documented access conditions",
     "recursiveProduction": "Expands documented production recipes recursively with cycle protection; terminal inputs and missing intermediate recipes remain explicit rather than assumed",
     "explainability": "A follow-up such as Why? explains the previous deterministic interpretation, constraints, conclusions, evidence and limits; it does not expose hidden model reasoning because the site has no model reasoning layer",
-    "rankingPolicy": "Uses measurable comparisons such as numeric shop price or documented skill gate when requested; qualitative best/easiest/fastest prompts ask for a criterion instead of inventing an overall ranking"
+    "rankingPolicy": "Uses measurable comparisons such as numeric shop price or documented skill gate when requested; qualitative best/easiest/fastest prompts ask for a criterion instead of inventing an overall ranking",
+    "topicThreads": "Active and parked topic threads preserve subject, goal, scoped constraints, source-role references, result sets and reasoning traces. Users can return naturally with wording such as “back to Ent”.",
+    "semanticRepair": "Corrections such as “No, I meant Mining, not the Ent” rewrite the relevant interpretation and re-run the previous question. A bare “that’s not what I meant” enters repair mode and asks what the user intended next.",
+    "repairPrecedence": "explicit correction > explicit current subject > active-thread context > recent-thread context > fuzzy inference",
+    "resultSetMemory": "Constrained searches preserve their candidate set across filters and measurable comparisons, enabling follow-ups such as “Only food” then “Which is cheapest?”.",
+    "userFactMemory": "Clearly personal skill statements such as “I am Mining 40” are remembered for later questions in the conversation; hypothetical “what if” levels affect only that calculation and do not overwrite durable user facts.",
+    "relationshipGraph": "flatmmo-graph.json joins stable typed item, acquisition-source, monster, quest, skill, area, room, NPC, shop, mechanic and rule nodes with materialized reverse relationships. Ambiguous actor names remain typed rather than collapsed.",
+    "humanPresence": "Responses acknowledge corrections, changed assumptions and returns to earlier topics in ordinary language while keeping uncertainty and evidence explicit. Personality never overrides structured facts.",
+    "memoryPresentation": "Conversation memory is silent by default. Continuity should appear through correct follow-up answers, not notices that a prior message/topic/result set was remembered, retained or inherited. Explicit Why?, correction and deliberate return-to-topic interactions may acknowledge context naturally."
   },
   "coverage": {
     "combatStyles": [
@@ -100,7 +157,11 @@
     "itemGraph": "588 first-class item records; 1168 normalized acquisition routes; 199 items with structured uses",
     "shopInventories": "item-specific rows from the current Shops page plus explicit item-named area/NPC shop records; generic shop descriptions are not promoted to complete inventories",
     "stealing": "pickpocket, stall, one-time chest and Rogue chest item-source records normalized where the current Stealing page names the item",
-    "farming": "seed-to-crop and selected tree/fruit-tree planting relationships normalized from current Farming data; unknown yields remain unknown"
+    "farming": "seed-to-crop and selected tree/fruit-tree planting relationships normalized from current Farming data; unknown yields remain unknown",
+    "unifiedRelationshipGraph": "1574 typed nodes and 7380 explicit relationships across items, sources, monsters, quests, skills, areas, rooms, NPCs, shops, mechanics and rules; 1 unresolved text-only reference retained rather than invented",
+    "conversationMemory": "12 bounded topic threads × up to 36 turns, with explicit-subject priority, scoped constraints, parked-thread return, result-set continuity and semantic repair; recent user questions replay from optional localStorage up to 120 turns",
+    "semanticRepair": "Natural correction can reject a mistaken subject/constraint, replace it, and re-run the prior question; rejected context is thread-scoped rather than permanently banning the entity",
+    "relationshipAuthority": "flatmmo-graph.json is a derived cross-dataset relationship index. It links existing sourced records; it does not promote a derived edge into a new independent game fact."
   },
   "calculationReadiness": {
     "safeNow": [
@@ -119,7 +180,12 @@
       "lowest documented skill-gate comparison within matching acquisition routes",
       "numeric shop-price comparison when price and currency are explicitly structured",
       "recursive production dependency expansion from documented recipes with explicit gaps",
-      "deterministic explanation of the previous query interpretation, constraints and conclusions"
+      "deterministic explanation of the previous query interpretation, constraints and conclusions",
+      "thread-aware follow-up interpretation with explicit-current-subject priority",
+      "semantic repair of mistaken subjects and scoped acquisition constraints",
+      "result-set refinement and measurable price ranking across conversational turns",
+      "stable two-hop relationship disambiguation through the unified graph",
+      "durable conversation skill facts distinct from hypothetical inline levels"
     ],
     "blockedPendingMechanics": [
       "exact combat hit chance",
@@ -151,13 +217,16 @@
     "Exact combat hit/damage formulas remain unresolved, so exact DPS, kill time, survivability and recommended combat levels are intentionally blocked.",
     "Agility level 1-19 Run-step progression and exact zero-Sleep behavior by activity remain pending observations.",
     "Known source conflicts remain retained in verification notes.",
-    "The v1.9 reasoning interpreter is deterministic and finite; unusual or genuinely ambiguous phrasing may still require a more specific question.",
     "The item graph is substantially expanded but not exhaustive; absence of a source/use means not documented in the current snapshot, not proof that it does not exist in FlatMMO.",
     "Some Stealing stall drop chances are shown as unknown on the current wiki and remain unknown in the Companion.",
     "Prospector shop price values are preserved from the shop table but its currency column is not labelled for those rows, so the Companion does not assume Coins.",
     "Qualitative route terms such as easiest, fastest and best are not assigned an overall ranking without a measurable criterion supported by the data.",
-    "Recursive production expansion can expose missing intermediate recipes/acquisition records; those remain explicit knowledge gaps rather than inferred steps."
+    "Recursive production expansion can expose missing intermediate recipes/acquisition records; those remain explicit knowledge gaps rather than inferred steps.",
+    "The v2.0 language interpreter is deterministic and finite; unusual idiom, deeply nested corrections or ambiguous references can still require clarification.",
+    "Conversation memory is deliberately bounded. Explicit current subjects always outrank remembered topics, but a genuinely ambiguous short follow-up can still require a clarifying question.",
+    "Semantic item categories used for result-set filters are conservative; a missing category label is not proof an item does not belong to that category in FlatMMO.",
+    "The unified relationship graph contains one intentionally unresolved text-only material reference rather than inventing a fake item node."
   ],
-  "aiContextSha256": "bbc1b9ce3d54a443a954a552165aae944e156fe5e37778b4ef26c85f085cf534",
+  "aiContextSha256": "bfeaf71d45f7ef2a74760fe04fc1d31ca336371c75a8d56909f14d5f90f664c0",
   "updatePolicy": "Manually maintained static snapshot. The deployment workflow publishes committed files; it does not refresh game data or player snapshots. AI retrieval is optional/best-effort."
 }

@@ -15,7 +15,7 @@ https://etherealaporia-alt.github.io/FlatMMO-Companion/flatmmo-context.json
 
 The `v2-online` branch is the active development branch. Project data is deliberately kept at the repository root because the mobile maintenance workflow flattens archive directory structures.
 
-The human UI is a deterministic conversational reasoning assistant. v1.9 keeps the v1.8 first-class item/acquisition graph and adds structured query planning: questions are interpreted as goals, entities and composable constraints before the engine traverses the graph, applies documented requirements, performs allowed calculations and composes an answer. It retains recent semantic conversation context, optional/disposable `localStorage`, portable player links, and stats-aware checks using public skill data, explicitly labelled user-entered levels, or temporary levels stated in a question.
+The human UI is a deterministic conversational companion. v2.0 keeps the v1.8 first-class item/acquisition graph and v1.9 deterministic reasoning engine, then adds a unified typed relationship graph plus longer topic-thread memory and semantic repair. Questions are interpreted as goals, entities and scoped constraints; explicit current subjects outrank remembered context; recent topic threads can be parked and resumed; result sets survive follow-up filters/rankings; and users can correct a mistaken interpretation naturally (for example, “No, I meant Mining, not the Ent”) so the previous question is re-run with the correction. No LLM is required.
 
 The current public-profile loader is interim and may be blocked by normal browser cross-origin policy. It fails cleanly. The player-provider boundary is already isolated so an official player API can replace the loader without redesigning the assistant.
 
@@ -120,3 +120,14 @@ The reasoning engine supports constrained acquisition discovery (`What can I ste
 
 Qualitative requests such as `best`, `easiest` or `fastest` are not silently converted into a made-up ranking. When the data cannot support a universal ordering, the Companion asks for a measurable criterion such as non-combat, lowest documented skill requirement, buying or making. Exact combat calculations remain blocked until the underlying mechanics are verified.
 
+
+
+## v2.0 unified conversation graph
+
+This release adds `flatmmo-graph.json`, a derived relationship index over stable typed entities. The graph currently contains **1,574 nodes and 7,380 explicit relationships** across items, acquisition sources, monsters, quests, skills, areas, rooms, NPCs, shops, mechanics and rules. Acquisition actors are typed source nodes so a name such as `Farmer` does not silently collapse a pickpocket source, monster and NPC into one entity.
+
+Conversation state is also redesigned around bounded semantic topic threads rather than a single `lastEntity`. Up to 12 recent threads can be retained in a live session, each with up to 36 semantic turns; optional local history replays up to 120 user questions after a reload. Explicit current language always beats memory. A short follow-up may inherit the active topic/constraints/result set, a clearly named new subject starts or activates the appropriate thread, and wording such as `back to Ent` can return to a parked thread.
+
+Semantic repair is first-class. `No, I meant Mining, not the Ent`, `No, combat is fine; I meant without stealing`, and the two-step `That’s not what I meant` → `Gorilla drops, not its location` repair the previous interpretation rather than simply adding another unrelated query. Corrections are scoped to the relevant thread, so rejecting an interpretation does not permanently ban that entity from future questions.
+
+The response layer acknowledges meaningful changes, corrections and deliberate topic returns in ordinary language. **Memory itself stays invisible by default:** the Companion should demonstrate continuity by answering correctly, not by announcing that it remembered, retained, inherited or reused a previous message. Context mechanics are surfaced only when the user explicitly asks `Why?`, performs a correction, or deliberately returns to an older topic. The goal is conversational presence without allowing tone to become factual authority.

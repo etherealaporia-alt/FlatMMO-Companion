@@ -1,7 +1,7 @@
 {
   "meta": {
     "id": "flatmmo-companion-ai-context",
-    "schemaVersion": "1.7",
+    "schemaVersion": "1.8",
     "generated": "2026-09-20",
     "game": "FlatMMO",
     "canonicalPage": "https://etherealaporia-alt.github.io/FlatMMO-Companion/ai.html",
@@ -29,7 +29,9 @@
       "shops_and_item_prices",
       "stealing_item_sources",
       "farming_seed_crop_relationships",
-      "item_uses_and_recipes"
+      "item_uses_and_recipes",
+      "unified_typed_relationship_graph",
+      "stable_cross_dataset_entity_relationships"
     ],
     "excludedForNow": [
       "official_news_change_notes",
@@ -47,10 +49,11 @@
       "resources": "61 structured resource/activity nodes across 44 rooms",
       "mechanicsRules": "12 explicit rule/readiness records from flatmmo-rules.json",
       "playerIntegration": "Optional/disposable browser storage. Manual levels are unverified and may be partial; XP is unknown. Official API remains pending. No individual player snapshot is embedded in this public context.",
-      "humanUi": "Deterministic conversational reasoning assistant v1.9: structured query interpretation, goal/constraint planning, semantic context across turns, constrained graph search, recursive documented-recipe expansion, measurable route comparisons and explicit why/explanation traces. FlatMMO facts remain structured/source-backed; no LLM is required.",
-      "items": "588 first-class item records with 1168 normalized acquisition routes; 199 items have structured use relationships. The graph is broad but intentionally not claimed exhaustive."
+      "humanUi": "Deterministic conversational companion v2.0: unified typed relationship graph, longer bounded topic-thread memory, explicit-current-subject priority, scoped result sets/constraints, semantic repair, user-stated skill facts, silent context continuity, and conversational response composition. FlatMMO facts remain structured/source-backed; no LLM is required.",
+      "items": "588 first-class item records with 1168 normalized acquisition routes; 199 items have structured use relationships. The graph is broad but intentionally not claimed exhaustive.",
+      "relationshipGraph": "flatmmo-graph.json: 1574 typed nodes, 7380 explicit relationships and 1 retained unresolved text-only reference"
     },
-    "release": "reasoning-engine-v1.9",
+    "release": "unified-conversation-graph-v2.0",
     "updatePolicy": "Manually maintained static snapshot. The deployment workflow publishes committed files; it does not refresh game data or player snapshots. AI retrieval is optional/best-effort."
   },
   "instructions": [
@@ -81,7 +84,8 @@
     "A missing acquisition method or use means not documented in the current snapshot, not proof that FlatMMO has none.",
     "Unknown shop currencies, stock semantics, Stealing chances, or reward odds must stay unknown. Do not infer missing numbers.",
     "For what-is-this-used-for questions, use items[].uses and explicit recipe/material relationships; do not invent additional recipes.",
-    "Generic descriptions such as “sells fishing-related items” are service evidence, not a complete item inventory. Prefer explicit item-specific shop rows."
+    "Generic descriptions such as “sells fishing-related items” are service evidence, not a complete item inventory. Prefer explicit item-specific shop rows.",
+    "Conversation memory in the human Companion is an internal implementation detail: continuity should normally be expressed by answering the follow-up correctly, not by narrating that prior context was remembered or inherited."
   ],
   "authorityOrder": [
     "official",
@@ -229,6 +233,57 @@
         "special_source"
       ],
       "unknownPolicy": "Fields such as rate, price, currency, stock, yield or requirements may be absent when the source does not establish them."
+    },
+    "unifiedRelationshipGraph": {
+      "node": "id,type,name plus type-specific metadata",
+      "edge": "id,from,to,type,meta?",
+      "nodeTypes": [
+        "acquisition_source",
+        "area",
+        "concept",
+        "item",
+        "mechanic",
+        "monster",
+        "npc",
+        "quest",
+        "room",
+        "rule",
+        "shop",
+        "skill"
+      ],
+      "edgeTypes": [
+        "acquired_via",
+        "area_connection",
+        "contains_monster",
+        "contains_npc",
+        "contains_room",
+        "dropped_by",
+        "drops_item",
+        "in_area",
+        "located_in_area",
+        "located_in_room",
+        "occurs_in_area",
+        "provides_item",
+        "provides_resource",
+        "requires_item",
+        "requires_material",
+        "requires_skill",
+        "rewards_item",
+        "room_connection",
+        "sells_item",
+        "sold_by",
+        "source_actor",
+        "source_in_area",
+        "source_in_room",
+        "step_in_area",
+        "step_in_room",
+        "step_with_monster",
+        "step_with_npc",
+        "used_by_skill",
+        "used_to_make",
+        "world_resource_at"
+      ],
+      "sourceFile": "flatmmo-graph.json"
     }
   },
   "reasoningGuide": {
@@ -243,7 +298,9 @@
     "playerAware": "When a normalized player snapshot is available to the human assistant, use only fields actually present. Never infer missing bank, inventory, equipment, quest completion, or live state.",
     "combat": "Compare recorded monster Defence/Magic Defence/weakness and player fields only. Exact hit chance, DPS, kill time, survivability, and recommended levels remain blocked until their formulas are verified.",
     "findItem": "Resolve the item in items, then inspect all acquisition routes or filter by the requested method (buy/steal/farm/craft/non-combat). Preserve unknown prices, chances and access conditions.",
-    "useItem": "Use items[].uses to answer what an item makes, grows, or contributes to. Distinguish recipe quantity from acquisition quantity."
+    "useItem": "Use items[].uses to answer what an item makes, grows, or contributes to. Distinguish recipe quantity from acquisition quantity.",
+    "relationshipGraph": "For cross-domain questions, resolve stable typed entities and traverse explicit flatmmo-graph.json edges. Do not collapse entities merely because their display names match.",
+    "conversation": "Human-side remembered context may resolve omitted references, but explicit current language always wins. Corrections re-run the relevant prior query rather than becoming new game facts."
   },
   "sources": {
     "s1": "https://flatmmo.com/data/monsters.json",
@@ -21740,9 +21797,12 @@
   },
   "relationshipPolicy": {
     "authority": "derived",
-    "basis": "v1.3 cross-links are deterministic joins across the already sourced v1.2 world model, quest procedures, and monster records.",
+    "basis": "v2.0 materializes deterministic cross-links across the already sourced item, acquisition, world, quest, monster, skill, equipment, mechanic and rule records.",
+    "stableTypedIds": "Entities use typed IDs; acquisition actors use acquisition_source nodes so identical names such as Farmer do not collapse unrelated roles.",
+    "reverseRelationships": "Key reverse edges are materialized so questions can traverse either direction, for example item→source and source→item or shop→item and item→shop.",
     "noNewExternalFactClaim": "A relationship marked derived does not claim a new independently sourced game fact; it points between existing sourced records.",
-    "conflictHandling": "Broad monster-area labels and more specific room-page evidence are both preserved when they disagree."
+    "conflictHandling": "Broad source labels and more specific evidence are both preserved when they disagree; unknown links remain unknown.",
+    "memoryRule": "Human conversation memory is not factual authority. Explicit current language outranks remembered context."
   },
   "mechanicsRules": {
     "schemaVersion": 1,
@@ -48710,5 +48770,66 @@
         "Prospector price units are not labelled on the current shop table, so currency is null for those rows."
       ]
     }
+  },
+  "relationshipGraphMetadata": {
+    "sourceFile": "flatmmo-graph.json",
+    "schemaVersion": 1,
+    "release": "unified-conversation-graph-v2.0",
+    "nodeCount": 1574,
+    "edgeCount": 7380,
+    "nodeTypes": {
+      "acquisition_source": 523,
+      "area": 14,
+      "concept": 5,
+      "item": 588,
+      "mechanic": 20,
+      "monster": 82,
+      "npc": 71,
+      "quest": 21,
+      "room": 193,
+      "rule": 12,
+      "shop": 27,
+      "skill": 18
+    },
+    "edgeTypes": {
+      "acquired_via": 1168,
+      "area_connection": 27,
+      "contains_monster": 82,
+      "contains_npc": 142,
+      "contains_room": 193,
+      "dropped_by": 363,
+      "drops_item": 363,
+      "in_area": 193,
+      "located_in_area": 24,
+      "located_in_room": 153,
+      "occurs_in_area": 29,
+      "provides_item": 1168,
+      "provides_resource": 53,
+      "requires_item": 533,
+      "requires_material": 560,
+      "requires_skill": 382,
+      "rewards_item": 15,
+      "room_connection": 50,
+      "sells_item": 138,
+      "sold_by": 138,
+      "source_actor": 122,
+      "source_in_area": 162,
+      "source_in_room": 53,
+      "step_in_area": 112,
+      "step_in_room": 59,
+      "step_with_monster": 7,
+      "step_with_npc": 42,
+      "used_by_skill": 431,
+      "used_to_make": 565,
+      "world_resource_at": 53
+    },
+    "unresolvedTextReferences": 1,
+    "policy": {
+      "explicitCurrentSubjectBeatsMemory": true,
+      "typedAcquisitionSources": true,
+      "reverseRelationshipsMaterialized": true,
+      "unknownRelationshipsRemainUnknown": true
+    },
+    "embeddingPolicy": "The full relationship graph is published as a separate root JSON file rather than duplicated into this already-large public context. This context embeds the source records and points to the canonical derived relationship index."
   }
 }

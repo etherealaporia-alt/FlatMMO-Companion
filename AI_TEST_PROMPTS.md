@@ -1,4 +1,4 @@
-# FlatMMO Companion v1.9 — Regression Tests
+# FlatMMO Companion v2.0 — Regression Tests
 
 These tests cover both the public AI grounding layer and the deterministic human Companion.
 
@@ -583,7 +583,7 @@ Expected:
 - Arrow Shaft recipes preserve their different output quantities, including both Cactus Logs and Blessed Logs producing 16 shafts.
 - Do not collapse alternative recipes merely because level/output quantity match.
 
-# Human Companion v1.9 reasoning-engine tests
+# Human Companion v2.0 unified-conversation tests
 
 These tests exercise the deployed deterministic reasoning layer. They are intentionally multi-turn where conversation state matters.
 
@@ -687,3 +687,136 @@ Expected:
 - Full Iron Armour remains 125 Iron Bars → 125 Iron Ore + 125 Coal under the documented recipe expansion.
 - Exact DPS/recommended combat level remain blocked because the combat formulas are unresolved.
 
+
+
+# v2.0 topic-thread / semantic-repair tests
+
+## Explicit-current-subject priority
+Conversation:
+1. `Tell me about Ent`
+2. `How does Mining speed work?`
+3. `What about level 40?`
+
+Expected:
+- Turn 2 starts/activates a Mining-mechanics thread and does not carry Ent into the answer.
+- Turn 3 remains in the Mining thread unless clarification is genuinely needed.
+- Remembered Ent context may not replace the explicitly stated Mining subject.
+
+## Park and return to a topic
+Conversation:
+1. `Tell me about Ent`
+2. `How does Mining speed work?`
+3. `Back to Ent — where is it?`
+
+Expected:
+- Mining does not delete the Ent thread.
+- Turn 3 returns to the Ent thread and uses Ent location data.
+- The response may acknowledge the return naturally.
+
+## Direct semantic repair
+Conversation:
+1. `Tell me about Ent`
+2. `What happens at level 40?`
+3. `No, I meant Mining, not the Ent.`
+4. `What about level 50?`
+
+Expected:
+- Turn 3 rejects the mistaken Ent interpretation and re-runs turn 2 as a Mining-level question.
+- It does not treat the correction as a brand-new unrelated query.
+- Turn 4 stays with Mining.
+- The rejected Ent interpretation is scoped to that repair and does not permanently ban Ent.
+
+## Two-stage repair failsafe
+Conversation:
+1. `What does a gorilla drop?`
+2. `Where is it?`
+3. `That’s not what I meant.`
+4. `Gorilla drops, not its location.`
+
+Expected:
+- Turn 3 asks what the user meant instead rather than guessing again.
+- Turn 4 repairs the previous question and returns Gorilla drops.
+
+## Constraint repair
+Conversation:
+1. `How do I get Green Leaf Seeds without combat?`
+2. `No, combat is fine. I meant without stealing.`
+3. `Why?`
+
+Expected:
+- Turn 2 removes the non-combat constraint, excludes Stealing routes, and returns matching combat routes if documented.
+- `No` is interpreted as a discourse correction marker, not as `no combat`.
+- Turn 3 explains the corrected constraint set.
+
+## Result-set continuity
+Conversation:
+1. `What can I buy in Everbrook under 100 coins?`
+2. `Only food.`
+3. `Which is cheapest?`
+4. `Actually only bread.`
+
+Expected:
+- Turn 2 filters the previous candidate set rather than starting a new search.
+- Turn 3 ranks the filtered set by recorded numeric price only.
+- Ranking does not destroy the underlying candidate set needed for later refinement.
+- Turn 4 narrows the active set to Bread rather than opening a generic Bread article.
+
+## Durable user facts vs hypothetical levels
+Conversation:
+1. `I am Mining 40 and Crafting 48. Can I do Atlas Crown?`
+2. `What if my Crafting was 50?`
+3. `What is my Crafting level?`
+
+Expected:
+- Turn 1 remembers Mining 40 and Crafting 48 as conversation-supplied player facts.
+- Turn 2 uses Crafting 50 for that hypothetical answer while retaining Mining 40.
+- The hypothetical does not overwrite the durable Crafting 48 fact.
+- Turn 3 reports Crafting 48 unless the user has explicitly updated it.
+
+## Explicit update to a user fact
+Conversation:
+1. `I have Stealing 5.`
+2. `Actually I have Stealing 12.`
+3. `What is my Stealing level?`
+
+Expected:
+- The explicit correction/update replaces the stored conversation fact with 12.
+
+## Coordinated negation
+Prompt:
+`How do I get Green Leaf Seeds without combat or stealing?`
+
+Expected:
+- Both combat and Stealing acquisition groups are excluded.
+- If no source remains, the Companion says none is documented under those constraints rather than claiming the game has none.
+
+## Same-name role safety
+Conversation:
+1. `How do I get Green Leaf Seeds?`
+2. `Any ways other than combat?`
+3. `Where is the Farmer?`
+
+Expected:
+- If the preceding source is the Farmer pickpocket route, `Farmer` remains a typed source-role reference.
+- It must not silently switch to the Farmer monster just because the display name matches.
+
+## Silent-memory presentation
+Conversation:
+1. `Tell me about Ent`
+2. `How does Mining speed work?`
+3. `What about level 40?`
+
+Expected:
+- Turn 2 switches cleanly to Mining and does not mention that Ent was parked, remembered or discarded.
+- Turn 3 uses the Mining context naturally without saying that it is remembering the last message, keeping the same topic, inheriting context, or reusing a previous turn.
+- Context should be visible through continuity, not through implementation narration.
+- Explicit `Why?`, a user correction, or `Back to ...` may naturally refer to the relevant earlier turn/topic because the user has asked for that relationship explicitly.
+
+## Unified relationship graph integrity
+Expected machine checks:
+- Every edge `from` and `to` resolves to a graph node.
+- Node IDs are unique.
+- Edge IDs are unique.
+- Acquisition-source nodes remain typed separately from monsters/NPCs/shops with the same display name.
+- Reverse relationships required by the published graph are present/materialized.
+- The intentionally unresolved text-only material reference remains unresolved instead of becoming a fabricated item.

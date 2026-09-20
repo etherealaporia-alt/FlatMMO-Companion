@@ -129,12 +129,15 @@ const FILES = {
   areas:"flatmmo-areas.json",
   equipment:"flatmmo-equipment.json",
   items:"flatmmo-items.json",
+  graph:"flatmmo-graph.json",
   mechanics:"flatmmo-mechanics.json",
   rules:"flatmmo-rules.json",
   overrides:"flatmmo-overrides.json"
 };
 const STORAGE_KEY="flatmmoCompanion.v1";
-const MAX_HISTORY=30;
+const MAX_HISTORY=120;
+const MAX_THREADS=12;
+const MAX_THREAD_TURNS=36;
 const KNOWN_SKILLS=[
   "Health","Melee","Archery","Magic","Worship","Mining","Forging","Crafting",
   "Enchantment","Fishing","Woodcutting","Firemaking","Cooking","Brewing","Farming",
@@ -145,6 +148,7 @@ const SKILL_ALIASES={firemake:"Firemaking"};
 const state = {
   data:{}, ready:false, lastEntity:null,
   context:{intent:null,entities:[],raw:""}, contextStack:[], lastReasoning:null, lastQuery:null, graphDiagnostics:null,
+  conversation:{threads:[],activeThreadId:null,nextThreadId:1,pendingRepair:null,turnSeq:0,userFacts:{skills:{}}},
   playerRequest:0,
   player:null, history:[], restoring:false,
   playerProvider:{
@@ -279,7 +283,7 @@ function clearLocal(){
   state.playerRequest++;
   $("#loadPlayer").disabled=false;
   try{localStorage.removeItem(STORAGE_KEY)}catch(_){}
-  state.player=null;state.history=[];state.lastEntity=null;state.context={intent:null,entities:[],raw:""};state.contextStack=[];state.lastReasoning=null;state.lastQuery=null;
+  state.player=null;state.history=[];state.lastEntity=null;state.context={intent:null,entities:[],raw:""};state.contextStack=[];state.lastReasoning=null;state.lastQuery=null;state.conversation={threads:[],activeThreadId:null,nextThreadId:1,pendingRepair:null,turnSeq:0,userFacts:{skills:{}}};
   $("#username").value="";
   updatePlayerUi();
   history.replaceState(null,"",location.pathname+location.search);
@@ -488,7 +492,7 @@ async function loadAll(){
   buildIndexes();
   state.ready=true;
   $("#loading").style.display="none";
-  $("#loadState").textContent=`Knowledge loaded: ${state.data.items?.records?.length||0} items, ${state.data.monsters.records.length} monsters, ${state.data.quests.records.length} quests, ${state.data.areas.records.length} areas`;
+  $("#loadState").textContent=`Knowledge loaded: ${state.data.items?.records?.length||0} items, ${state.graphDiagnostics?.nodes||0} typed graph nodes, ${state.data.monsters.records.length} monsters, ${state.data.quests.records.length} quests`;
   restoreSession();
 }
 function buildIndexes(){
@@ -605,6 +609,39 @@ function buildIndexes(){
 
   state.dropMap=dropMap; state.resourceMap=resourceMap; state.acquisitionMap=acquisitionMap; state.itemByName=itemByName; state.shopIndex=shopIndex; state.stealingIndex=stealingIndex; state.serviceMap=serviceMap;
   state.roomById=roomById; state.npcById=npcById; state.productionMap=productionMap; state.areaGraph=areaGraph; state.entityCatalog=catalog;
+  buildRelationshipIndexes();
+}
+
+function buildRelationshipIndexes(){
+  const graph=state.data.graph||{},nodeById=new Map(),nodesByName=new Map(),out=new Map(),incoming=new Map();
+  for(const n of graph.nodes||[]){
+    nodeById.set(n.id,n);
+    const k=norm(n.name);if(!nodesByName.has(k))nodesByName.set(k,[]);nodesByName.get(k).push(n);
+  }
+  for(const e of graph.edges||[]){
+    if(!out.has(e.from))out.set(e.from,[]);out.get(e.from).push(e);
+    if(!incoming.has(e.to))incoming.set(e.to,[]);incoming.get(e.to).push(e);
+  }
+  state.graphNodeById=nodeById;state.graphNodesByName=nodesByName;state.graphOut=out;state.graphIn=incoming;
+  state.graphDiagnostics={nodes:graph.counts?.nodes||nodeById.size,edges:graph.counts?.edges||(graph.edges||[]).length,unresolvedTextReferences:graph.counts?.unresolvedTextReferences||0};
+}
+function graphNodesNamed(name,type=null){return (state.graphNodesByName?.get(norm(name))||[]).filter(n=>!type||n.type===type)}
+function graphNodeForEntity(e){
+  if(!e)return null;const id=e.obj?.id;
+  if(id&&state.graphNodeById?.has(id))return state.graphNodeById.get(id);
+  if(e.type==="rule"&&e.obj?.id&&state.graphNodeById?.has(`rule.${e.obj.id}`))return state.graphNodeById.get(`rule.${e.obj.id}`);
+  const preferred={item:"item",resource:"item",monster:"monster",quest:"quest",skill:"skill",area:"area",room:"room",npc:"npc",shop:"shop",mechanic:"mechanic"}[e.type];
+  const rows=graphNodesNamed(e.name,preferred);if(rows.length===1)return rows[0];
+  if(e.type==="equipment"){const item=graphNodesNamed(e.name,"item");if(item.length===1)return item[0]}
+  return null;
+}
+function graphNeighborIds(id){const out=new Set();for(const e of state.graphOut?.get(id)||[])out.add(e.to);for(const e of state.graphIn?.get(id)||[])out.add(e.from);return out}
+function graphRelatedEntities(a,b){
+  const an=graphNodeForEntity(a),bn=graphNodeForEntity(b);if(!an||!bn)return false;if(an.id===bn.id)return true;
+  const first=graphNeighborIds(an.id);if(first.has(bn.id))return true;
+  // Two-hop relation is useful for item -> typed source -> area/NPC, but never by itself overrides an explicit current subject.
+  for(const mid of first)if(graphNeighborIds(mid).has(bn.id))return true;
+  return false;
 }
 
 const QUERY_STOP=new Set("what where when which who why how is are was were do does did can could should would i me my we our the a an to from for of in on at with about tell show give list find get need want please there here it its that this those these and or versus vs into through all any every".split(" "));
@@ -642,51 +679,92 @@ function compactEntity(e){
   if(!e)return null;
   return {type:e.type,name:e.name,obj:e.obj,area:e.area||null,room:e.room||null,score:e.score??null,role:e.role||null,source:e.source||null};
 }
-function latestContextTurn(){return state.contextStack?.length?state.contextStack[state.contextStack.length-1]:null}
-function rememberContext(intent,entities,raw,{query=null,resultRefs=[],reasoning=null}={}){
-  const keep=(entities||[]).slice(0,6).map(compactEntity).filter(Boolean);
-  state.context={intent,entities:keep,raw};
-  const turn={intent,entities:keep,raw,goal:query?.goal||intent,constraints:query?.constraints||{},resultRefs:(resultRefs||[]).slice(0,30),reasoning:reasoning||null};
-  state.contextStack.push(turn);if(state.contextStack.length>8)state.contextStack.shift();
-  const primary=keep[0];if(primary?.obj)state.lastEntity={type:primary.type,obj:primary.obj};
-  if(reasoning)state.lastReasoning=reasoning;
-  if(query)state.lastQuery=query;
+function activeThread(){return state.conversation.threads.find(t=>t.id===state.conversation.activeThreadId)||null}
+function recentThreads(){return [...state.conversation.threads].sort((a,b)=>(b.lastActive||0)-(a.lastActive||0))}
+function threadTurn(thread){return thread?.turns?.length?thread.turns[thread.turns.length-1]:null}
+function latestContextTurn(){return threadTurn(activeThread())||state.contextStack?.[state.contextStack.length-1]||null}
+function subjectTypeForGoal(goal,type){
+  const table={
+    acquire:new Set(["item","resource","equipment"]),produce:new Set(["item","resource","equipment"]),uses:new Set(["item","resource","equipment"]),earliest_source:new Set(["item","resource","equipment"]),cheapest_source:new Set(["item","resource","equipment"]),preference_clarification:new Set(["item","resource","equipment"]),
+    travel:new Set(["area"]),readiness:new Set(["quest","equipment"]),walkthrough:new Set(["quest"]),mechanics:new Set(["skill","rule","mechanic"]),progression:new Set(["skill","equipment"]),shop_inventory:new Set(["shop","area"]),search_acquisition:new Set(["area","skill"]),refine_result_set:new Set([]),rank_result_set_price:new Set([]),locate:new Set(["source_ref","room","npc","area","monster","item","resource"]),info:new Set(["item","resource","equipment","monster","quest","area","skill","room","npc","shop","rule","mechanic"])
+  };return (table[goal]||table.info).has(type);
 }
-function previousContextEntities(){
-  for(let i=(state.contextStack?.length||0)-1;i>=0;i--){const es=state.contextStack[i]?.entities||[];if(es.length)return es}
-  return state.context?.entities||[];
+function queryTopicEntities(entities,goal,q=""){
+  const priceCurrency=/\b[\d,]+\s*coins?\b/.test(q);
+  return (entities||[]).filter(e=>e.score>=100&&subjectTypeForGoal(goal,e.type)&&!(priceCurrency&&norm(e.name)==="coins")).slice(0,4);
 }
-function contextResultCandidates(q){
-  for(let i=(state.contextStack?.length||0)-1;i>=Math.max(0,(state.contextStack?.length||0)-6);i--){
-    const rows=[];
-    for(const ref of state.contextStack[i]?.resultRefs||[]){
-      if(!ref?.name||!hasWholePhrase(q,ref.name))continue;
-      const role=ref.role||ref.method||ref.type||"source";let boost=0;
-      if(role==="pickpocket"&&/\b(pickpocket|steal|stealing)\b/.test(q))boost=24;
-      else if(role==="monster_drop"&&/\b(monster|drop|combat|fight|fighting)\b/.test(q))boost=24;
-      else if(role==="shop"&&/\b(shop|buy|purchase|store)\b/.test(q))boost=24;
-      else if(["stall","map_chest","rogue_chest"].includes(role)&&/\b(stall|chest|steal|stealing)\b/.test(q))boost=18;
-      rows.push({type:"source_ref",name:ref.name,obj:ref,source:ref.source||null,area:ref.area||null,room:null,aliases:[norm(ref.name)],score:190+boost,role});
-    }
-    if(rows.length)return rows; // Most recent matching answer owns the conversational reference.
+function threadLabelFrom(entities,goal){const e=entities?.[0];return e?.name||title(String(goal||"conversation").replace(/_/g," "))}
+function makeThread(seedEntities=[],goal="info"){
+  const id=`thread.${state.conversation.nextThreadId++}`;
+  const t={id,label:threadLabelFrom(seedEntities,goal),topicEntities:(seedEntities||[]).map(compactEntity),goal,constraints:{},resultRefs:[],resultSet:[],turns:[],rejected:[],lastActive:++state.conversation.turnSeq};
+  state.conversation.threads.push(t);if(state.conversation.threads.length>MAX_THREADS){const oldest=recentThreads().slice(MAX_THREADS);for(const x of oldest)state.conversation.threads=state.conversation.threads.filter(t=>t.id!==x.id)}
+  return t;
+}
+function threadMatchesEntity(thread,e){return (thread?.topicEntities||[]).some(x=>x.type===e.type&&norm(x.name)===norm(e.name))}
+function threadForExplicitEntity(e){for(const t of recentThreads())if(threadMatchesEntity(t,e))return t;return null}
+function looksLikeFollowup(q){
+  return /^(?:and\b|also\b|so\b|then\b|what about\b|how about\b|what if\b|where\b|why\b|which\b|only\b|except\b|instead\b|actually\b|same\b|again\b|does it\b|can it\b|can i still\b|any other\b|any ways?\b|what else\b)/.test(q)||/\b(it|its|this|that|them|those|same|again|former|latter|the other one)\b/.test(q);
+}
+function looksLikeExplicitNewQuestion(q){return /^(?:how does|how do i|what is|what are|tell me about|explain|where can i|where is|can i do|what does|list|show me|give me)\b/.test(q)}
+function skillLooksLikeModifier(q,e){if(e.type!=="skill")return false;const t=activeThread();if(!t)return false;return /^(?:what if|what about|how about|and|only|actually|instead|suppose|say|if)\b/.test(q)||/\bmy\s+\w+\s+(?:is|was|were|only)\s*\d+\b/.test(q)}
+function selectThreadForQuestion(q,baseEntities,goal){
+  const strong=queryTopicEntities(baseEntities,goal,q).filter(e=>!skillLooksLikeModifier(q,e));
+  if(/\bback to\b/.test(q))for(const t of recentThreads())if((t.topicEntities||[]).some(e=>hasWholePhrase(q,e.name)))return {thread:t,move:"return",contextAllowed:true};
+  const current=activeThread(),follow=looksLikeFollowup(q);
+  if(strong.length){
+    const first=strong[0];
+    if(current&&threadMatchesEntity(current,first))return {thread:current,move:follow?"continue":"continue",contextAllowed:follow};
+    if(current&&follow&&(/^(?:what about|how about|and)\b/.test(q)||graphRelatedEntities(current.topicEntities?.[0],first)))return {thread:current,move:"branch",contextAllowed:true};
+    const old=threadForExplicitEntity(first);if(old&&/\bback to\b/.test(q))return {thread:old,move:"return",contextAllowed:true};
+    return {thread:null,move:"new",contextAllowed:false};
   }
-  return [];
+  if(current&&follow)return {thread:current,move:"continue",contextAllowed:true};
+  if(current&&!looksLikeExplicitNewQuestion(q)&&contentTokens(q).length<=5)return {thread:current,move:"continue",contextAllowed:true};
+  return {thread:null,move:"new",contextAllowed:false};
 }
-function contextualize(q,entities){
-  const prior=previousContextEntities();
-  const pronounFollow=/\b(it|its|this|them|those|same|again|former|latter)\b/.test(q)||/^(?:that|there)\b/.test(q)||/\bwhat about (?:that|there)\b/.test(q);
-  const freshQuestion=/\b(what can i|how many|list|show me|which items?|what items?)\b/.test(q);
-  const shortFollow=/\b(requirements?|level|drop|drops|where|how|what about|reward|materials?|make|craft|fight|weak|why|which|first|earliest)\b/.test(q)&&contentTokens(q).length<=6;
-  const alternativeFollow=/\b(other|another|alternative|alternatives|else|instead|besides|without|ways?)\b/.test(q)&&contentTokens(q).length<=8;
-  if(freshQuestion&&!pronounFollow&&!alternativeFollow)return entities;
-  if(!(pronounFollow||shortFollow||alternativeFollow))return entities;
-  const concreteTypes=new Set(["monster","quest","area","skill","equipment","room","npc","resource","item","shop","source_ref"]);
-  const explicitConcrete=entities.some(e=>concreteTypes.has(e.type)&&e.score>=100);
-  if(explicitConcrete||!prior.length)return entities;
-  const seen=new Set(),merged=[];
-  for(const e of [...prior,...entities]){const k=`${e.type}:${norm(e.name)}:${e.role||""}`;if(!seen.has(k)){seen.add(k);merged.push(e)}}
-  return merged;
+function inheritedEntitiesFromThread(thread){
+  if(!thread)return[];const rejected=new Set((thread.rejected||[]).map(x=>`${x.type||""}:${norm(x.name||x)}`));
+  return (thread.topicEntities||[]).filter(e=>!rejected.has(`${e.type}:${norm(e.name)}`));
 }
+function contextResultCandidates(q,thread=activeThread()){
+  const turns=thread?.turns||[];
+  for(let i=turns.length-1;i>=Math.max(0,turns.length-12);i--){
+    const rows=[];for(const ref of turns[i]?.resultRefs||[]){
+      if(!ref?.name||!hasWholePhrase(q,ref.name))continue;const role=ref.role||ref.method||ref.type||"source";let boost=0;
+      if(role==="pickpocket"&&/\b(pickpocket|steal|stealing)\b/.test(q))boost=30;else if(role==="monster_drop"&&/\b(monster|drop|combat|fight|fighting)\b/.test(q))boost=30;else if(role==="shop"&&/\b(shop|buy|purchase|store)\b/.test(q))boost=30;else if(["stall","map_chest","rogue_chest"].includes(role)&&/\b(stall|chest|steal|stealing)\b/.test(q))boost=24;
+      rows.push({type:"source_ref",name:ref.name,obj:ref,source:ref.source||null,area:ref.area||null,room:null,aliases:[norm(ref.name)],score:195+boost,role});
+    }if(rows.length)return rows;
+  }return[];
+}
+function contextualize(q,entities,{thread=activeThread(),contextAllowed=true}={}){
+  if(!contextAllowed||!thread)return entities;
+  const prior=inheritedEntitiesFromThread(thread);if(!prior.length)return entities;
+  const strong=queryTopicEntities(entities,"info",q).filter(e=>!skillLooksLikeModifier(q,e));
+  // Explicit current subjects always win. Memory can fill omissions, never replace them.
+  if(strong.some(e=>e.score>=120)&&!looksLikeFollowup(q))return entities;
+  const seen=new Set(),merged=[];for(const e of [...prior,...entities]){const k=`${e.type}:${norm(e.name)}:${e.role||""}`;if(seen.has(k))continue;seen.add(k);merged.push(e)}return merged;
+}
+function compactQueryForThread(query){
+  if(!query)return null;return {raw:query.raw,q:query.q,intent:query.intent,goal:query.goal,entities:(query.entities||[]).slice(0,8).map(compactEntity),overrides:{...(query.overrides||{})},constraints:JSON.parse(JSON.stringify(query.constraints||{})),collection:query.collection||null,searchTerms:[...(query.searchTerms||[])],move:query.move||null,threadId:query.threadId||null};
+}
+function rememberContext(intent,entities,raw,{query=null,resultRefs=[],reasoning=null,resultSet=[]}={}){
+  rememberAssertedUserFacts(raw);
+  const keep=(entities||[]).slice(0,8).map(compactEntity).filter(Boolean);state.context={intent,entities:keep,raw};
+  let thread=(query?.threadId&&state.conversation.threads.find(t=>t.id===query.threadId))||activeThread();
+  if(!thread||query?.move==="new")thread=makeThread(queryTopicEntities(keep,query?.goal||intent,query?.q||norm(raw)),query?.goal||intent);
+  state.conversation.activeThreadId=thread.id;thread.lastActive=++state.conversation.turnSeq;
+  const topics=queryTopicEntities(keep,query?.goal||intent,query?.q||norm(raw));
+  const hasRootItem=(thread.topicEntities||[]).some(e=>["item","resource","equipment"].includes(e.type));
+  const transientSourceLocation=query?.goal==="locate"&&topics[0]?.type==="source_ref"&&hasRootItem&&query?.contextUsed;
+  if(topics.length&&!transientSourceLocation){thread.topicEntities=topics.map(compactEntity);thread.label=threadLabelFrom(topics,query?.goal||intent)}
+  if(!transientSourceLocation)thread.goal=query?.goal||intent;thread.constraints=JSON.parse(JSON.stringify(query?.constraints||{}));thread.resultRefs=(resultRefs||[]).slice(0,40);thread.resultSet=(resultSet||[]).slice(0,80);
+  if(query?.repair?.rejectedEntities?.length){for(const e of query.repair.rejectedEntities)thread.rejected.push({type:e.type,name:e.name,at:state.conversation.turnSeq});thread.rejected=thread.rejected.slice(-8)}
+  const turn={seq:state.conversation.turnSeq,intent,entities:keep,raw,goal:query?.goal||intent,constraints:thread.constraints,resultRefs:thread.resultRefs,resultSet:thread.resultSet,reasoning:reasoning||null,query:compactQueryForThread(query),repair:query?.repair||null};
+  thread.turns.push(turn);if(thread.turns.length>MAX_THREAD_TURNS)thread.turns.shift();
+  state.contextStack.push(turn);if(state.contextStack.length>60)state.contextStack.shift();
+  const primary=keep[0];if(primary?.obj)state.lastEntity={type:primary.type,obj:primary.obj};if(reasoning)state.lastReasoning=reasoning;if(query)state.lastQuery=query;
+}
+function previousContextEntities(){return inheritedEntitiesFromThread(activeThread())}
 function extractStatedSkillLevels(q){
   const out={};
   const labels=[...KNOWN_SKILLS,"Firemake"].sort((a,b)=>b.length-a.length);
@@ -694,9 +772,23 @@ function extractStatedSkillLevels(q){
     const p=label.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
     let m=String(q).match(new RegExp(`\\b${p}\\s*(?:level\\s*)?(\\d+)\\b`,"i"));
     if(!m)m=String(q).match(new RegExp(`\\b(?:level\\s*)?(\\d+)\\s*${p}\\b`,"i"));
+    if(!m)m=String(q).match(new RegExp(`\\b(?:my\\s+)?${p}\\s+(?:is|was|would be|were)\\s+(?:only\\s+)?(?:level\\s*)?(\\d+)\\b`,"i"));
     if(m)out[norm(canonicalSkillName(label))]=Number(m[1]);
   }
   return out;
+}
+function extractAssertedUserSkillLevels(raw){
+  const text=String(raw||"");
+  if(/^\s*(?:what if|suppose|say|if)\b/i.test(text))return {};
+  // Only promote levels to durable conversation facts when the user actually speaks about themselves.
+  if(!/\b(?:i am|i'm|im|i have|i've got|my)\b/i.test(text))return {};
+  // A later hypothetical clause belongs to the current calculation, not the user's durable profile.
+  const asserted=text.split(/\b(?:what if|suppose|imagine if)\b/i,1)[0];
+  return extractStatedSkillLevels(asserted);
+}
+function rememberAssertedUserFacts(raw){
+  const facts=extractAssertedUserSkillLevels(raw);
+  for(const [k,v] of Object.entries(facts))state.conversation.userFacts.skills[k]={level:v,statedAt:state.conversation.turnSeq+1,source:"conversation"};
 }
 function detectIntent(q,entities){
   if(/\b(what should i do next|what do i do next|what should i work on|suggest.*next|recommend.*next)\b/.test(q))return "player_next";
@@ -706,7 +798,7 @@ function detectIntent(q,entities){
   if(/\b(list|show me all|which .* are there|what .* are there)\b/.test(q))return "list";
   if(/\b(walkthrough|step by step|start to finish|how (?:do|can) i (?:complete|finish)|quest steps)\b/.test(q))return "walkthrough";
   if(/\b(can i do|am i ready|ready for|requirements?|requirement|what do i need|what level do i need|eligible)\b/.test(q))return "requirements";
-  if(/\b(get to|travel to|travel from|route to|route from|how do i reach|how can i reach|go from|go to)\b/.test(q))return "travel";
+  if(/\b(get to|get from|travel to|travel from|route to|route from|how do i reach|how can i reach|go from|go to)\b/.test(q)||/\bfrom\s+.+?\s+to\s+.+/.test(q))return "travel";
   if(/\b(drop|drops|loot|dropped by)\b/.test(q))return "drops";
   if(/\b(used for|use it for|use this for|what can i make with|what can .* be used for|uses of|what is .* for|lead to|leads to|downstream|turn into|eventually make)\b/.test(q))return "uses";
   if(/\b(materials?|ingredients?|from scratch|smelt|forge|craft|make|recipe|how many .* (?:bar|ore|coal|log|plank))\b/.test(q))return "materials";
@@ -714,7 +806,7 @@ function detectIntent(q,entities){
   if(/\b(bed|beds|sleep in|rest in)\b/.test(q) && entities.some(e=>e.type==="area"))return "beds";
   if(/\b(monsters?|enemies)\b/.test(q) && entities.some(e=>e.type==="area"))return "monsters_in_area";
   if(/\b(where|location|located|find|obtain|source|sources|get|mine|fish|chop|dig)\b/.test(q))return "locate";
-  if(/\b(how does|how do|explain|mechanic|works?|what happens|ticks?|cooldown|sleep points?|run energy|dodge|weakness)\b/.test(q))return "mechanics";
+  if(/\b(how does|how do|explain|mechanic|works?|what happens|ticks?|cooldown|sleep points?|run energy|dodge|weakness)\b/.test(q)||(/\b(run|running)\b/.test(q)&&/\b(agility|combat|level|steps?)\b/.test(q)))return "mechanics";
   if(/\b(unlock|progression|at level|by level|can i equip|can i make)\b/.test(q))return "progression";
   return "info";
 }
@@ -911,16 +1003,24 @@ function parseLevelRequirement(req){
   m=s.match(new RegExp(`\\b(${pattern})\\s+(?:level\\s*)?(\\d+)\\b`,"i"));if(m)return {level:Number(m[2]),skill:canonicalSkillName(m[1])};return null;
 }
 function requirementCheck(skill,level,overrides={}){
-  const key=norm(canonicalSkillName(skill));
-  if(overrides[key]!=null){const have=overrides[key];return have>=level?{status:"good",text:`${skill} ${level} — stated level ${have} ✓`}:{status:"bad",text:`${skill} ${level} — stated level ${have}; need ${level-have} more`}}
-  const rec=playerSkill(skill);if(!state.player)return {status:"unknown",text:`${skill} ${level} — no player level supplied`};
-  if(!rec)return {status:"unknown",text:`${skill} ${level} — player field unavailable`};
-  return rec.level>=level?{status:"good",text:`${skill} ${level} — your level ${rec.level} ✓`}:{status:"bad",text:`${skill} ${level} — your level ${rec.level}; need ${level-rec.level} more`};
+  const known=knownSkillLevel(skill,overrides,{});
+  if(!known)return {status:"unknown",text:`${skill} ${level} — no player level supplied`};
+  const have=Number(known.level),basis=known.basis||"known";
+  const label=basis==="your"?`your level ${have}`:basis==="stated"?`stated level ${have}`:basis==="question limit"?`level ${have} for this question`:`${basis} level ${have}`;
+  return have>=level?{status:"good",text:`${skill} ${level} — ${label} ✓`}:{status:"bad",text:`${skill} ${level} — ${label}; need ${level-have} more`};
 }
 function questAnswer(qst,readiness=false,overrides={}){
-  state.lastEntity={type:"quest",obj:qst};const reqs=qst.requirements||[],checks=reqs.map(r=>({raw:r,parsed:parseLevelRequirement(r)}));
-  const checkHtml=checks.map(x=>{if(!x.parsed)return `<li>${esc(x.raw)}${(state.player||Object.keys(overrides).length)?" <span class='muted'>— ownership/access not available from known player data</span>":""}</li>`;const c=requirementCheck(x.parsed.skill,x.parsed.level,overrides);return `<li class="${c.status}">${esc(c.text)}</li>`}).join("");
-  return `${playerBasis()}<h3>${esc(qst.name)}</h3><p><b>Difficulty:</b> ${esc(qst.difficulty||"Unknown")}</p>${reqs.length?`<p><b>${readiness?"Readiness":"Requirements"}:</b></p><ul>${checkHtml}</ul>`:""}${qst.rewards?.length?`<p><b>Rewards:</b></p><ul>${qst.rewards.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}${qst.procedure?.length?`<p><b>Procedure:</b></p><ol>${qst.procedure.map((x,i)=>{const g=qst.procedureGraph?.[i],rooms=(g?.roomIds||[]).map(id=>state.roomById?.get(id)).filter(Boolean).map(h=>`${h.area.name} → ${h.room.name}`);return `<li>${esc(x)}${rooms.length?` <span class="muted">(${esc(unique(rooms).join(" / "))})</span>`:""}</li>`}).join("")}</ol>`:`<p class="warn">Procedure not documented in the current Companion data.</p>`}${(state.player||Object.keys(overrides).length)&&readiness?`<p class="muted small">Skill readiness is only part of readiness: item ownership, access and quest completion may still be unknown.</p>`:""}${evidence([qst.source].filter(Boolean),qst.verificationNote?[qst.verificationNote]:[])}`;
+  state.lastEntity={type:"quest",obj:qst};
+  const reqs=qst.requirements||[],checks=reqs.map(r=>{const parsed=parseLevelRequirement(r);return {raw:r,parsed,check:parsed?requirementCheck(parsed.skill,parsed.level,overrides):null}});
+  const checkHtml=checks.map(x=>{if(!x.parsed)return `<li>${esc(x.raw)}${(state.player||Object.keys(overrides).length||Object.keys(state.conversation.userFacts?.skills||{}).length)?" <span class='muted'>— ownership/access not available from known player data</span>":""}</li>`;const c=x.check;return `<li class="${c.status}">${esc(c.text)}</li>`}).join("");
+  let readinessLead="";
+  if(readiness&&checks.some(x=>x.parsed)){
+    const known=checks.filter(x=>x.check&&x.check.status!=="unknown"),bad=known.filter(x=>x.check.status==="bad"),unknown=checks.filter(x=>x.parsed&&x.check?.status==="unknown");
+    if(bad.length)readinessLead=`<p><b>Not quite on the recorded skill requirements.</b> ${bad.length===1?"There’s one known skill gate you don’t meet yet.":`There are ${bad.length} known skill gates you don’t meet yet.`}</p>`;
+    else if(known.length&&unknown.length===0)readinessLead=`<p><b>On the recorded skill requirements, yes.</b> That still isn’t the same as proving full quest readiness.</p>`;
+    else readinessLead=`<p><b>I can only check part of your readiness from what I currently know.</b></p>`;
+  }
+  return `${playerBasis()}<h3>${esc(qst.name)}</h3>${readinessLead}<p><b>Difficulty:</b> ${esc(qst.difficulty||"Unknown")}</p>${reqs.length?`<p><b>${readiness?"Readiness":"Requirements"}:</b></p><ul>${checkHtml}</ul>`:""}${qst.rewards?.length?`<p><b>Rewards:</b></p><ul>${qst.rewards.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}${qst.procedure?.length?`<p><b>Procedure:</b></p><ol>${qst.procedure.map((x,i)=>{const g=qst.procedureGraph?.[i],rooms=(g?.roomIds||[]).map(id=>state.roomById?.get(id)).filter(Boolean).map(h=>`${h.area.name} → ${h.room.name}`);return `<li>${esc(x)}${rooms.length?` <span class="muted">(${esc(unique(rooms).join(" / "))})</span>`:""}</li>`}).join("")}</ol>`:`<p class="warn">I don’t have the procedure documented yet, so I won’t make one up.</p>`}${(state.player||Object.keys(overrides).length||Object.keys(state.conversation.userFacts?.skills||{}).length)&&readiness?`<p class="muted small">Skill readiness is only part of readiness: item ownership, access and quest completion may still be unknown.</p>`:""}${evidence([qst.source].filter(Boolean),qst.verificationNote?[qst.verificationNote]:[])}`;
 }
 function areaAnswer(a){
   state.lastEntity={type:"area",obj:a};const services=unique((a.rooms||[]).flatMap(r=>r.services||[]));
@@ -1025,7 +1125,7 @@ const METHOD_GROUPS={
   gathering:new Set(["world_resource"]),farming:new Set(["farming"]),production:PRODUCTION_METHODS,rewards:REWARD_METHODS
 };
 const REASON_METHOD_ORDER=["world_resource","farming","shop","npc_service","npc_trade","pickpocket","stall","map_chest","rogue_chest","production","smelting","enchantment","brewing","cooking","conversion","quest_reward","spirit_reward","event_reward","bundle_reward","special_source","monster_drop"];
-const SEARCH_STOP=new Set([...QUERY_STOP,"thing","things","way","ways","method","methods","source","sources","item","items","available","first","earliest","lowest","level","levels","combat","fighting","fight","killing","kill","buy","buying","purchase","shop","shopping","steal","stealing","pickpocket","stall","chest","farm","farming","grow","growing","plant","mine","mining","fish","fishing","chop","woodcutting","dig","gather","craft","crafting","forge","forging","smelt","smelting","brew","brewing","cook","cooking","make","making","myself","self","without","other","another","instead","besides","under","below","less","than","coins","coin","give","gives","that"].map(norm));
+const SEARCH_STOP=new Set([...QUERY_STOP,"thing","things","way","ways","method","methods","source","sources","item","items","available","first","earliest","lowest","level","levels","combat","fighting","fight","killing","kill","buy","buying","purchase","shop","shopping","steal","stealing","pickpocket","stall","chest","farm","farming","grow","growing","plant","mine","mining","fish","fishing","chop","woodcutting","dig","gather","craft","crafting","forge","forging","smelt","smelting","brew","brewing","cook","cooking","make","making","myself","self","without","other","another","instead","besides","under","below","less","than","coins","coin","give","gives","that","only","just","ones","one"].map(norm));
 
 function setUnion(...sets){const out=new Set();for(const s of sets)for(const x of s||[])out.add(x);return out}
 function addMethods(target,set){for(const x of set||[])target.add(x)}
@@ -1038,17 +1138,27 @@ function knownSkillLevel(skill,overrides={},caps={}){
   const key=norm(canonicalSkillName(skill));
   if(overrides[key]!=null)return {level:Number(overrides[key]),basis:"stated"};
   if(caps[key]!=null)return {level:Number(caps[key]),basis:"question limit"};
+  const fact=state.conversation.userFacts?.skills?.[key];if(fact?.level!=null)return {level:Number(fact.level),basis:"your"};
   const rec=playerSkill(skill);if(rec?.level!=null)return {level:Number(rec.level),basis:state.player?.source==="manual"?"user-entered":"player snapshot"};
   return null;
 }
 function inferGoal(q,intent,entities){
   if(/^\s*(why|how come|what made you|why did you)\b/.test(q))return "explain";
+  if(/\b(?:what(?: is|'s| was)|which)\s+(?:is\s+)?my\s+[a-z -]+\s+level\b|\bwhat level (?:am i|do i have)\b/.test(q)&&entities.some(e=>e.type==="skill"))return "user_fact";
+  const activeSet=activeThread()?.resultSet||[];
+  if(activeSet.length&&/^only\b/.test(q))return "refine_result_set";
+  if(activeSet.length&&/\b(which|what).*(cheapest|lowest price)|\bcheapest\b/.test(q)&&!entities.some(e=>["item","resource","equipment"].includes(e.type)&&e.score>=120))return "rank_result_set_price";
+  if(/\b(swords?|scimitars?|maces?|knives?|spears?|bows?|arrows?|staves?|armou?r|helmets?|boots?|gloves?|legs?|bodies?)\b/.test(q)&&/\b(equip|wear|use|available)\b/.test(q))return "equipment_search";
+  const skillMilestone=entities.find(e=>e.type==="skill"&&e.score>=80),levelMention=q.match(/\b(?:level\s*)?(\d+)\b/);
+  if(skillMilestone&&levelMention&&/\b(what happens|what changes|what do i get|unlock|at level|by level)\b/.test(q)&&!/\b(run|running|dodge|speed|tick|cooldown)\b/.test(q))return "skill_milestone";
   if(/\b(which|what).*(available|accessible).*(first|earliest)|\b(first|earliest|lowest level).*(way|method|source)|\bwhich.*first\b/.test(q))return "earliest_source";
   const priceCurrency=/\b[\d,]+\s*coins?\b/.test(q);
+  if(entities.some(e=>e.type==="source_ref")&&/\b(where|located|location|find)\b/.test(q))return "locate";
   const hasSpecificItem=entities.some(e=>["item","resource","equipment"].includes(e.type)&&e.score>=80&&!(priceCurrency&&norm(e.name)==="coins"));
   if(hasSpecificItem&&/^what about (?:combat|fighting|buying|shopping|stealing|pickpocketing|farming|crafting|making)\b/.test(q)&&["acquire","earliest_source","search_acquisition"].includes(latestContextTurn()?.goal))return "acquire";
-  const methodSearch=/\bwhat can i\b.*\b(buy|steal|pickpocket|farm|grow|mine|fish|gather|craft|forge|smelt|brew|cook|make)\b/.test(q)||/\b(show|list|which)\b.*\b(items?|things?)\b.*\b(buy|steal|farm|craft|make)\b/.test(q);
+  const methodSearch=/\bwhat(?:\s+\w+){0,3}\s+can i\b.*\b(buy|steal|pickpocket|farm|grow|mine|fish|gather|craft|forge|smelt|brew|cook|make)\b/.test(q)||/\b(show|list|which)\b.*\b(items?|things?)\b.*\b(buy|steal|farm|craft|make)\b/.test(q);
   if(hasSpecificItem&&/\bcheapest\b/.test(q)&&/\b(buy|shop|purchase|source|way|method)\b/.test(q))return "cheapest_source";
+  if(hasSpecificItem&&(/\b(?:best|highest|greatest)\s+(?:documented\s+)?(?:drop rate|drop chance|chance)\b/.test(q)||/\b(?:drop rate|drop chance)\b.*\b(?:best|highest|greatest)\b/.test(q)))return "highest_drop_rate";
   if(hasSpecificItem&&/\b(best|easiest|fastest|simplest)\b/.test(q))return "preference_clarification";
   if(hasSpecificItem&&/\b(buy|purchase|shop|steal|pickpocket|farm|grow|plant|mine|fish|gather|obtain|get|acquire|drop|loot)\b/.test(q))return "acquire";
   if(methodSearch&&!hasSpecificItem)return "search_acquisition";
@@ -1083,6 +1193,9 @@ function extractConstraints(raw,q,entities,overrides){
   const includeMethods=new Set(),excludeMethods=new Set(),skillCaps={};
   const addExclude=group=>addMethods(excludeMethods,METHOD_GROUPS[group]);
   const addInclude=group=>addMethods(includeMethods,METHOD_GROUPS[group]);
+  // Coordinated negation: “without combat or stealing” must exclude both, not just the first noun.
+  const negRx=/\b(?:without|avoid|excluding|except|no|besides|other than)\s+((?:(?:combat|fighting|killing|buying|shopping|spending|stealing|pickpocketing|farming|growing|crafting|making|forging|smelting|brewing|cooking|quests?)(?:\s*(?:,|or|and)\s*)?)+)/g;
+  for(const m of q.matchAll(negRx)){const seg=m[1];if(/\b(combat|fighting|killing)\b/.test(seg))addExclude("combat");if(/\b(buying|shopping|spending)\b/.test(seg))addExclude("buying");if(/\b(stealing|pickpocketing)\b/.test(seg))addExclude("stealing");if(/\b(farming|growing)\b/.test(seg))addExclude("farming");if(/\b(crafting|making|forging|smelting|brewing|cooking)\b/.test(seg))addExclude("production");if(/\bquests?\b/.test(seg))excludeMethods.add("quest_reward")}
   if(/\b(without|avoid|excluding|except|no|besides|other than)\s+(combat|fighting|killing)\b|\bnon combat\b/.test(q))addExclude("combat");
   if(/\b(without|avoid|excluding|except|no|besides|other than)\s+(buying|shopping|spending)\b/.test(q))addExclude("buying");
   if(/\b(without|avoid|excluding|except|no|besides|other than)\s+(stealing|pickpocketing)\b/.test(q))addExclude("stealing");
@@ -1117,16 +1230,14 @@ function extractConstraints(raw,q,entities,overrides){
   return {includeMethods:[...includeMethods],excludeMethods:[...excludeMethods],areas,skillCaps,maxPrice,fromScratch,avoidCombat,avoidQuests,avoidSpending,onlyAccessible};
 }
 function isSemanticFollowup(q){
-  if(/\b(what can i|how many|list|show me|which items?|what items?)\b/.test(q))return false;
-  return /^(?:and |also |so |then |what about |how about |where |why |which (?:one|source|way)|what else|any other|any ways?|does it|can it|can i still)/.test(q)||/\b(it|its|this|them|those|same|again|former|latter)\b/.test(q);
+  if(/\b(what can i|how many|list|show me|which items?|what items?)\b/.test(q)&&!/^what if\b/.test(q))return false;
+  return looksLikeFollowup(q);
 }
-function inheritContextConstraints(q,current){
-  if(!isSemanticFollowup(q))return current;
-  const prior=latestContextTurn()?.constraints;if(!prior)return current;
+function inheritContextConstraints(q,current,thread=activeThread(),contextAllowed=true){
+  if(!contextAllowed||!isSemanticFollowup(q))return current;const prior=threadTurn(thread)?.constraints||thread?.constraints;if(!prior)return current;
   const merged={...current};
   merged.includeMethods=current.includeMethods?.length?current.includeMethods:[...(prior.includeMethods||[])];
   merged.excludeMethods=unique([...(prior.excludeMethods||[]),...(current.excludeMethods||[])]);
-  // An explicit new positive method re-opens a method that a prior turn excluded, and vice versa.
   if(current.includeMethods?.length)merged.excludeMethods=merged.excludeMethods.filter(x=>!current.includeMethods.includes(x));
   if(current.excludeMethods?.length)merged.includeMethods=merged.includeMethods.filter(x=>!current.excludeMethods.includes(x));
   merged.areas=current.areas?.length?current.areas:[...(prior.areas||[])];
@@ -1136,10 +1247,52 @@ function inheritContextConstraints(q,current){
   merged.avoidCombat=!!(current.avoidCombat||prior.avoidCombat&&!current.includeMethods?.includes("monster_drop"));
   merged.avoidQuests=!!(current.avoidQuests||prior.avoidQuests&&!current.includeMethods?.includes("quest_reward"));
   merged.avoidSpending=!!(current.avoidSpending||prior.avoidSpending);
-  if(current.includeMethods?.includes("monster_drop"))merged.avoidCombat=false;
-  if(current.includeMethods?.includes("quest_reward"))merged.avoidQuests=false;
-  merged.onlyAccessible=!!(current.onlyAccessible||Object.keys(merged.skillCaps).length);
-  return merged;
+  if(current.includeMethods?.includes("monster_drop"))merged.avoidCombat=false;if(current.includeMethods?.includes("quest_reward"))merged.avoidQuests=false;
+  merged.onlyAccessible=!!(current.onlyAccessible||Object.keys(merged.skillCaps).length);return merged;
+}
+function correctionDescriptor(raw){
+  const q=norm(raw),pending=state.conversation.pendingRepair;
+  const marker=/^(?:no\b|nah\b|nope\b|wrong\b|wrong thing\b|not quite\b|sorry\b|actually\b|i meant\b|i mean\b|that s not\b|that isn t\b|that is not\b|not what i meant\b|i didn t mean\b)/.test(q);
+  if(!marker&&!pending)return null;
+  let replacement="",rejected="";
+  // After “that’s not what I meant”, the very next user message is the repair content even without another marker.
+  if(pending&&!marker)replacement=String(raw||"").trim();
+  const meant=String(raw).match(/\b(?:i meant|i mean|meant)\s+(.+?)(?:\s*,?\s*not\s+(?:the\s+)?(.+?))?[.!?]?$/i);
+  if(meant){replacement=(meant[1]||"").trim();rejected=(meant[2]||"").trim()}
+  if(!replacement){const simple=String(raw).match(/^(?:no|nah|nope|wrong(?: thing)?|not quite|sorry|actually)\s*[-,:]?\s*(.+)$/i);if(simple)replacement=simple[1].trim()}
+  if(replacement&&/^(?:that s not what i meant|that isn t what i meant|that is not what i meant|that was wrong)$/i.test(norm(replacement)))replacement="";
+  const notPair=String(raw).match(/\bnot\s+(?:the\s+)?([^,.;]+)[,;]\s*(?:the\s+)?(.+?)[.!?]?$/i);if(notPair&&!meant){rejected=notPair[1].trim();replacement=notPair[2].trim()}
+  const reopen=[];for(const [group,rx] of [["combat",/\b(?:combat|fighting)\s+(?:is|are)\s+(?:fine|ok|okay|allowed)\b/i],["stealing",/\bstealing\s+(?:is|are)\s+(?:fine|ok|okay|allowed)\b/i],["buying",/\b(?:buying|shopping|spending)\s+(?:is|are)\s+(?:fine|ok|okay|allowed)\b/i],["farming",/\bfarming\s+(?:is|are)\s+(?:fine|ok|okay|allowed)\b/i],["production",/\b(?:crafting|making|forging|smelting)\s+(?:is|are)\s+(?:fine|ok|okay|allowed)\b/i]])if(rx.test(raw))reopen.push(group);
+  return {isRepair:true,replacement,rejected,reopen,pending:!!pending,raw};
+}
+function lastRepairableTurn(thread=activeThread()){
+  const turns=thread?.turns||[];for(let i=turns.length-1;i>=0;i--)if(turns[i]?.query&&turns[i].goal!=="repair_clarify"&&turns[i].goal!=="explain")return turns[i];return null;
+}
+function constraintMethodsForGroup(group){return [...(METHOD_GROUPS[group]||[])];}
+function applyRepairConstraintPatch(query,desc){
+  // Leading “No,” is a discourse repair marker here, not a request to exclude the word that follows it.
+  const patchRaw=String(desc.raw||"").replace(/^\s*(?:no|nah|nope|wrong(?: thing)?|not quite|sorry)\s*[-,:]?\s*/i,"");
+  const patch=extractConstraints(patchRaw,norm(patchRaw),query.entities||[],extractStatedSkillLevels(patchRaw));
+  const c={...query.constraints,skillCaps:{...(query.constraints?.skillCaps||{})},includeMethods:[...(query.constraints?.includeMethods||[])],excludeMethods:[...(query.constraints?.excludeMethods||[])]};
+  for(const group of desc.reopen||[]){const methods=constraintMethodsForGroup(group);c.excludeMethods=c.excludeMethods.filter(x=>!methods.includes(x));if(group==="combat")c.avoidCombat=false;if(group==="buying")c.avoidSpending=false;if(group==="quests")c.avoidQuests=false}
+  if(patch.includeMethods?.length){c.includeMethods=unique([...c.includeMethods,...patch.includeMethods]);c.excludeMethods=c.excludeMethods.filter(x=>!patch.includeMethods.includes(x))}
+  if(patch.excludeMethods?.length){c.excludeMethods=unique([...c.excludeMethods,...patch.excludeMethods]);c.includeMethods=c.includeMethods.filter(x=>!patch.excludeMethods.includes(x))}
+  c.skillCaps={...c.skillCaps,...patch.skillCaps};if(patch.maxPrice!=null)c.maxPrice=patch.maxPrice;if(patch.areas?.length)c.areas=patch.areas;
+  c.avoidCombat=!!(patch.avoidCombat||c.avoidCombat&&!c.includeMethods.includes("monster_drop"));c.avoidQuests=!!(patch.avoidQuests||c.avoidQuests&&!c.includeMethods.includes("quest_reward"));c.avoidSpending=!!(patch.avoidSpending||c.avoidSpending);c.onlyAccessible=!!(c.onlyAccessible||Object.keys(c.skillCaps).length);query.constraints=c;query.overrides={...(query.overrides||{}),...extractStatedSkillLevels(desc.raw)};return query;
+}
+function repairedQuestion(raw,desc){
+  const thread=activeThread(),base=lastRepairableTurn(thread);if(!thread||!base?.query)return {raw,q:norm(raw),intent:"repair",goal:"repair_clarify",entities:[],overrides:{},constraints:{includeMethods:[],excludeMethods:[],areas:[],skillCaps:{},maxPrice:null,fromScratch:false,avoidCombat:false,avoidQuests:false,avoidSpending:false,onlyAccessible:false},collection:null,directRule:null,searchTerms:[],ambiguity:null,threadId:thread?.id||null,move:"repair",repair:{needsReplacement:true,baseRaw:base?.raw||null,rejectedEntities:[]}};
+  const repairNorm=norm(raw),hasConstraintRepair=/\b(?:without|avoid|except|excluding)\b/.test(repairNorm)||/\b(?:combat|fighting|stealing|buying|shopping|farming|crafting|making)\s+(?:is|are)\s+(?:fine|ok|okay|allowed)\b/.test(repairNorm);
+  if(!desc.replacement&&!desc.reopen.length&&!Object.keys(extractStatedSkillLevels(raw)).length&&!hasConstraintRepair)return {raw,q:norm(raw),intent:"repair",goal:"repair_clarify",entities:base.entities||[],overrides:{},constraints:base.constraints||{},collection:null,directRule:null,searchTerms:[],ambiguity:null,threadId:thread.id,move:"repair",repair:{needsReplacement:true,baseRaw:base.raw,rejectedEntities:[]}};
+  let synthetic=base.raw||"";if(desc.rejected){const rx=new RegExp(desc.rejected.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),"ig");synthetic=synthetic.replace(rx," ")}
+  if(desc.replacement)synthetic+=` ${desc.replacement}`;
+  let q=interpretQuestionCore(synthetic,{forcedThread:thread,contextAllowed:true,skipRepair:true,move:"repair"});
+  q.raw=raw;q.move="repair";q.threadId=thread.id;
+  // A correction can replace a subject even if the old subject was only inferred from memory.
+  const repEntities=desc.replacement?resolveEntities(norm(desc.replacement),{limit:8}):[];const repGoal=inferGoal(norm(synthetic),q.intent,repEntities.length?repEntities:q.entities);const repTopics=queryTopicEntities(repEntities,repGoal,norm(desc.replacement));
+  const rejectedEntities=[];if(desc.rejected){for(const e of resolveEntities(norm(desc.rejected),{limit:6}))rejectedEntities.push(compactEntity(e))}
+  if(repTopics.length){const rejectKeys=new Set(rejectedEntities.map(e=>`${e.type}:${norm(e.name)}`));const leftovers=(q.entities||[]).filter(e=>!subjectTypeForGoal(q.goal,e.type)||!rejectKeys.has(`${e.type}:${norm(e.name)}`));q.entities=rankEntitiesForGoal([...repTopics,...leftovers].filter((e,i,a)=>a.findIndex(x=>x.type===e.type&&norm(x.name)===norm(e.name)&&x.role===e.role)===i),q.goal)}
+  q=applyRepairConstraintPatch(q,desc);q.repair={baseRaw:base.raw,replacement:desc.replacement,rejected:desc.rejected,rejectedEntities,needsReplacement:false};return q;
 }
 function searchTermsForQuery(q,entities){
   const entityWords=new Set(entities.flatMap(e=>contentTokens(e.name)));
@@ -1174,18 +1327,25 @@ function semanticAmbiguity(entities,goal){
   if(overlapRatio>=0.75)return {options:[a,b],reason:"Two overlapping entity names fit that wording almost equally well."};
   return null;
 }
-function interpretQuestion(raw){
-  const q=norm(raw),base=resolveEntities(q,{limit:10}),contextRefs=isSemanticFollowup(q)?contextResultCandidates(q):[];
-  let entities=[...contextRefs,...base];
+function interpretQuestionCore(raw,{forcedThread=null,contextAllowed=null,skipRepair=false,move=null}={}){
+  const q=norm(raw),base=resolveEntities(q,{limit:12});
+  const baseIntent=detectIntent(q,base),baseGoal=inferGoal(q,baseIntent,base);const sel=forcedThread?{thread:forcedThread,move:move||"continue",contextAllowed:contextAllowed!==false}:selectThreadForQuestion(q,base,baseGoal);
+  const allow=contextAllowed==null?sel.contextAllowed:contextAllowed,thread=sel.thread;
+  const contextRefs=allow&&isSemanticFollowup(q)?contextResultCandidates(q,thread):[];let entities=[...contextRefs,...base];
   const seen=new Set();entities=entities.filter(e=>{const k=`${e.type}:${norm(e.name)}:${e.role||""}`;if(seen.has(k))return false;seen.add(k);return true});
-  entities=contextualize(q,entities);
-  let intent=detectIntent(q,entities),goal=inferGoal(q,intent,entities);
-  entities=rankEntitiesForGoal(entities,goal);
-  // Goal inference may become more specific after context has supplied a prior item.
-  goal=inferGoal(q,intent,entities);entities=rankEntitiesForGoal(entities,goal);
-  const overrides=extractStatedSkillLevels(raw);let constraints=extractConstraints(raw,q,entities,overrides);constraints=inheritContextConstraints(q,constraints);
+  entities=contextualize(q,entities,{thread,contextAllowed:allow});
+  let intent=detectIntent(q,entities),goal=inferGoal(q,intent,entities);entities=rankEntitiesForGoal(entities,goal);goal=inferGoal(q,intent,entities);entities=rankEntitiesForGoal(entities,goal);
+  // “What if Crafting was 50?” is a refinement of the active quest/item goal, not suddenly a Crafting article.
+  if(thread&&allow&&/^(?:what if|what about|how about|and|only|actually|instead|suppose|say|if)\b/.test(q)&&["info","progression","mechanics"].includes(goal)&&thread.goal&&!['info','mechanics','progression'].includes(thread.goal))goal=thread.goal;
+  const overrides=extractStatedSkillLevels(raw);let constraints=extractConstraints(raw,q,entities,overrides);constraints=inheritContextConstraints(q,constraints,thread,allow);
   const collection=genericCollection(q),directRule=ruleForQuestion(q),searchTerms=searchTermsForQuery(q,entities),ambiguity=semanticAmbiguity(entities,goal);
-  return {raw,q,intent,goal,entities,overrides,constraints,collection,directRule,searchTerms,ambiguity};
+  return {raw,q,intent,goal,entities,overrides,constraints,collection,directRule,searchTerms,ambiguity,threadId:thread?.id||null,move:sel.move,contextUsed:!!(thread&&allow),contextThreadLabel:thread?.label||null};
+}
+function interpretQuestion(raw){
+  if(/^\s*(?:never mind|nevermind|forget it|new question)\b/i.test(raw)){state.conversation.pendingRepair=null;return interpretQuestionCore(String(raw).replace(/^\s*(?:never mind|nevermind|forget it|new question)\b\s*[-,:]?\s*/i,""),{contextAllowed:false,move:"new"})}
+  const activeSet=activeThread()?.resultSet||[],trimmed=String(raw||"").replace(/^\s*(?:no\s*[-,:]?\s*)?(?:actually\s+)?/i,"");
+  if(activeSet.length&&/^only\b/i.test(trimmed)){const q=interpretQuestionCore(trimmed,{forcedThread:activeThread(),contextAllowed:true,move:"refine"});q.goal="refine_result_set";q.move="refine";return q}
+  const repair=correctionDescriptor(raw);if(repair)return repairedQuestion(raw,repair);return interpretQuestionCore(raw);
 }
 function planQuery(query){
   const item=query.entities.find(e=>["item","resource","equipment"].includes(e.type));
@@ -1204,6 +1364,11 @@ function planQuery(query){
   if(query.goal==="earliest_source"&&item)route="earliest_source";
   if(query.goal==="cheapest_source"&&item)route="cheapest_source";
   if(query.goal==="preference_clarification"&&item)route="preference_clarification";
+  if(query.goal==="highest_drop_rate"&&item)route="highest_drop_rate";
+  if(query.goal==="equipment_search")route="equipment_search";
+  if(query.goal==="skill_milestone")route="skill_milestone";
+  if(query.goal==="refine_result_set")route="refine_result_set";
+  if(query.goal==="rank_result_set_price")route="rank_result_set_price";
   if(query.goal==="search_acquisition")route="search_acquisition";
   steps.push(`Execute ${route} plan against structured data.`);
   return {route,item,sourceRef,steps};
@@ -1241,7 +1406,19 @@ function reasoningEntities(query,plan){
 function makeReasoning(query,plan,{conclusions=[],uncertainties=[],sources=[]}={}){
   return {question:query.raw,goal:query.goal,interpretation:{entities:reasoningEntities(query,plan),constraints:query.constraints},steps:plan.steps,conclusions,uncertainties,sources:unique(sources.filter(Boolean))};
 }
-function result(html,focus=[],reasoning=null,resultRefs=[]){return {html,focus,reasoning,resultRefs}}
+function result(html,focus=[],reasoning=null,resultRefs=[],resultSet=[]){return {html,focus,reasoning,resultRefs,resultSet}}
+const EXPLICIT_FOOD_NAMES=new Set(["bread","apple","banana","avocado","beer","premium beer","rogue premium beer","sardine sushi","octopus sushi"]);
+function semanticItemCategories(item){
+  const out=new Set((item?.categories||[]).map(norm)),name=norm(item?.name||"");
+  if(/\bseeds?\b/.test(name)||(item?.uses||[]).some(u=>u.type==="plant_to_grow"||u.type==="plant_tree"))out.add("seed");
+  // Conservative semantic class used for conversational filtering. Raw ingredients are not promoted to food.
+  if((item?.acquisition||[]).some(a=>a.type==="cooking")||EXPLICIT_FOOD_NAMES.has(name)||/^(?:cooked|sardine sushi|octopus sushi)\b/.test(name)||/\bpie$/.test(name))out.add("food");
+  const eq=(state.data.equipmentFlat||[]).find(e=>norm(e.name)===name);if(eq?.family){out.add(norm(eq.family));out.add(norm(eq.family).replace(/s$/,""))}if(eq?.kind)out.add(norm(eq.kind));if(eq?.style)out.add(norm(eq.style));
+  return out;
+}
+function itemMatchesSemanticTerms(item,terms){if(!terms?.length)return true;const cats=semanticItemCategories(item),name=norm(item?.name||"");return terms.every(t=>name.includes(norm(t))||[...cats].some(c=>c===norm(t)||c.includes(norm(t))||norm(t).includes(c)))}
+function compactResultRow(item,ev){return {kind:"item_source",itemName:item.name,itemId:item.id||null,source:ev?.source||null,status:ev?.status||null}}
+
 function itemEntity(item){return {type:"item",name:item.name,obj:item,score:200,area:null,room:null}}
 function reasonedAcquisitionAnswer(query,plan){
   const item=itemRecord(plan.item.name)||plan.item.obj;if(!item)return result(resourceAnswer(plan.item.name,query.q),[plan.item],makeReasoning(query,plan,{uncertainties:["No first-class item record was found; legacy lookup was used."]}));
@@ -1249,14 +1426,14 @@ function reasonedAcquisitionAnswer(query,plan){
   const all=item.acquisition||[],sources=rows.map(x=>x.source.source),refs=resultRefsFromSources(rows.map(x=>({source:x.source})));
   if(!rows.length){
     const scoped=query.constraints.excludeMethods.length||query.constraints.includeMethods.length||query.constraints.areas.length||query.constraints.maxPrice!=null;
-    const why=scoped?"No recorded acquisition route matches all of those constraints.":"No item-specific acquisition route is recorded.";
+    const why=scoped?"I don’t have a documented acquisition route that fits all of those constraints.":"I don’t have an item-specific acquisition route documented yet.";
     const html=`<h3>${esc(item.name)}</h3><p>${esc(why)}</p><p class="muted small">That is a knowledge-gap statement, not proof that the method does not exist in FlatMMO.</p>${all.length?chips([`How do I get ${item.name}?`]):""}`;
     return result(html,[itemEntity(item)],makeReasoning(query,plan,{conclusions:[why],uncertainties:["The item graph is broad but not exhaustive."],sources:all.map(a=>a.source)}),[]);
   }
   const by=new Map();for(const ev of rows){const k=ev.source.type;if(!by.has(k))by.set(k,[]);by.get(k).push(ev)}
   const groups=[];for(const kind of REASON_METHOD_ORDER){const g=by.get(kind);if(!g?.length)continue;groups.push(`<p><b>${esc(ACQ_LABELS[kind]||title(kind))}:</b></p><ul>${g.slice(0,30).map(ev=>`<li>${esc(evaluatedSourceText(ev))}</li>`).join("")}</ul>${g.length>30?`<p class="muted small">${g.length-30} additional routes omitted from this compact answer.</p>`:""}`)}
   const accessible=rows.filter(x=>x.status==="accessible").length,blocked=rows.filter(x=>x.status==="blocked").length,conditional=rows.filter(x=>x.status==="conditional").length;
-  let intro=`I found <b>${rows.length}</b> documented route${rows.length===1?"":"s"} matching the question.`;
+  let intro=query.constraints.avoidCombat&&rows.length?`Yep — you don’t have to fight for this one. I found <b>${rows.length}</b> documented non-combat route${rows.length===1?"":"s"}.`:`You’ve got <b>${rows.length}</b> documented route${rows.length===1?"":"s"} that fit${rows.length===1?"s":""} what you asked.`;
   if(query.constraints.onlyAccessible&&accessible)intro+=` <b>${accessible}</b> ${accessible===1?"is":"are"} available from the skill levels supplied/known.`;
   if(blocked)intro+=` ${blocked} ${blocked===1?"is":"are"} blocked by a known skill requirement.`;
   if(conditional)intro+=` ${conditional} ${conditional===1?"has":"have"} an additional access condition I can't verify from current player data.`;
@@ -1267,19 +1444,20 @@ function reasonedAcquisitionAnswer(query,plan){
 function acquisitionSearchAnswer(query,plan){
   const rows=[];
   for(const item of state.data.items?.records||[]){
-    if(!itemMatchesTerms(item,query.searchTerms))continue;
+    if(!itemMatchesSemanticTerms(item,query.searchTerms))continue;
     for(const a of item.acquisition||[]){const ev=assessAcquisitionSource(a,query);if(ev.eligible&&!(query.constraints.onlyAccessible&&ev.status==="blocked"))rows.push({item,ev})}
   }
   rows.sort((a,b)=>statusOrder(a.ev.status)-statusOrder(b.ev.status)||sourceOrder(a.ev.source.type)-sourceOrder(b.ev.source.type)||a.item.name.localeCompare(b.item.name));
   if(!rows.length){const desc=query.searchTerms.length?` matching “${query.searchTerms.join(" ")}”`:"";return result(`<h3>No matching documented routes</h3><p>I couldn't find an item-specific acquisition route${esc(desc)} that satisfies those constraints.</p><p class="muted small">That means not documented in the current graph, not impossible in FlatMMO.</p>`,query.entities,makeReasoning(query,plan,{conclusions:["No acquisition records matched the structured filters."],uncertainties:["The item graph is not exhaustive."]}));}
   const shown=rows.slice(0,45),terms=query.searchTerms.length?` matching <b>${esc(query.searchTerms.join(" "))}</b>`:"";
-  const html=`<h3>Matching acquisition options</h3><p>I found <b>${rows.length}</b> item/source pair${rows.length===1?"":"s"}${terms}.</p><ul>${shown.map(({item,ev})=>`<li><b>${esc(item.name)}</b> — ${esc(evaluatedSourceText(ev))}</li>`).join("")}</ul>${rows.length>shown.length?`<p class="muted small">${rows.length-shown.length} additional matches omitted.</p>`:""}${evidence(unique(shown.map(x=>x.ev.source.source).filter(Boolean)),["This is a constrained graph search, not a recommendation ranking."])}`;
+  const html=`<h3>Matching acquisition options</h3><p>Here’s what fits: <b>${rows.length}</b> item/source pair${rows.length===1?"":"s"}${terms}.</p><ul>${shown.map(({item,ev})=>`<li><b>${esc(item.name)}</b> — ${esc(evaluatedSourceText(ev))}</li>`).join("")}</ul>${rows.length>shown.length?`<p class="muted small">${rows.length-shown.length} additional matches omitted.</p>`:""}${evidence(unique(shown.map(x=>x.ev.source.source).filter(Boolean)),["This is a constrained graph search, not a recommendation ranking."])}`;
   const refs=resultRefsFromSources(shown.map(x=>({source:x.ev.source})));
-  return result(html,unique(shown.slice(0,6).map(x=>itemEntity(x.item))),makeReasoning(query,plan,{conclusions:[`Matched ${rows.length} item/source pairs after applying method, area, level and price constraints.`],sources:shown.map(x=>x.ev.source.source)}),refs);
+  return result(html,unique(shown.slice(0,6).map(x=>itemEntity(x.item))),makeReasoning(query,plan,{conclusions:[`Matched ${rows.length} item/source pairs after applying method, area, level and price constraints.`],sources:shown.map(x=>x.ev.source.source)}),refs,rows.slice(0,80).map(x=>compactResultRow(x.item,x.ev)));
 }
 function earliestSourceAnswer(query,plan){
   const item=itemRecord(plan.item.name)||plan.item.obj;if(!item)return result(`<h3>${esc(plan.item.name)}</h3><p>I don't have a first-class item record to compare.</p>`,[plan.item],makeReasoning(query,plan,{uncertainties:["No first-class item record."]}));
   const rows=evaluatedAcquisition(item,query),gated=rows.filter(x=>x.source.skill&&Number.isFinite(Number(x.source.level)));
+  if(query.constraints.onlyAccessible&&gated.length){const available=gated.filter(x=>x.status==="accessible"||x.status==="conditional");if(!available.length){const min=Math.min(...gated.map(x=>Number(x.source.level))),next=gated.filter(x=>Number(x.source.level)===min);return result(`<h3>${esc(item.name)} at your stated level</h3><p><b>None of the comparable documented skill-gated routes are available at the level you gave me.</b></p><p>The first recorded gate is ${esc(next.map(x=>sourceLine({kind:x.source.type,source:x.source})).join(" / "))}.</p>`,[itemEntity(item)],makeReasoning(query,plan,{conclusions:[`No comparable route meets the stated skill level; the lowest documented gate is ${min}.`],sources:next.map(x=>x.source.source)}),resultRefsFromSources(next.map(x=>({source:x.source}))));}}
   if(!gated.length){return result(`<h3>${esc(item.name)}</h3><p>None of the matching routes has a numeric skill requirement I can use for an “available first” comparison.</p><p class="muted small">I won't turn missing requirements into zero-level requirements.</p>`,[itemEntity(item)],makeReasoning(query,plan,{conclusions:["No comparable numeric skill gates were available."],uncertainties:["Ungated routes may still have other prerequisites."]}));}
   const skills=unique(gated.map(x=>norm(x.source.skill))),min=Math.min(...gated.map(x=>Number(x.source.level))),best=gated.filter(x=>Number(x.source.level)===min);
   let caveat=skills.length>1?`<p class="warn">These routes use different skills, so level numbers are not a universal measure of which you will reach first. The lowest <i>numeric documented requirement</i> is shown only as a factual comparison.</p>`:"";
@@ -1336,6 +1514,49 @@ function preferenceClarificationAnswer(query,plan){
   const item=itemRecord(plan.item.name)||plan.item.obj,name=item?.name||plan.item.name;
   return result(`<h3>What should “${/\bfastest\b/.test(query.q)?"fastest":/\b(?:easiest|simplest)\b/.test(query.q)?"easiest":"best"}” mean for ${esc(name)}?</h3><p>I can compare documented routes by measurable criteria, but I won't invent a single overall ranking.</p>${chips([`Which source for ${name} has the lowest documented skill requirement?`,`How do I get ${name} without combat?`,`Can I buy ${name}?`,`How do I make ${name}?`])}`,item?[itemEntity(item)]:[plan.item],makeReasoning(query,plan,{conclusions:["The requested ranking criterion is ambiguous."],uncertainties:["Fastest/easiest cannot be inferred safely from incomplete timing, travel and probability data."]}));
 }
+function highestDropRateAnswer(query,plan){
+  const item=itemRecord(plan.item.name)||plan.item.obj;if(!item)return result(`<h3>${esc(plan.item.name)}</h3><p>I don't have a first-class item record to compare.</p>`,[plan.item],makeReasoning(query,plan,{uncertainties:["No first-class item record."]}));
+  const drops=(item.acquisition||[]).filter(a=>a.type==="monster_drop"&&Number.isFinite(Number(a.rarityDenominator))&&sourceHardMatches(a,{...query.constraints,includeMethods:["monster_drop"]}));
+  if(!drops.length)return result(`<h3>${esc(item.name)}</h3><p>I don't have a matching monster drop with a numeric recorded drop chance to compare.</p>`,[itemEntity(item)],makeReasoning(query,plan,{conclusions:["No comparable numeric monster-drop probabilities matched."],uncertainties:["Missing drop rates were not ranked."]}));
+  const bestDen=Math.min(...drops.map(a=>Number(a.rarityDenominator))),best=drops.filter(a=>Number(a.rarityDenominator)===bestDen);const pct=(100/bestDen).toFixed(bestDen===1?0:2).replace(/\.00$/,'');
+  const html=`<h3>Highest recorded drop chance for ${esc(item.name)}</h3><p>${best.map(a=>`<b>${esc(a.monster)}</b> — 1/${esc(a.rarityDenominator)} (${esc(pct)}%)${a.min!=null?` · ${esc(a.min===a.max?a.min:`${a.min}–${a.max}`)} per drop` : ""}`).join("<br>")}</p><p class="muted small">That compares the documented probability per drop roll only. It does not estimate kills per hour or time-to-drop.</p>${evidence(unique(best.map(a=>a.source)),["Only numeric recorded drop probabilities are compared."])}`;
+  return result(html,[itemEntity(item)],makeReasoning(query,plan,{conclusions:[`Highest recorded monster-drop probability is 1/${bestDen}.`],uncertainties:["No kill-speed or time-to-drop estimate is inferred."],sources:best.map(a=>a.source)}),resultRefsFromSources(best.map(a=>({source:a}))));
+}
+function equipmentFamilyFromQuery(q){const map=[["swords",/\bswords?\b/],["scimitars",/\bscimitars?\b/],["maces",/\bmaces?\b/],["knives",/\bknives?|knife\b/],["spears",/\bspears?\b/],["bows",/\bbows?\b/],["arrows",/\barrows?\b/],["staves",/\bstaves?|staff\b/]];for(const [k,rx] of map)if(rx.test(q))return k;return null}
+function skillMilestoneAnswer(query,plan){
+  const sk=query.entities.find(e=>e.type==="skill"),key=sk?norm(sk.name):null,level=sk?(query.constraints.skillCaps[key]??query.overrides[key]):null;if(!sk||level==null)return result(`<h3>Skill milestone</h3><p>I need a skill and level to check that.</p>`,query.entities,makeReasoning(query,plan,{uncertainties:["Skill or level was not resolved."]}));
+  const exact=[],below=[],above=[];
+  for(const item of state.data.items?.records||[])for(const a of item.acquisition||[]){if(norm(a.skill)!==key||a.level==null)continue;const row={kind:"source",name:item.name,level:Number(a.level),detail:`${ACQ_LABELS[a.type]||title(a.type)}${a.area?` · ${a.area}`:""}`,source:a};if(row.level===Number(level))exact.push(row);else if(row.level<Number(level))below.push(row);else above.push(row)}
+  for(const e of state.data.equipmentFlat||[]){const x=e.obj;if(norm(x.equipSkill)===key&&x.equipLevel!=null){const row={kind:"equip",name:e.name,level:Number(x.equipLevel),detail:"Equip requirement"};if(row.level===Number(level))exact.push(row);else if(row.level<Number(level))below.push(row);else above.push(row)}if(norm(x.craftSkill)===key&&x.craftLevel!=null){const row={kind:"make",name:e.name,level:Number(x.craftLevel),detail:"Production requirement"};if(row.level===Number(level))exact.push(row);else if(row.level<Number(level))below.push(row);else above.push(row)}}
+  for(const qst of state.data.quests.records||[])for(const req of qst.requirements||[]){const r=parseLevelRequirement(req);if(r&&norm(r.skill)===key){const row={kind:"quest",name:qst.name,level:Number(r.level),detail:"Quest skill requirement"};if(row.level===Number(level))exact.push(row);else if(row.level<Number(level))below.push(row);else above.push(row)}}
+  const dedup=rows=>{const seen=new Set();return rows.filter(r=>{const k=`${r.kind}:${r.name}:${r.level}`;if(seen.has(k))return false;seen.add(k);return true})};
+  const ex=dedup(exact).sort((a,b)=>a.name.localeCompare(b.name)),lo=dedup(below).sort((a,b)=>b.level-a.level).slice(0,6),hi=dedup(above).sort((a,b)=>a.level-b.level).slice(0,6);
+  let body="";if(ex.length)body=`<p>At exactly <b>${esc(sk.name)} ${esc(level)}</b>, these structured gates/unlocks are recorded:</p><ul>${ex.map(r=>`<li><b>${esc(r.name)}</b> — ${esc(r.detail)}</li>`).join("")}</ul>`;else body=`<p>I don't have a specific structured unlock recorded at exactly <b>${esc(sk.name)} ${esc(level)}</b>.</p>`;
+  if(!ex.length&&(lo.length||hi.length))body+=`${lo.length?`<p><b>Nearest below:</b> ${esc(lo.map(r=>`${r.name} (${r.level})`).join(", "))}</p>`:""}${hi.length?`<p><b>Nearest above:</b> ${esc(hi.map(r=>`${r.name} (${r.level})`).join(", "))}</p>`:""}`;
+  body+=`<p class="muted small">This checks structured item-source, equipment, production and quest skill gates. It does not invent hidden perks between documented levels.</p>`;
+  return result(`<h3>${esc(sk.name)} ${esc(level)}</h3>${body}`,[sk],makeReasoning(query,plan,{conclusions:[ex.length?`Found ${ex.length} structured relationship(s) at exactly ${sk.name} ${level}.`:`No exact structured milestone was found at ${sk.name} ${level}.`],uncertainties:["A missing structured milestone is not proof that the game has no other effect at that level."]}),[],ex.map(r=>({kind:r.kind,itemName:r.name,level:r.level})));
+}
+function equipmentSearchAnswer(query,plan){
+  const family=equipmentFamilyFromQuery(query.q),armour=/\barmou?r|helmets?|boots?|gloves?|legs?|bodies?\b/.test(query.q);let rows=(state.data.equipmentFlat||[]).filter(e=>family?e.family===family:armour?e.kind.startsWith("armour"):false);
+  const skillEntity=query.entities.find(e=>e.type==="skill"),skill=skillEntity?.name||null;let cap=null;if(skill)cap=query.constraints.skillCaps[norm(skill)]??query.overrides[norm(skill)]??state.conversation.userFacts?.skills?.[norm(skill)]?.level??playerSkill(skill)?.level??null;
+  if(skill)rows=rows.filter(e=>!e.obj?.equipSkill||norm(e.obj.equipSkill)===norm(skill));if(cap!=null)rows=rows.filter(e=>e.obj?.equipLevel!=null&&Number(e.obj.equipLevel)<=Number(cap));
+  rows.sort((a,b)=>(a.obj?.equipLevel??999)-(b.obj?.equipLevel??999)||a.name.localeCompare(b.name));
+  if(!rows.length)return result(`<h3>Equipment search</h3><p>I don't have a structured match for that category and level.</p>`,query.entities,makeReasoning(query,plan,{conclusions:["No equipment records matched the category/skill filters."]}));
+  const label=family?title(family):"Armour";const html=`<h3>${esc(label)}${cap!=null?` at ${esc(skill||"level")} ${esc(cap)}`:""}</h3><p>I found <b>${rows.length}</b> recorded option${rows.length===1?"":"s"}${cap!=null?" you can equip at or below that level":""}.</p><ul>${rows.map(e=>`<li><b>${esc(e.name)}</b>${e.obj?.equipSkill?` — ${esc(e.obj.equipSkill)} ${esc(e.obj.equipLevel)}`:""}${e.obj?.craftSkill?` · make: ${esc(e.obj.craftSkill)} ${esc(e.obj.craftLevel??"unknown")}`:""}</li>`).join("")}</ul><p class="muted small">Equip requirements and production requirements are kept separate.</p>`;
+  return result(html,rows.slice(0,6),makeReasoning(query,plan,{conclusions:[`Matched ${rows.length} structured ${label.toLowerCase()} record(s)${cap!=null?` at or below ${skill} ${cap}`:""}.`]}),[],rows.slice(0,80).map(e=>({kind:"equipment",itemName:e.name,equipSkill:e.obj?.equipSkill||null,equipLevel:e.obj?.equipLevel??null})));
+}
+function refineResultSetAnswer(query,plan){
+  const thread=activeThread(),base=thread?.resultSet||[],terms=query.searchTerms||[],named=unique((query.entities||[]).filter(e=>["item","resource","equipment"].includes(e.type)&&e.score>=115).map(e=>norm(e.name)));if(!base.length)return result(`<h3>Nothing to narrow down yet</h3><p>Give me a list or search to narrow down first.</p>`,[],makeReasoning(query,plan,{uncertainties:["No prior candidate set is active."]}));
+  const rows=base.filter(r=>{const item=itemRecord(r.itemName);if(!item)return false;if(named.length&&!named.includes(norm(item.name)))return false;return itemMatchesSemanticTerms(item,terms)});if(!rows.length)return result(`<h3>No matches after that filter</h3><p>Nothing in that list matches <b>${esc(terms.join(" ")||"that category")}</b>.</p><p class="muted small">Try a different filter if you want to narrow it another way.</p>`,thread.topicEntities||[],makeReasoning(query,plan,{conclusions:["The requested filter matched none of the prior candidates; the candidate set remains available for another refinement."]}),[],base);
+  const filterLabel=terms.join(" ")||(named.length?named.map(title).join(", "):"that category");
+  const html=`<h3>Filtered results</h3><p>Okay — that leaves <b>${rows.length}</b> match${rows.length===1?"":"es"} for <b>${esc(filterLabel)}</b>.</p><ul>${rows.slice(0,45).map(r=>{const a=r.source;return `<li><b>${esc(r.itemName)}</b>${a?` — ${esc(sourceLine({kind:a.type,source:a}))}`:""}</li>`}).join("")}</ul>${rows.length>45?`<p class="muted small">${rows.length-45} additional matches omitted.</p>`:""}`;
+  return result(html,unique(rows.slice(0,6).map(r=>{const it=itemRecord(r.itemName);return it?itemEntity(it):null}).filter(Boolean)),makeReasoning(query,plan,{conclusions:[`Filtered the previous ${base.length}-row result set to ${rows.length} row(s).`]}),resultRefsFromSources(rows.filter(r=>r.source).map(r=>({source:r.source}))),rows);
+}
+function rankResultSetPriceAnswer(query,plan){
+  const base=activeThread()?.resultSet||[],shops=base.filter(r=>r.source?.type==="shop"&&Number.isFinite(Number(r.source.price)));if(!shops.length)return result(`<h3>I can't compare those by price</h3><p>I don't have comparable numeric shop prices for those results.</p>`,[],makeReasoning(query,plan,{uncertainties:["Missing/unlabelled prices are not treated as zero."]}));
+  const min=Math.min(...shops.map(r=>Number(r.source.price))),best=shops.filter(r=>Number(r.source.price)===min);const html=`<h3>Cheapest option</h3><p>${best.map(r=>`<b>${esc(r.itemName)}</b> — ${esc(sourceLine({kind:"shop",source:r.source}))}`).join("<br>")}</p>`;
+  return result(html,unique(best.map(r=>{const it=itemRecord(r.itemName);return it?itemEntity(it):null}).filter(Boolean)),makeReasoning(query,plan,{conclusions:[`Lowest numeric shop price in the active result set is ${min}.`],uncertainties:["This ranks price only, not travel, stock or access."]}),resultRefsFromSources(best.map(r=>({source:r.source}))),base);
+}
 function downstreamUsePaths(itemName,maxDepth=3){
   const out=[],walk=(name,path,depth,seen)=>{if(depth>maxDepth)return;const item=itemRecord(name);if(!item)return;for(const u of item.uses||[]){if(u.type!=="material_for"&&u.type!=="plant_to_grow"&&u.type!=="plant_tree")continue;const next=u.output;if(!next||seen.has(norm(next)))continue;const np=[...path,{from:name,to:next,use:u}];out.push(np);const ns=new Set(seen);ns.add(norm(next));walk(next,np,depth+1,ns)}};walk(itemName,[],1,new Set([norm(itemName)]));return out;
 }
@@ -1351,7 +1572,7 @@ function sourceLocationAnswer(query,plan){
   let where="";
   if(a.area)where+=a.area;if(a.location)where+=`${where?" → ":""}${a.location}`;else if(a.room)where+=`${where?" → ":""}${a.room}`;else if(a.shop)where+=`${where?" → ":""}${a.shop}`;
   const methodLabel=ACQ_LABELS[a.type||ref.method]||title(a.type||ref.method||"source");
-  const html=`<h3>${esc(ref.name||sourceActorName(a)||"Referenced source")}</h3>${where?`<p>The referenced <b>${esc(methodLabel)}</b> source is recorded at <b>${esc(where)}</b>.</p>`:`<p>I have the source relationship, but not a more precise structured location for it.</p>`}<p class="muted small">I kept the interaction role from the previous answer rather than assuming another entity with the same name.</p>`;
+  const html=`<h3>${esc(ref.name||sourceActorName(a)||"Referenced source")}</h3>${where?`<p>The <b>${esc(methodLabel)}</b> source is recorded at <b>${esc(where)}</b>.</p>`:`<p>I know which source you mean, but I don’t have a more precise structured location for it.</p>`}`;
   return result(html,[plan.sourceRef],makeReasoning(query,plan,{conclusions:[where?`Referenced source location: ${where}.`:"No precise location is structured for the referenced source."],sources:[a.source]}));
 }
 function whyAnswer(){
@@ -1370,12 +1591,23 @@ function clarificationAnswer(query){
 function genericReasoning(query,plan,conclusion,sources=[],uncertainties=[]){return makeReasoning(query,plan,{conclusions:[conclusion],sources,uncertainties})}
 function executeQuery(query,plan){
   if(query.goal==="explain")return result(whyAnswer(),[],null,[]);
+  if(query.goal==="user_fact"){
+    const sk=query.entities.find(e=>e.type==="skill"),known=sk?knownSkillLevel(sk.name,query.overrides,query.constraints?.skillCaps||{}):null;
+    const html=known?`<h3>${esc(sk.name)}</h3><p>You told me your <b>${esc(sk.name)} is ${esc(known.level)}</b>.</p>`:`<h3>${esc(sk?.name||"Skill level")}</h3><p>I don't have a level for that yet. Tell me yours and I can use it when it matters.</p>`;
+    return result(html,sk?[sk]:[],genericReasoning(query,plan,known?`Used the player's ${sk.name} level from ${known.basis}.`:`No known player level is stored for ${sk?.name||"that skill"}.`));
+  }
+  if(query.goal==="repair_clarify")return result(`<h3>Got it — I had the wrong thing.</h3><p>What did you mean instead?</p><p class="muted small">You can just say the subject, for example “Mining”, or correct the detail: “combat is fine; I meant without stealing”.</p>`,query.entities||[],null,[]);
   if(query.ambiguity)return result(clarificationAnswer(query),query.ambiguity.options,genericReasoning(query,plan,"Asked for clarification because multiple interpretations were similarly strong."));
   if(plan.route==="source_location"){const v=sourceLocationAnswer(query,plan);if(v)return v}
   if(plan.route==="item_acquisition")return reasonedAcquisitionAnswer(query,plan);
   if(plan.route==="search_acquisition")return acquisitionSearchAnswer(query,plan);
   if(plan.route==="earliest_source")return earliestSourceAnswer(query,plan);
   if(plan.route==="cheapest_source")return cheapestSourceAnswer(query,plan);
+  if(plan.route==="highest_drop_rate")return highestDropRateAnswer(query,plan);
+  if(plan.route==="equipment_search")return equipmentSearchAnswer(query,plan);
+  if(plan.route==="skill_milestone")return skillMilestoneAnswer(query,plan);
+  if(plan.route==="refine_result_set")return refineResultSetAnswer(query,plan);
+  if(plan.route==="rank_result_set_price")return rankResultSetPriceAnswer(query,plan);
   if(plan.route==="preference_clarification")return preferenceClarificationAnswer(query,plan);
   if(plan.route==="equipment_materials"){const e=plan.item;return result(equipmentAnswer(e.obj,query.q,query.overrides),[e],genericReasoning(query,plan,`Calculated structured requirements/materials for ${e.name}.`,e.obj.obj?.sources||[]));}
   if(plan.route==="item_production")return productionPlanAnswer(query,plan);
@@ -1391,7 +1623,7 @@ function executeQuery(query,plan){
   if(intent==="travel"&&areas.length){const v=travelAnswer(areas);if(v)return result(v,areas,genericReasoning(query,plan,"Traversed explicit area connections only.",[],["Undocumented room adjacency is not invented."]))}
   if(intent==="beds"&&areas[0])return result(bedsAnswer(areas[0].obj),areas,genericReasoning(query,plan,`Listed explicitly documented beds in ${areas[0].name}.`));
   if(intent==="monsters_in_area"&&areas[0])return result(monstersInArea(areas[0].obj),areas,genericReasoning(query,plan,`Used exact room-linked monsters for ${areas[0].name}.`,[],["Unlinked monsters may be omitted."]));
-  if(quests[0]){const ready=intent==="requirements"||/\b(can i|ready|requirements?|need)\b/.test(q);return result(questAnswer(quests[0].obj,ready,overrides),quests,genericReasoning(query,plan,ready?`Checked ${quests[0].name} requirements against known/stated skill levels.`:`Returned the structured ${quests[0].name} quest record.`,[quests[0].obj.source].filter(Boolean),["Items/access/completion may remain unknown."]))}
+  if(quests[0]){const ready=query.goal==="readiness"||intent==="requirements"||/\b(can i|ready|requirements?|need)\b/.test(q);return result(questAnswer(quests[0].obj,ready,overrides),quests,genericReasoning(query,plan,ready?`Checked ${quests[0].name} requirements against known/stated skill levels.`:`Returned the structured ${quests[0].name} quest record.`,[quests[0].obj.source].filter(Boolean),["Items/access/completion may remain unknown."]))}
   if(monsters[0]){let html,conclusion;if(intent==="drops"){html=monsterDrops(monsters[0].obj);conclusion="Returned recorded monster drops."}else if(intent==="locate"){html=monsterWhere(monsters[0].obj);conclusion="Returned exact room links where available."}else if(intent==="requirements"||intent==="mechanics"||/\b(fight|combat|weak|best|recommended|dps|hit chance)\b/.test(q)){html=monsterCombat(monsters[0].obj);conclusion="Compared only verified combat fields and preserved formula limits."}else{html=monsterProfile(monsters[0].obj);conclusion="Returned the structured monster profile."}return result(html,monsters,genericReasoning(query,plan,conclusion,["https://flatmmo.wiki/index.php/Monsters"],["Exact combat DPS/recommended levels remain unresolved."]))}
   if(shops[0]&&/\b(sell|sells|stock|inventory|buy|shop|store)\b/.test(q))return result(shopInventoryAnswer(shops[0]),shops,genericReasoning(query,plan,`Listed item-specific inventory for ${shops[0].name}.`));
   if(areas[0]&&/\b(shop|store)\b/.test(q)&&/\b(sell|sells|stock|inventory|buy|what)\b/.test(q))return result(shopInventoryAnswer(areas[0]),areas,genericReasoning(query,plan,`Listed item-specific shops in ${areas[0].name}.`));
@@ -1409,14 +1641,23 @@ function executeQuery(query,plan){
   return result(unknown(q),entities,genericReasoning(query,plan,"No supported interpretation/entity combination was strong enough to answer safely.",[],["The Companion chose not to fill the gap from another game or from unsupported assumptions."]));
 }
 function unknown(q){
-  const candidates=resolveEntities(q,{limit:4});return `<h3>I couldn't resolve that confidently</h3><p>I understood the wording as a FlatMMO question, but I couldn't connect it to a supported intent/entity combination without guessing.</p>${candidates.length?`<p>Possible matches:</p>${chips(candidates.map(x=>`Tell me about ${x.name}`))}`:""}<p class="muted small">You can ask naturally: “where can I mine graphite?”, “can I do Atlas Crown with Mining 40 and Crafting 48?”, “how do I get to Omboko from Everbrook?”, or “what does a gorilla drop?”</p>`;
+  const candidates=resolveEntities(q,{limit:4});return `<h3>I’m not confident I understood that</h3><p>I can see it’s a FlatMMO question, but I’d rather ask than confidently answer the wrong thing.</p>${candidates.length?`<p>Were you talking about one of these?</p>${chips(candidates.map(x=>`Tell me about ${x.name}`))}`:""}<p class="muted small">Phrase it normally. If I grab the wrong subject, just correct me.</p>`;
 }
+function conversationalLead(query){
+  if(query.repair&&!query.repair.needsReplacement){const topic=queryTopicEntities(query.entities,query.goal,query.q)[0]?.name||query.contextThreadLabel||null;return `<p><b>Got it${topic?` — ${esc(topic)}`:""}.</b></p>`}
+  if(query.move==="return"&&query.contextThreadLabel)return `<p><b>Back to ${esc(query.contextThreadLabel)}.</b></p>`;
+  if(query.contextUsed&&/^(?:what if|actually|instead)\b/.test(query.q))return `<p><b>That changes it.</b></p>`;
+  return "";
+}
+function repairFailsafeChip(query){if(query.goal==="explain"||query.goal==="repair_clarify"||query.repair)return "";if(query.contextUsed||query.move==="continue"||query.move==="branch"||query.move==="return")return chips(["That's not what I meant"]);return ""}
 function answer(raw){
   const q=norm(raw);if(!state.ready)return `<p class="warn">Knowledge is still loading.</p>`;
   const query=interpretQuestion(raw),plan=planQuery(query),out=executeQuery(query,plan);
+  if(query.goal==="repair_clarify"){state.conversation.pendingRepair={threadId:query.threadId,baseRaw:query.repair?.baseRaw||lastRepairableTurn(activeThread())?.raw||null};return out.html}
+  if(query.repair&&!query.repair.needsReplacement)state.conversation.pendingRepair=null;
   // “Why?” explains the previous turn and must not replace that reasoning trace.
-  if(query.goal!=="explain")rememberContext(query.intent,out.focus?.length?out.focus:query.entities,raw,{query,resultRefs:out.resultRefs||[],reasoning:out.reasoning||null});
-  return out.html;
+  if(query.goal!=="explain")rememberContext(query.intent,out.focus?.length?out.focus:query.entities,raw,{query,resultRefs:out.resultRefs||[],reasoning:out.reasoning||null,resultSet:out.resultSet||[]});
+  return conversationalLead(query)+out.html+repairFailsafeChip(query);
 }
 
 function submitQuestion(text,{record=true}={}){
