@@ -1,4 +1,4 @@
-# FlatMMO Companion v2.0 — Regression Tests
+# FlatMMO Companion v2.1 — Regression Tests
 
 These tests cover both the public AI grounding layer and the deterministic human Companion.
 
@@ -820,3 +820,107 @@ Expected machine checks:
 - Acquisition-source nodes remain typed separately from monsters/NPCs/shops with the same display name.
 - Reverse relationships required by the published graph are present/materialized.
 - The intentionally unresolved text-only material reference remains unresolved instead of becoming a fabricated item.
+
+
+# v2.1 language / colloquial regression tests
+
+## Beginner glossary
+Prompts:
+- `What is a skill?`
+- `What does XP mean?`
+- `What does equip mean?`
+- `What is a drop?`
+- `What does AFK mean?`
+- `What is a tick?`
+- `What is BiS?`
+
+Expected:
+- Give a plain-language definition from the curated language layer.
+- Do not invent mechanics that are not established in FlatMMO data.
+- A glossary-only answer must not replace the active gameplay topic thread.
+
+## Negated entity suppression
+Prompt:
+`I am talking about combat, not Bat.`
+
+Expected:
+- Answer the Combat/mechanics subject.
+- Do not return Bat or Fighting Bat merely because the rejected word is an exact entity name.
+
+## FlatMMO-attested terminology
+Prompts:
+- `What does AFK mean here?`
+- `What does PvM mean?`
+- `What are hiscores?`
+- `What does OSAAT mean?`
+- `What does bankless mean?`
+
+Expected:
+- Explain the term using the curated lexicon and cited FlatMMO usage where available.
+- Terminology evidence is language evidence only; do not infer extra mechanics from the term itself.
+
+## RuneScape comparison quarantine
+Prompts:
+- `Is Forging like Smithing in RuneScape?`
+- `Is Stealing basically Thieving in OSRS?`
+- `Is Worship like Prayer in RuneScape?`
+- `Is the Global Market like the Grand Exchange in RuneScape?`
+- `Is Mining like Mining in RuneScape?`
+
+Expected:
+- Use the curated stock comparison where one exists; otherwise use the conservative fallback.
+- Keep official FlatMMO names canonical.
+- Do not import RuneScape recipes, success rates, XP rates, unlock levels, timings or mechanics.
+- Foreign terms must not be added to the FlatMMO entity alias catalog.
+
+## Active-problem skill fact enrichment
+Conversation:
+1. `Atlas Crown requirements?`
+2. `I am Mining 40 and Crafting 48.`
+3. `Am I ready?`
+
+Expected:
+- Turn 2 enriches the Atlas Crown readiness problem rather than changing the topic to Crafting.
+- Turn 3 continues Atlas Crown and reports the recorded skill gap.
+
+## Green Leaf Seeds shorthand/skill enrichment
+Conversation:
+1. `Green Leaf Seeds. Non-combat source?`
+2. `I am Stealing 12.`
+3. `Can I get them now?`
+4. `Without fighting, which source is available first?`
+
+Expected:
+- Stay on Green Leaf Seeds throughout.
+- Farmer pickpocket at Stealing 10 is a documented non-combat route and is available at stated Stealing 12.
+- The earliest-source route must not throw if the subject was inherited from conversation context.
+
+## Ordinary why vs explicit trace
+Conversation:
+1. `What are Sleep Points?`
+2. `Why do I care about them?`
+
+Expected:
+- Turn 2 answers the Sleep Points question in ordinary language.
+- It must not invoke the special deterministic `Why?` trace merely because the sentence starts with `why`.
+
+## Price-result refinement after ranking
+Conversation:
+1. `What can I buy in Everbrook under 100 coins?`
+2. `Only food.`
+3. `Which is cheapest?`
+4. `Under 50 coins.`
+
+Expected:
+- All turns operate on the same result-query definition.
+- `coins` in the numeric price constraint must not hijack the subject as the Coins item.
+
+## Repair ordering
+Conversation:
+1. `Where is Bat?`
+2. `No, not Bat, Gorilla.`
+3. `Where is it?`
+
+Expected:
+- Turn 2 rejects Bat and replaces the subject with Gorilla.
+- Turn 3 stays on Gorilla.

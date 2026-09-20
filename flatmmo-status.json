@@ -1,7 +1,7 @@
 {
-  "schemaVersion": 7,
+  "schemaVersion": 8,
   "generated": "2026-09-20",
-  "release": "unified-conversation-graph-v2.0",
+  "release": "language-conversation-lexicon-v2.1",
   "layout": "flat-root",
   "branch": "v2-online",
   "counts": {
@@ -98,10 +98,14 @@
       "used_by_skill": 431,
       "used_to_make": 565,
       "world_resource_at": 53
-    }
+    },
+    "languageEnglishColloquialGroups": 20,
+    "languageFlatmmoTerms": 46,
+    "languageForeignComparisons": 7,
+    "languageSourceRecords": 4
   },
   "humanUi": {
-    "mode": "deterministic conversational companion with unified typed relationship graph, topic-thread memory and semantic repair",
+    "mode": "deterministic conversational companion with unified typed relationship graph, topic-thread memory, semantic repair and curated language interpretation",
     "playerUsername": true,
     "localStorage": "optional and disposable; stores username, latest normalized player snapshot (public or user-entered) and recent questions when available",
     "portablePlayerLink": "#player=<username>",
@@ -111,7 +115,7 @@
     "refreshFailure": "Retain previous same-player snapshot with warning and timestamp; never reuse across different usernames; ignore superseded responses.",
     "visualStyle": "FlatMMO-inspired charcoal panels, brown secondary controls, green primary actions, cream text and monospace headings; no external images/fonts required.",
     "manualFormLayout": "Bounded dialog with independently scrolling fields and persistent Save/Cancel footer; two skill columns at phone widths.",
-    "queryEngine": "v2.0 browser-side structured interpreter: explicit-current-subject priority, typed topic threads, composable constraints/result sets, unified relationship traversal, deterministic deductions, semantic repair and conversational composition; no LLM required",
+    "queryEngine": "v2.1 browser-side structured interpreter: conversation operation/negation handling, English colloquial normalization, FlatMMO-attested glossary, typed topic threads, composable constraints/result sets, unified relationship traversal, deterministic deductions, semantic repair and conversational composition; no LLM required",
     "conversationContext": "Keeps up to 12 semantic topic threads with up to 36 turns each plus 120 replayable recent user questions. Explicit current subjects outrank memory; context may fill omissions but may not replace a clearly stated new subject.",
     "inlineLevels": "Skill levels explicitly stated in a question may be used for that answer only; they do not overwrite the saved/manual player snapshot",
     "acquisitionIndex": "flatmmo-items.json is authoritative for item-specific acquisition/use questions. It normalizes monster drops, world nodes, production, shops, Stealing, Farming, quests, spirits, events, bundles and explicit NPC services/trades; unknown rates/currencies stay unknown.",
@@ -127,7 +131,14 @@
     "userFactMemory": "Clearly personal skill statements such as “I am Mining 40” are remembered for later questions in the conversation; hypothetical “what if” levels affect only that calculation and do not overwrite durable user facts.",
     "relationshipGraph": "flatmmo-graph.json joins stable typed item, acquisition-source, monster, quest, skill, area, room, NPC, shop, mechanic and rule nodes with materialized reverse relationships. Ambiguous actor names remain typed rather than collapsed.",
     "humanPresence": "Responses acknowledge corrections, changed assumptions and returns to earlier topics in ordinary language while keeping uncertainty and evidence explicit. Personality never overrides structured facts.",
-    "memoryPresentation": "Conversation memory is silent by default. Continuity should appear through correct follow-up answers, not notices that a prior message/topic/result set was remembered, retained or inherited. Explicit Why?, correction and deliberate return-to-topic interactions may acknowledge context naturally."
+    "memoryPresentation": "Conversation memory is silent by default. Continuity should appear through correct follow-up answers, not notices that a prior message/topic/result set was remembered, retained or inherited. Explicit Why?, correction and deliberate return-to-topic interactions may acknowledge context naturally.",
+    "languageInterpreter": "flatmmo-language.json supplies curated English colloquialisms and provenance-backed FlatMMO terminology before fuzzy entity resolution; it is input-language interpretation only, not mechanics authority",
+    "languageAuthority": "Official FlatMMO skill/entity names remain canonical. Colloquial/community/foreign-game language may signal intent or concepts but may not create mechanics, rename entities or add graph relationships.",
+    "foreignComparisonPolicy": "RuneScape/OSRS comparisons use a small curated stock-response table plus a conservative fallback; foreign terms never enter the FlatMMO entity alias catalog.",
+    "negatedEntitySuppression": "Explicitly rejected/negated entity candidates are suppressed so phrases such as “combat, not Bat” do not let Bat outrank the positive subject.",
+    "glossaryDefinitions": "Beginner and player-language questions can be answered from curated term definitions without creating an active gameplay topic thread.",
+    "communityTerminology": "FlatMMO-specific usage is provenance-backed from official news, the community wiki and public web-visible community/developer discussions. Usage evidence is not mechanics authority.",
+    "genreVocabulary": "Broader MMO/RPG genre vocabulary is intentionally deferred to a later, separately controlled layer."
   },
   "coverage": {
     "combatStyles": [
@@ -152,7 +163,7 @@
     "resourceNodes": "61 conservative nodes across 44 rooms",
     "bedSemantics": "bedStatus distinguishes documented beds from rooms where a bed is merely not documented",
     "mechanicsRules": "12 explicit rules/readiness records including observed Sleep/Run behavior and calculation blocks",
-    "aiContext": "schema 1.7; merges 2 observed quest placeholders, embeds the first-class item/acquisition graph, and retains mechanics rules plus player-source and refresh policies",
+    "aiContext": "schema 1.9; merges 2 observed quest placeholders, embeds the first-class item/acquisition graph, retains mechanics rules/player-source policies, and publishes v2.1 language-layer metadata while keeping the full lexicon in flatmmo-language.json",
     "playerAwareness": "Skill-level checks from public profiles or explicitly labelled manual levels. Inventory, bank, equipment and quest completion remain unknown.",
     "itemGraph": "588 first-class item records; 1168 normalized acquisition routes; 199 items with structured uses",
     "shopInventories": "item-specific rows from the current Shops page plus explicit item-named area/NPC shop records; generic shop descriptions are not promoted to complete inventories",
@@ -161,7 +172,10 @@
     "unifiedRelationshipGraph": "1574 typed nodes and 7380 explicit relationships across items, sources, monsters, quests, skills, areas, rooms, NPCs, shops, mechanics and rules; 1 unresolved text-only reference retained rather than invented",
     "conversationMemory": "12 bounded topic threads × up to 36 turns, with explicit-subject priority, scoped constraints, parked-thread return, result-set continuity and semantic repair; recent user questions replay from optional localStorage up to 120 turns",
     "semanticRepair": "Natural correction can reject a mistaken subject/constraint, replace it, and re-run the prior question; rejected context is thread-scoped rather than permanently banning the entity",
-    "relationshipAuthority": "flatmmo-graph.json is a derived cross-dataset relationship index. It links existing sourced records; it does not promote a derived edge into a new independent game fact."
+    "relationshipAuthority": "flatmmo-graph.json is a derived cross-dataset relationship index. It links existing sourced records; it does not promote a derived edge into a new independent game fact.",
+    "languageLexicon": "20 English colloquial groups, 46 FlatMMO-attested terms, 7 quarantined RuneScape comparison responses; genre-wide vocabulary intentionally deferred",
+    "languageProvenance": "Official FlatMMO news, current community wiki terminology, and public web-visible developer/community discussions are used to attest player wording; they do not replace factual source authority.",
+    "foreignGameIsolation": "Foreign-game comparison phrases are handled outside the FlatMMO entity alias catalog; official FlatMMO names and mechanics remain authoritative."
   },
   "calculationReadiness": {
     "safeNow": [
@@ -185,7 +199,12 @@
       "semantic repair of mistaken subjects and scoped acquisition constraints",
       "result-set refinement and measurable price ranking across conversational turns",
       "stable two-hop relationship disambiguation through the unified graph",
-      "durable conversation skill facts distinct from hypothetical inline levels"
+      "durable conversation skill facts distinct from hypothetical inline levels",
+      "beginner/colloquial term definitions from the curated language lexicon",
+      "FlatMMO-attested player-language interpretation without promoting terminology into mechanics",
+      "quarantined RuneScape/OSRS stock comparisons with conservative fallback",
+      "explicit negated-entity suppression before subject selection",
+      "active-problem enrichment from user-stated skill facts when the skill statement is conversationally subordinate"
     ],
     "blockedPendingMechanics": [
       "exact combat hit chance",
@@ -225,8 +244,13 @@
     "The v2.0 language interpreter is deterministic and finite; unusual idiom, deeply nested corrections or ambiguous references can still require clarification.",
     "Conversation memory is deliberately bounded. Explicit current subjects always outrank remembered topics, but a genuinely ambiguous short follow-up can still require a clarifying question.",
     "Semantic item categories used for result-set filters are conservative; a missing category label is not proof an item does not belong to that category in FlatMMO.",
-    "The unified relationship graph contains one intentionally unresolved text-only material reference rather than inventing a fake item node."
+    "The unified relationship graph contains one intentionally unresolved text-only material reference rather than inventing a fake item node.",
+    "The v2.1 language lexicon is curated and finite; uncommon slang, spelling variants, deeply compressed shorthand and unusual idiom may still require clarification.",
+    "Broader genre vocabulary is intentionally deferred; v2.1 does not map generic MMO jargon onto FlatMMO skill names.",
+    "Public web evidence does not provide a complete Discord terminology corpus, so only web-visible official/community language is attested.",
+    "The foreign-game comparison list is intentionally small and conservative; unlisted comparisons use a non-mechanical fallback."
   ],
-  "aiContextSha256": "bfeaf71d45f7ef2a74760fe04fc1d31ca336371c75a8d56909f14d5f90f664c0",
-  "updatePolicy": "Manually maintained static snapshot. The deployment workflow publishes committed files; it does not refresh game data or player snapshots. AI retrieval is optional/best-effort."
+  "aiContextSha256": "c030f04788562ca3f92ec0ce0dab50ea715774d9e4bf81d9a4611226ad297f95",
+  "updatePolicy": "Manually maintained static snapshot. The deployment workflow publishes committed files; it does not refresh game data or player snapshots. AI retrieval is optional/best-effort.",
+  "languageLexiconSha256": "81f3232e804aa96bd6de7becce7ed0812f9d7e1bb12e2c4c16a7e6da30acb1d8"
 }

@@ -15,7 +15,7 @@ https://etherealaporia-alt.github.io/FlatMMO-Companion/flatmmo-context.json
 
 The `v2-online` branch is the active development branch. Project data is deliberately kept at the repository root because the mobile maintenance workflow flattens archive directory structures.
 
-The human UI is a deterministic conversational companion. v2.0 keeps the v1.8 first-class item/acquisition graph and v1.9 deterministic reasoning engine, then adds a unified typed relationship graph plus longer topic-thread memory and semantic repair. Questions are interpreted as goals, entities and scoped constraints; explicit current subjects outrank remembered context; recent topic threads can be parked and resumed; result sets survive follow-up filters/rankings; and users can correct a mistaken interpretation naturally (for example, “No, I meant Mining, not the Ent”) so the previous question is re-run with the correction. No LLM is required.
+The human UI is a deterministic conversational companion. v2.1 keeps the v2.0 unified typed relationship graph, longer topic-thread memory and semantic repair, then adds a curated language layer before fuzzy entity resolution. English colloquialisms and provenance-backed FlatMMO player terminology help identify speech acts and concepts; explicit negation suppresses rejected entities; and obvious RuneScape/OSRS comparisons use isolated stock responses rather than becoming FlatMMO aliases. Official FlatMMO names and structured mechanics remain authoritative. No LLM is required.
 
 The current public-profile loader is interim and may be blocked by normal browser cross-origin policy. It fails cleanly. The player-provider boundary is already isolated so an official player API can replace the loader without redesigning the assistant.
 
@@ -34,6 +34,8 @@ Included:
 - explicit shop inventories/prices where item rows are documented
 - Stealing pickpockets, stalls and chest sources; Farming seed/crop relationships; spirit/event/bundle rewards
 - monster/quest/location cross-links
+- curated English colloquial interpretation and FlatMMO-attested terminology from `flatmmo-language.json`
+- quarantined RuneScape/OSRS comparison responses that never enter the FlatMMO alias catalog
 
 Human-side player support:
 - username selection
@@ -131,3 +133,14 @@ Conversation state is also redesigned around bounded semantic topic threads rath
 Semantic repair is first-class. `No, I meant Mining, not the Ent`, `No, combat is fine; I meant without stealing`, and the two-step `That’s not what I meant` → `Gorilla drops, not its location` repair the previous interpretation rather than simply adding another unrelated query. Corrections are scoped to the relevant thread, so rejecting an interpretation does not permanently ban that entity from future questions.
 
 The response layer acknowledges meaningful changes, corrections and deliberate topic returns in ordinary language. **Memory itself stays invisible by default:** the Companion should demonstrate continuity by answering correctly, not by announcing that it remembered, retained, inherited or reused a previous message. Context mechanics are surfaced only when the user explicitly asks `Why?`, performs a correction, or deliberately returns to an older topic. The goal is conversational presence without allowing tone to become factual authority.
+
+
+## v2.1 language & conversation lexicon
+
+v2.1 adds `flatmmo-language.json` as an interpretation-only language layer. It currently contains **20 English colloquial groups**, **46 FlatMMO-attested terms**, and **7 curated RuneScape/OSRS comparison responses**. The language file is deliberately not mechanics authority: it may tell the parser that `nah` is rejection, that `AFK` is normal FlatMMO/player vocabulary, or that a RuneScape Smithing comparison should invoke the Forging stock response, but it cannot create a recipe, requirement, skill alias or graph relationship.
+
+FlatMMO terminology is attested from public web-visible sources including official update/news language, the community Stealing wiki, and public developer/community discussions. Those sources prove that players/developers use the wording; they do not replace the normal authority rules for game mechanics. Broader genre vocabulary is intentionally deferred so terms such as generic MMO jargon cannot accidentally overwrite official skill names.
+
+Negation is resolved before fuzzy subject selection. Phrases such as `combat, not Bat` suppress the rejected Bat entity, and language-only glossary/comparison answers do not replace the active gameplay topic thread. User-stated skill facts can enrich an active problem such as Atlas Crown instead of automatically opening a new standalone skill topic.
+
+Foreign-game language is quarantined. A question such as `Is Forging like Smithing in RuneScape?` uses a curated comparison answer while keeping `Forging` as the canonical FlatMMO name. Unlisted comparisons use a conservative fallback and never import foreign recipes, levels, rates, timings or unlocks.

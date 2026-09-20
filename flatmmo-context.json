@@ -1,7 +1,7 @@
 {
   "meta": {
     "id": "flatmmo-companion-ai-context",
-    "schemaVersion": "1.8",
+    "schemaVersion": "1.9",
     "generated": "2026-09-20",
     "game": "FlatMMO",
     "canonicalPage": "https://etherealaporia-alt.github.io/FlatMMO-Companion/ai.html",
@@ -31,7 +31,10 @@
       "farming_seed_crop_relationships",
       "item_uses_and_recipes",
       "unified_typed_relationship_graph",
-      "stable_cross_dataset_entity_relationships"
+      "stable_cross_dataset_entity_relationships",
+      "english_colloquial_language",
+      "flatmmo_attested_terminology",
+      "foreign_game_comparison_policy"
     ],
     "excludedForNow": [
       "official_news_change_notes",
@@ -49,11 +52,12 @@
       "resources": "61 structured resource/activity nodes across 44 rooms",
       "mechanicsRules": "12 explicit rule/readiness records from flatmmo-rules.json",
       "playerIntegration": "Optional/disposable browser storage. Manual levels are unverified and may be partial; XP is unknown. Official API remains pending. No individual player snapshot is embedded in this public context.",
-      "humanUi": "Deterministic conversational companion v2.0: unified typed relationship graph, longer bounded topic-thread memory, explicit-current-subject priority, scoped result sets/constraints, semantic repair, user-stated skill facts, silent context continuity, and conversational response composition. FlatMMO facts remain structured/source-backed; no LLM is required.",
+      "humanUi": "Deterministic conversational companion v2.1: v2.0 typed topic threads/semantic repair plus a curated English colloquial interpreter, provenance-backed FlatMMO terminology glossary, negated-entity suppression, and quarantined stock foreign-game comparisons. Language knowledge helps interpret requests but never supplies game mechanics.",
       "items": "588 first-class item records with 1168 normalized acquisition routes; 199 items have structured use relationships. The graph is broad but intentionally not claimed exhaustive.",
-      "relationshipGraph": "flatmmo-graph.json: 1574 typed nodes, 7380 explicit relationships and 1 retained unresolved text-only reference"
+      "relationshipGraph": "flatmmo-graph.json: 1574 typed nodes, 7380 explicit relationships and 1 retained unresolved text-only reference",
+      "languageLexicon": "flatmmo-language.json: 20 English colloquial groups, 46 FlatMMO-attested terms, 7 curated foreign-game comparison responses; genre-wide vocabulary is intentionally deferred."
     },
-    "release": "unified-conversation-graph-v2.0",
+    "release": "language-conversation-lexicon-v2.1",
     "updatePolicy": "Manually maintained static snapshot. The deployment workflow publishes committed files; it does not refresh game data or player snapshots. AI retrieval is optional/best-effort."
   },
   "instructions": [
@@ -85,7 +89,12 @@
     "Unknown shop currencies, stock semantics, Stealing chances, or reward odds must stay unknown. Do not infer missing numbers.",
     "For what-is-this-used-for questions, use items[].uses and explicit recipe/material relationships; do not invent additional recipes.",
     "Generic descriptions such as “sells fishing-related items” are service evidence, not a complete item inventory. Prefer explicit item-specific shop rows.",
-    "Conversation memory in the human Companion is an internal implementation detail: continuity should normally be expressed by answering the follow-up correctly, not by narrating that prior context was remembered or inherited."
+    "Conversation memory in the human Companion is an internal implementation detail: continuity should normally be expressed by answering the follow-up correctly, not by narrating that prior context was remembered or inherited.",
+    "Language interpretation is not game authority. Colloquial, community, genre, or foreign-game language may help identify the user’s intent but may not create a FlatMMO mechanic or relationship.",
+    "Official FlatMMO skill and entity names remain canonical. Do not rename Forging to Smithing, Stealing to Thieving, Worship to Prayer, or otherwise replace FlatMMO terminology because another game uses an analogous term.",
+    "Treat explicit negation and correction semantically: rejected entities such as “not Bat” must not outrank the user’s positive subject.",
+    "Foreign-game comparisons use curated comparison responses or a conservative fallback. A comparison may explain broad similarity, but mechanics, levels, recipes, timings, rates, and unlocks from the foreign game never carry over.",
+    "Public community/developer terminology is evidence that players use a word or phrase; it is not independent proof of the mechanics described by that word."
   ],
   "authorityOrder": [
     "official",
@@ -300,7 +309,9 @@
     "findItem": "Resolve the item in items, then inspect all acquisition routes or filter by the requested method (buy/steal/farm/craft/non-combat). Preserve unknown prices, chances and access conditions.",
     "useItem": "Use items[].uses to answer what an item makes, grows, or contributes to. Distinguish recipe quantity from acquisition quantity.",
     "relationshipGraph": "For cross-domain questions, resolve stable typed entities and traverse explicit flatmmo-graph.json edges. Do not collapse entities merely because their display names match.",
-    "conversation": "Human-side remembered context may resolve omitted references, but explicit current language always wins. Corrections re-run the relevant prior query rather than becoming new game facts."
+    "conversation": "Human-side remembered context may resolve omitted references, but explicit current language always wins. Corrections re-run the relevant prior query rather than becoming new game facts.",
+    "language": "Interpret ordinary English discourse markers and attested FlatMMO terms before fuzzy entity scoring. Use language knowledge to identify speech acts/concepts only; resolve factual answers from FlatMMO structured data.",
+    "foreignComparison": "When a user explicitly compares FlatMMO to RuneScape/OSRS, use the curated comparison table in flatmmo-language.json when available. Otherwise give the conservative comparison fallback. Never promote foreign-game terminology into a FlatMMO alias."
   },
   "sources": {
     "s1": "https://flatmmo.com/data/monsters.json",
@@ -322,7 +333,10 @@
     "s17": "https://flatmmo.wiki/index.php/Spirits",
     "s18": "https://flatmmo.wiki/index.php/Community_Events",
     "s19": "https://flatmmo.wiki/index.php/Bundles",
-    "s20": "https://flatmmo.wiki/index.php/Badges"
+    "s20": "https://flatmmo.wiki/index.php/Badges",
+    "s21": "https://flatmmo.com/news/",
+    "s22": "https://www.reddit.com/r/incremental_games/comments/1to5l8m/flatmmo_what_1_year_of_updates_looks_like/",
+    "s23": "https://www.reddit.com/r/PBBG/comments/1rhzapm/flatmmo_what_one_year_of_content_addition_can_do/"
   },
   "monsters": [
     [
@@ -10819,7 +10833,11 @@
     "The first-class item graph is broad but not exhaustive. Missing acquisition/use methods remain unknown rather than documented absence.",
     "Some Stealing stall odds are not specified on the current source table and remain null/unknown.",
     "Shop prices/stock are a static source snapshot; availability can change, and some rows explicitly show zero stock.",
-    "The Prospector table preserves numeric price text without assuming a currency where the current source does not label one."
+    "The Prospector table preserves numeric price text without assuming a currency where the current source does not label one.",
+    "The v2.1 language lexicon is curated and finite; uncommon slang, spelling variants, deeply compressed shorthand, or unusual idiom can still require clarification.",
+    "Genre-wide MMO vocabulary is intentionally deferred in v2.1. Only English colloquialisms, FlatMMO-attested terminology, and a small quarantined RuneScape comparison table are included.",
+    "Publicly searchable terminology evidence does not include a complete Discord conversation corpus; only web-visible official/community sources are used.",
+    "Foreign-game stock comparisons are deliberately conservative and do not establish mechanical equivalence."
   ],
   "sanityChecks": [
     "Chicken has 3 HP.",
@@ -21802,7 +21820,8 @@
     "reverseRelationships": "Key reverse edges are materialized so questions can traverse either direction, for example item→source and source→item or shop→item and item→shop.",
     "noNewExternalFactClaim": "A relationship marked derived does not claim a new independently sourced game fact; it points between existing sourced records.",
     "conflictHandling": "Broad source labels and more specific evidence are both preserved when they disagree; unknown links remain unknown.",
-    "memoryRule": "Human conversation memory is not factual authority. Explicit current language outranks remembered context."
+    "memoryRule": "Human conversation memory is not factual authority. Explicit current language outranks remembered context.",
+    "languageAuthority": "flatmmo-language.json is interpretation evidence only. It may not rename official entities or create graph edges/mechanics."
   },
   "mechanicsRules": {
     "schemaVersion": 1,
@@ -48831,5 +48850,50 @@
       "unknownRelationshipsRemainUnknown": true
     },
     "embeddingPolicy": "The full relationship graph is published as a separate root JSON file rather than duplicated into this already-large public context. This context embeds the source records and points to the canonical derived relationship index."
+  },
+  "languageLexiconMetadata": {
+    "sourceFile": "flatmmo-language.json",
+    "schemaVersion": "1.0",
+    "release": "language-conversation-lexicon-v2.1",
+    "englishColloquialGroups": 20,
+    "flatmmoAttestedTerms": 46,
+    "foreignComparisonResponses": 7,
+    "sourceRecords": 4,
+    "genreLayerStatus": "deferred; v2.1 intentionally contains English colloquialisms, FlatMMO-attested language and quarantined RuneScape comparison responses only",
+    "policy": {
+      "mechanicsAuthority": false,
+      "officialNamesCanonical": true,
+      "foreignTermsBecomeAliases": false,
+      "negatedEntitiesSuppressed": true,
+      "communityTerminologyRole": "evidence of language usage only"
+    },
+    "foreignComparisonIds": [
+      "runescape_smithing_forging",
+      "runescape_thieving_stealing",
+      "runescape_prayer_worship",
+      "runescape_agility_agility",
+      "runescape_crafting_crafting",
+      "runescape_farming_farming",
+      "runescape_ge_global_market"
+    ],
+    "sourceRoles": [
+      {
+        "url": "https://flatmmo.com/news/",
+        "role": "official FlatMMO update/news terminology"
+      },
+      {
+        "url": "https://flatmmo.wiki/index.php/Stealing",
+        "role": "current FlatMMO community wiki terminology for Stealing"
+      },
+      {
+        "url": "https://www.reddit.com/r/incremental_games/comments/1to5l8m/flatmmo_what_1_year_of_updates_looks_like/",
+        "role": "public FlatMMO developer/community discussion; attests AFK, skilling/grinds, PvM/raids language"
+      },
+      {
+        "url": "https://www.reddit.com/r/PBBG/comments/1rhzapm/flatmmo_what_one_year_of_content_addition_can_do/",
+        "role": "public FlatMMO developer/community discussion; attests AFK, skilling/grinds, PvM/raids language"
+      }
+    ],
+    "embeddingPolicy": "The full language lexicon is published as a separate root JSON file. This context publishes its counts, policies, provenance and comparison IDs without duplicating the complete phrase inventory."
   }
 }
