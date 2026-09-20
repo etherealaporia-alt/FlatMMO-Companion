@@ -77,7 +77,7 @@ function explicitEntities(raw){
   const q=semanticEnglish(raw),excluded=excludedEntityNames(raw);
   const rows=resolveEntities(q,{limit:40}).filter(e=>!excluded.includes(norm(e.name))&&e.score>=115&&!(norm(e.name)==="coins"&&/\d+\s*coins?/.test(q)));
   // Exact multiword mentions beat nested names (Coal Ore beats Coal; Master Farmer beats Farmer).
-  return rows.filter(e=>!rows.some(x=>norm(x.name)!==norm(e.name)&&hasWholePhrase(x.name,e.name)&&hasWholePhrase(q,x.name)));
+  return rows.filter(e=>!rows.some(x=>norm(x.name)!==norm(e.name)&&hasWholePhrase(x.name,e.name)&&entityMentioned(q,x)));
 }
 function repairQuery(raw,desc){
   const previous=conversationSession().pendingClarification||activeOperation(),thread=activeThread();
@@ -113,7 +113,7 @@ function interpretQuestion(raw){
   if(asserted){return queryEnvelope(raw,"assert_facts",{facts:levels,style})}
   // Returning restores the operation, not merely the old entity name.
   if(/\b(?:back to|return to|back on)\b/.test(q)){
-    const t=recentThreads().find(t=>(t.topicEntities||[]).some(e=>hasWholePhrase(q,e.name)));
+    const t=recentThreads().find(t=>(t.topicEntities||[]).some(e=>entityMentioned(q,e)));
     const old=t&&c.gameplayContext[t.id];
     if(old)return {...old.query,raw,threadId:t.id,move:"return",style,ambiguity:null};
   }

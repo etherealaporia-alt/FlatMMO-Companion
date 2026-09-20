@@ -56,6 +56,35 @@ const state = {
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
 const norm = s => String(s ?? "").toLowerCase().replace(/[_-]+/g," ").replace(/[^a-z0-9\s]/g," ").replace(/\s+/g," ").trim();
+// Grammatical forms are interpretation-only. Never stem arbitrary names or skill labels.
+const ITEM_NOUN_PAIRS = `orb/orbs bar/bars ore/ores seed/seeds log/logs plank/planks
+arrow/arrows arrowhead/arrowheads head/heads shaft/shafts feather/feathers
+knife/knives leaf/leaves staff/staves axe/axes pickaxe/pickaxes sword/swords
+scimitar/scimitars mace/maces spear/spears bow/bows club/clubs trident/tridents
+potion/potions vial/vials bucket/buckets bottle/bottles pie/pies egg/eggs
+berry/berries ruby/rubies anchovy/anchovies key/keys bone/bones ash/ashes
+nail/nails shard/shards fragment/fragments page/pages note/notes strip/strips
+piece/pieces hide/hides match/matches glove/gloves boot/boots leg/legs
+helmet/helmets hat/hats hood/hoods body/bodies coif/coifs skirt/skirts
+net/nets rod/rods harpoon/harpoons cage/cages book/books scroll/scrolls
+ring/rings necklace/necklaces gem/gems diamond/diamonds emerald/emeralds
+pearl/pearls sapphire/sapphires mushroom/mushrooms rockshroom/rockshrooms
+moldshroom/moldshrooms seashroom/seashrooms fireshroom/fireshrooms
+apple/apples banana/bananas pear/pears pineapple/pineapples coconut/coconuts
+avocado/avocados pepper/peppers cake/cakes steak/steaks sardine/sardines eel/eels
+shark/sharks lobster/lobsters tree/trees artifact/artifacts relic/relics
+badge/badges emblem/emblems birdnest/birdnests shovel/shovels machete/machetes
+barrel/barrels crate/crates block/blocks handle/handles mask/masks mug/mugs
+skull/skulls tail/tails tip/tips tank/tanks totem/totems`.split(/\s+/).map(p=>p.split("/"));
+const ITEM_NUMBER_FORMS=new Map(ITEM_NOUN_PAIRS.flatMap(([a,b])=>[[a,[a,b]],[b,[a,b]]]));
+ITEM_NUMBER_FORMS.set("staff",["staff","staves","staffs"]);
+ITEM_NUMBER_FORMS.set("staves",["staff","staves","staffs"]);
+function itemNameForms(name){
+  const n=norm(name),m=n.match(/^(.*?)([a-z]+)(\s+(?:\d+|lit|unlit))?$/);
+  if(!m)return [n];
+  return [...new Set([n,...(ITEM_NUMBER_FORMS.get(m[2])||[]).map(w=>m[1]+w+(m[3]||""))])];
+}
+function entityMentioned(q,e){const aliases=e.aliases?.length?e.aliases:state.entityCatalog?.find(x=>x.type===e.type&&norm(x.name)===norm(e.name))?.aliases||[];return [e.name,...aliases].some(n=>hasWholePhrase(q,n))}
 const title = s => String(s ?? "").replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase());
 function phraseReplace(text,from,to){const escRx=String(from).replace(/[.*+?^${}()|[\]\\]/g,"\\$&");return text.replace(new RegExp("\\b"+escRx.replace(/\s+/g,"\\s+")+"\\b","g"),to)}
 function semanticEnglish(raw){
@@ -516,6 +545,21 @@ function buildIndexes(){
   }
   for(const sh of shopIndex.values())add("shop",sh.name,sh,{area:sh.area||null,aliases:[sh.area?`${sh.area} ${sh.name}`:null,sh.area?`${sh.area} shop`:null].filter(Boolean)});
 
+  // Exact canonical names win over generated forms, including singular/plural collisions.
+  const canonicalNames=new Set(catalog.map(e=>norm(e.name))),formItems=new Map();
+  for(const e of catalog){
+    if(!["item","resource","equipment"].includes(e.type))continue;
+    e.aliases=unique(e.aliases.flatMap(itemNameForms)).filter(a=>a===norm(e.name)||!canonicalNames.has(a));
+  }
+  for(const item of state.data.items?.records||[]){
+    for(const form of unique([item.name,...(item.aliases||[])].flatMap(itemNameForms))){
+      if(itemByName.has(form))continue;
+      if(!formItems.has(form))formItems.set(form,new Set());
+      formItems.get(form).add(item);
+    }
+  }
+  // Ambiguous generated forms are never silently assigned to one item.
+  for(const [form,records] of formItems)if(records.size===1)itemByName.set(form,[...records][0]);
   state.dropMap=dropMap; state.resourceMap=resourceMap; state.acquisitionMap=acquisitionMap; state.itemByName=itemByName; state.shopIndex=shopIndex; state.stealingIndex=stealingIndex; state.serviceMap=serviceMap;
   state.roomById=roomById; state.npcById=npcById; state.productionMap=productionMap; state.areaGraph=areaGraph; state.entityCatalog=catalog;
   buildRelationshipIndexes();
@@ -587,7 +631,7 @@ function resolveEntities(q,{types=null,limit=6,suppressNegated=true}={}){
 }
 function compactEntity(e){
   if(!e)return null;
-  return {type:e.type,name:e.name,obj:e.obj,area:e.area||null,room:e.room||null,score:e.score??null,role:e.role||null,source:e.source||null};
+  return {type:e.type,name:e.name,aliases:e.aliases||[],obj:e.obj,area:e.area||null,room:e.room||null,score:e.score??null,role:e.role||null,source:e.source||null};
 }
 function activeThread(){return state.conversation.threads.find(t=>t.id===state.conversation.activeThreadId)||null}
 function recentThreads(){return [...state.conversation.threads].sort((a,b)=>(b.lastActive||0)-(a.lastActive||0))}

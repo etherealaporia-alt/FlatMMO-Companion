@@ -32,4 +32,30 @@ test('entity exclusion applies to acquisition actors',()=>{ask('Where can I get 
 test('parked operation returns after unrelated topics',()=>{ask('Full Iron Armour from scratch. What do I need?');ask('Tell me about Ent');ask('Tell me about Gorilla');ask('Back to Iron Armour');assert.match(plain('Just the totals'),/Iron Ore: 125.*Coal Ore: 125/)});
 test('undo restores corrected user facts',()=>{ask('I am Crafting 48');ask('No, make that Crafting 50');ask('Scratch that');assert.equal(read('state.conversation.userFacts.skills.crafting.level'),48)});
 test('script-shaped input is escaped',()=>{assert.doesNotMatch(ask('<img src=x onerror=alert(1)>'),/<img src=x/)});
+test('singular/plural forms agree for full item lookups',()=>{
+  for(const [a,b] of [['Unpowered Orb','Unpowered Orbs'],['Iron Bar','Iron Bars'],['Green Leaf Seeds','Green Leaf Seed'],['Bronze Knife','Bronze Knives'],['Green Leaf','Green Leaves'],['Oak Staff','Oak Staves'],['Bronze Axe','Bronze Axes'],['Damage Orb 1','Damage Orbs 1']]){
+    reset();const one=plain('Where can I get '+a+'?');const name=read('activeOperation().query.entities[0].name');
+    reset();const many=plain('Where can I get '+b+'?');assert.equal(read('activeOperation().query.entities[0].name'),name,b);assert.equal(many,one,b);
+    ctx.lookup=b;assert.equal(read('itemRecord(lookup)?.name'),a);
+  }
+});
+test('bare plural, hard correction, and return retain canonical subject',()=>{
+  assert.match(plain('unpowered orbs'),/Unpowered Orb/);
+  ask('Tell me about Ent');assert.match(plain('Actually unpowered orbs'),/Unpowered Orb/);excludes('ent');
+  ask('Tell me about Gorilla');assert.match(plain('Back to unpowered orbs'),/Back to Unpowered Orb/);
+});
+test('plural negation suppresses the canonical item',()=>{
+  assert.match(plain('Tell me about Unpowered Orb'),/Unpowered Orb/);
+  ask('No, not unpowered orbs, Iron Bars');excludes('unpowered orb');
+  assert.equal(read('activeOperation().query.entities[0].name'),'Iron Bar');
+});
+test('canonical plural collision and unrelated names stay distinct',()=>{
+  assert.equal(read('itemRecord("Promethium Arrow").name'),'Promethium Arrow');
+  assert.equal(read('itemRecord("Promethium Arrows").name'),'Promethium Arrows');
+  assert.equal(read('itemNameForms("Glass").join(",")'),'glass');
+  assert.equal(read('itemNameForms("Atlas").join(",")'),'atlas');
+  assert.equal(read('itemNameForms("Brass").join(",")'),'brass');
+  assert.equal(read('resolveEntities("combat").some(e=>e.name==="Bat")'),false);
+  assert.equal(read('state.entityCatalog.some(e=>(e.aliases||[]).includes("smithing"))'),false);
+});
 console.log(`${passed} conversation scenarios passed.`);
