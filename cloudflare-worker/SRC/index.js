@@ -356,13 +356,25 @@ async function executeTool(env, name, args) {
   }
 }
 
+function normalizeToolCall(c, index = 0) {
+  const fn = c?.function && typeof c.function === "object" ? c.function : null;
+  return {
+    id: c?.id || `call_${index}`,
+    name: fn?.name || c?.name,
+    arguments: fn?.arguments ?? c?.arguments ?? {}
+  };
+}
+
 function normalizeAi(raw) {
   const msg = raw?.choices?.[0]?.message;
   if (msg) {
-    const calls = (msg.tool_calls || []).map(c => ({ name: c.function?.name || c.name, arguments: c.function?.arguments || c.arguments || {} }));
+    const calls = (msg.tool_calls || []).map((c, i) => normalizeToolCall(c, i));
     return { content: msg.content || "", tool_calls: calls };
   }
-  return { content: raw?.response || raw?.content || "", tool_calls: raw?.tool_calls || [] };
+  return {
+    content: raw?.response || raw?.content || "",
+    tool_calls: (raw?.tool_calls || []).map((c, i) => normalizeToolCall(c, i))
+  };
 }
 
 function cleanMessages(messages) {
@@ -416,33 +428,7 @@ export default {
       for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
         const raw = await env.AI.run(model, {
           messages: working,
-          tools: TOOLS,
-          parallel_tool_calls: false,
-          max_completion_tokens: 500,
-          temperature: 0.2
-        });
-        const ai = normalizeAi(raw);
-        const call = ai.tool_calls?.[0];
-        if (!call) {
-          const answer = ai.content || "I couldn't form an answer from the available FlatMMO data.";
-          return json({ answer, model, toolTrace: body.debug ? trace : undefined }, 200, corsOrigin);
-        }
-
-        let args = call.arguments;
-        if (typeof args === "string") {
-          try { args = JSON.parse(args); } catch { args = {}; }
-        }
-        const toolResult = await executeTool(env, call.name, args || {});
-        trace.push({ tool: call.name, arguments: args || {}, result: toolResult });
-
-        // Cloudflare's documented traditional tool loop accepts an assistant turn
-        // describing the selected tool followed by a tool result turn.
-        working.push({ role: "assistant", content: JSON.stringify({ name: call.name, arguments: args || {} }) });
-        working.push({ role: "tool", content: JSON.stringify(toolResult) });
-      }
-      return json({ error: "tool_loop_limit", message: "The model requested too many tool calls for one reply.", toolTrace: body.debug ? trace : undefined }, 502, corsOrigin);
-    } catch (err) {
-      return json({ error: "ai_error", message: String(err?.message || err), toolTrace: body.debug ? trace : undefined }, 502, corsOrigin);
-    }
-  }
-};
+          // GLM-4.7-Flash uses the current OpenAI-compatible tool envelope.
+          tools: TOOLS.map(tool => ({ type: "function", function: tool })),
+          tool_choice: "auto",
+          parallel_to
