@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "flatmmo-ai-prototype",
-  "main": "src/index.js",
+  "main": "SRC/index.js",
   "compatibility_date": "2026-09-21",
   "ai": {
     "binding": "AI"
