@@ -19,6 +19,12 @@ HARD RULES:
 - Official names returned by tools always win over your own wording. Never rename an official skill or entity.
 - Never claim that a FlatMMO skill does not exist unless get_skill has returned found:false for the current wording; before making that claim, use list_skills to check the canonical skill list.
 - For comparisons with RuneScape, OSRS, or another game, use compare_game_term. If a FlatMMO entity is named, also check that entity with the relevant FlatMMO tool. Do not ask whether the user wants you to check data that the available tools can check immediately.
+- A listed random acquisition source is never proof that the target item is guaranteed. For pickpocketing and monster drops, distinguish action success from the target item's drop roll.
+- For pickpocketing, use the returned rarity/drop odds when known. A successful pickpocket can still fail to produce a particular non-guaranteed item. Do not describe a target item as guaranteed unless the tool explicitly marks it guaranteed.
+- For monster loot, use the returned per-item rarity. "Always" / denominator 1 is guaranteed on that monster kill; larger denominators are chance-based. Do not imply that other drops are mutually exclusive unless a tool explicitly says so.
+- When discussing a chance-based source, mention a few other documented outcomes when useful, especially if the player asks what else they may receive.
+- If the current data has an exact chance, state it. Only say a chance is unknown when the tool explicitly reports it as unknown.
+- For questions about FlatMMO itself, its official rules, or where to get current community help, use get_game_info/get_game_rules. When current community help would be useful, you may suggest the official Discord via the Discord link in the game window or official site.
 - General English or genre explanations that do not assert FlatMMO-specific facts may be answered directly.
 
 CONVERSATION:
@@ -58,7 +64,7 @@ const TOOLS = [
   },
   {
     name: "find_item_sources",
-    description: "Find documented acquisition routes for one FlatMMO item and apply explicit player constraints conservatively.",
+    description: "Find documented acquisition routes for one FlatMMO item, apply explicit player constraints conservatively, and return chance semantics plus other documented outcomes for random pickpocket/monster sources.",
     parameters: {
       type: "object",
       properties: {
@@ -75,7 +81,7 @@ const TOOLS = [
   },
   {
     name: "get_monster",
-    description: "Return one monster's documented FlatMMO stats, area, room links, and drops.",
+    description: "Return one monster's documented FlatMMO stats, area, room links, and full loot table with explicit guaranteed-vs-chance semantics.",
     parameters: {
       type: "object",
       properties: { monster: { type: "string" } },
@@ -119,6 +125,34 @@ const TOOLS = [
         flatmmo_term: { type: "string", description: "Optional FlatMMO term named by the player, such as Forging." }
       },
       required: ["foreign_term"]
+    }
+  },
+  {
+    name: "get_source_loot",
+    description: "Return the documented loot/drop table for a random source. Use pickpocket for an NPC such as Farmer, or monster for a combat monster. This tool distinguishes guaranteed entries from chance-based entries and reports unknown odds explicitly.",
+    parameters: {
+      type: "object",
+      properties: {
+        source_type: { type: "string", enum: ["pickpocket", "monster"] },
+        source: { type: "string", description: "NPC victim or monster name, such as Farmer." }
+      },
+      required: ["source_type", "source"]
+    }
+  },
+  {
+    name: "get_game_info",
+    description: "Return the Companion's sourced description of FlatMMO, official/community links, and guidance for finding current help including the official Discord link exposed by the game/official site.",
+    parameters: {
+      type: "object",
+      properties: {}
+    }
+  },
+  {
+    name: "get_game_rules",
+    description: "Return FlatMMO's official Rules & Code of Conduct as structured sourced data. Use this for questions about allowed tools, botting, alts, trading, conduct, exploits, account security, or other game rules.",
+    parameters: {
+      type: "object",
+      properties: {}
     }
   },
   {
@@ -189,6 +223,88 @@ function compactSource(a) {
   if (a.materials) out.materials = a.materials;
   if (a.requirements) out.requirements = a.requirements;
   return out;
+}
+
+function chanceFromDenominator(denominator, label = null) {
+  const n = Number(denominator);
+  if (!Number.isFinite(n) || n <= 0) {
+    return { known: false, label: label || null, text: label ? `${label}; exact chance not documented` : "Exact chance not documented" };
+  }
+  if (n === 1) {
+    return { known: true, denominator: 1, probability: 1, percent: 100, label: label || "Always", text: label ? `${label} (1/1)` : "Always (1/1)" };
+  }
+  const percent = 100 / n;
+  return {
+    known: true,
+    denominator: n,
+    probability: 1 / n,
+    percent,
+    label: label || null,
+    text: label ? `${label} (1/${n})` : `1/${n}`
+  };
+}
+
+function pickpocketPool(itemsData, victim) {
+  const key = norm(victim);
+  const rows = [];
+  for (const rec of itemsData.records || []) {
+    for (const a of rec.acquisition || []) {
+      if (a.type !== "pickpocket" || norm(a.victim) !== key) continue;
+      rows.push({
+        item: rec.name,
+        rarity: a.rarity || null,
+        chance: chanceFromDenominator(a.rarityDenominator, a.rarity || null),
+        area: a.area || null,
+        location: a.location || null,
+        level: a.level ?? null
+      });
+    }
+  }
+  return rows.sort((a, b) => {
+    const ad = a.chance?.denominator ?? Number.POSITIVE_INFINITY;
+    const bd = b.chance?.denominator ?? Number.POSITIVE_INFINITY;
+    return ad - bd || a.item.localeCompare(b.item);
+  });
+}
+
+function monsterLootTable(monster) {
+  return (monster?.drops || []).map(d => ({
+    item: titleId(d.item),
+    min: d.min,
+    max: d.max,
+    chance: chanceFromDenominator(d.rarity_denominator, d.rarity_denominator === 1 ? "Always" : null),
+    unique: !!d.unique
+  }));
+}
+
+function randomRouteSemantics(route, targetName, pools = {}) {
+  if (route.type === "pickpocket") {
+    const pool = pickpocketPool(pools.items, route.victim);
+    const target = pool.find(x => norm(x.item) === norm(targetName));
+    return {
+      random: true,
+      action: "pickpocket",
+      targetChance: target?.chance || chanceFromDenominator(route.rarityDenominator, route.rarity || null),
+      actionSuccessSeparateFromDropRoll: true,
+      guarantee: target?.chance?.denominator === 1,
+      otherDocumentedOutcomes: pool.filter(x => norm(x.item) !== norm(targetName)),
+      note: "Pickpocket success chance and item drop chance are separate. A successful pickpocket does not guarantee this target unless its listed item chance is 1/1."
+    };
+  }
+  if (route.type === "monster_drop") {
+    const monster = (pools.monsters?.records || []).find(m => norm(m.name) === norm(route.monster));
+    const table = monsterLootTable(monster);
+    const target = table.find(x => norm(x.item) === norm(targetName));
+    return {
+      random: true,
+      action: "monster_drop",
+      targetChance: target?.chance || chanceFromDenominator(route.rarityDenominator),
+      guarantee: target?.chance?.denominator === 1,
+      otherDocumentedOutcomes: table.filter(x => norm(x.item) !== norm(targetName)),
+      note: "Monster loot-table entries with odds above 1/1 are chance-based. Other listed drops are additional documented drops and are not assumed to be mutually exclusive."
+    };
+  }
+  return null;
 }
 
 async function loadData(env, file) {
@@ -316,7 +432,10 @@ async function getItem(env, args) {
   return {
     found: true,
     item: { id: r.id, name: r.name, categories: r.categories || [], acquisition: (r.acquisition || []).map(compactSource), uses: r.uses || [] },
-    note: "Acquisition methods are additive. Missing methods mean not documented in this snapshot, not proven absent from the game."
+    notes: [
+      "Acquisition methods are additive. Missing methods mean not documented in this snapshot, not proven absent from the game.",
+      "A listed pickpocket or monster-drop source means the item can come from that source; it does not mean the item is guaranteed. Use find_item_sources or get_source_loot for chance and alternative-drop context."
+    ]
   };
 }
 
@@ -331,11 +450,26 @@ async function findItemSources(env, args) {
   if (args.exclude_stealing) routes = routes.filter(x => !["pickpocket","stall","map_chest","rogue_chest"].includes(x.type));
   if (args.exclude_quests) routes = routes.filter(x => x.type !== "quest_reward");
   if (args.area) routes = routes.filter(x => norm(x.area || x.location || "").includes(norm(args.area)));
+
+  const needsMonsters = routes.some(x => x.type === "monster_drop");
+  const monsters = needsMonsters ? await loadData(env, "flatmmo-monsters.json") : { records: [] };
+
   return {
     found: true,
     item: { id: r.id, name: r.name },
-    routes: routes.map(x => ({ ...compactSource(x), access_from_supplied_levels: routeAccessible(x, args.player_levels || {}) })),
-    unknowns: ["A listed skill unlock does not establish success probability unless a separate rule states it.", "Unlisted acquisition methods are not proven absent from FlatMMO."]
+    routes: routes.map(x => {
+      const chanceContext = randomRouteSemantics(x, r.name, { items: data, monsters });
+      return {
+        ...compactSource(x),
+        access_from_supplied_levels: routeAccessible(x, args.player_levels || {}),
+        chanceContext
+      };
+    }),
+    unknowns: [
+      "A listed skill unlock does not by itself establish pickpocket success probability.",
+      "Unlisted acquisition methods are not proven absent from FlatMMO.",
+      "Do not infer mutual exclusivity between loot-table entries unless a documented mechanic explicitly says so."
+    ]
   };
 }
 
@@ -348,9 +482,10 @@ async function getMonster(env, args) {
     monster: {
       id: r.id, name: r.name, area: r.area, boss: !!r.boss,
       stats: { damage: r.damage, accuracy: r.accuracy, defence: r.defence, magic_defence: r.magic_defence, hp: r.hp, weakness: r.weakness },
-      drops: (r.drops || []).map(d => ({ item: titleId(d.item), min: d.min, max: d.max, rarityDenominator: d.rarity_denominator, unique: !!d.unique })),
+      drops: monsterLootTable(r),
       rooms: (r.roomRefs || []).map(x => ({ roomId: x.roomId, relation: x.relation, confidence: x.confidence }))
-    }
+    },
+    lootSemantics: "Each listed loot-table entry has its own documented rarity. 1/1 means Always; larger denominators are chance-based. Do not describe a non-1/1 item as guaranteed, and do not assume different entries are mutually exclusive."
   };
 }
 
@@ -426,6 +561,69 @@ async function compareGameTerm(env, args) {
     : { found: false, foreign_game: args.foreign_game || null, foreign_term: args.foreign_term, flatmmo_term: args.flatmmo_term || null };
 }
 
+async function getSourceLoot(env, args) {
+  const sourceType = norm(args.source_type);
+  if (sourceType === "pickpocket") {
+    const data = await loadData(env, "flatmmo-items.json");
+    const rows = pickpocketPool(data, args.source);
+    if (!rows.length) {
+      return { found: false, sourceType: "pickpocket", source: args.source };
+    }
+    return {
+      found: true,
+      sourceType: "pickpocket",
+      source: args.source,
+      drops: rows,
+      semantics: [
+        "Pickpocketing NPCs gives random item drops.",
+        "The NPC pickpocket success chance is separate from the individual item drop rarity.",
+        "A successful pickpocket does not guarantee every listed item. Items marked 1/1 are guaranteed item rolls; other entries are chance-based.",
+        "Do not calculate an overall per-attempt item probability unless the current pickpocket success chance is also known."
+      ],
+      sourceUrl: "https://flatmmo.wiki/index.php/Stealing"
+    };
+  }
+  if (sourceType === "monster") {
+    const data = await loadData(env, "flatmmo-monsters.json");
+    const monster = bestRecord(data.records, args.source);
+    if (!monster) {
+      return { found: false, sourceType: "monster", source: args.source };
+    }
+    return {
+      found: true,
+      sourceType: "monster",
+      source: monster.name,
+      drops: monsterLootTable(monster),
+      semantics: [
+        "Monster loot-table entries are per-item documented rarities.",
+        "1/1 means Always; larger denominators are chance-based.",
+        "Do not assume different loot entries are mutually exclusive."
+      ],
+      sourceUrl: "https://flatmmo.wiki/index.php/Monsters"
+    };
+  }
+  return { found: false, error: "unsupported_source_type", sourceType: args.source_type };
+}
+
+async function getGameInfo(env) {
+  const data = await loadData(env, "flatmmo-game.json");
+  return {
+    description: data.description,
+    officialLinks: data.officialLinks,
+    communityGuidance: data.communityGuidance,
+    sources: data.sources
+  };
+}
+
+async function getGameRules(env) {
+  const data = await loadData(env, "flatmmo-game.json");
+  return {
+    rules: data.codeOfConduct || [],
+    source: data.officialLinks?.rules || "https://flatmmo.com/rules.php",
+    note: "These are the Companion's structured summaries of FlatMMO's official Rules & Code of Conduct. The official rules page is authoritative if wording changes."
+  };
+}
+
 async function findRoute(env, args) {
   const data = await loadData(env, "flatmmo-areas.json");
   const from = bestRecord(data.records, args.from), to = bestRecord(data.records, args.to);
@@ -446,17 +644,29 @@ async function findRoute(env, args) {
 }
 
 async function searchRules(env, args) {
-  const [rules, mechanics] = await Promise.all([loadData(env, "flatmmo-rules.json"), loadData(env, "flatmmo-mechanics.json")]);
+  const [rules, mechanics, acquisition, game] = await Promise.all([
+    loadData(env, "flatmmo-rules.json"),
+    loadData(env, "flatmmo-mechanics.json"),
+    loadData(env, "flatmmo-acquisition-rules.json"),
+    loadData(env, "flatmmo-game.json")
+  ]);
   const q = norm(args.query), rows = [];
-  for (const r of rules.rules || []) {
-    const hay = norm([r.id, r.name, ...(r.facts || []), ...(r.notes || [])].join(" "));
+  const addIfMatch = row => {
+    const hay = norm(JSON.stringify(row));
     const shared = q.split(" ").filter(t => hay.includes(t)).length;
-    if (hay.includes(q) || shared) rows.push({ type: "rule", id: r.id, name: r.name, status: r.status, facts: r.facts || [], notes: r.notes || [], sources: r.sources || [], score: (hay.includes(q)?20:0)+shared });
+    if (hay.includes(q) || shared) rows.push({ ...row, score: (hay.includes(q) ? 20 : 0) + shared });
+  };
+  for (const r of rules.rules || []) {
+    addIfMatch({ type: "rule", id: r.id, name: r.name, status: r.status, facts: r.facts || [], notes: r.notes || [], sources: r.sources || [] });
+  }
+  for (const r of acquisition.rules || []) {
+    addIfMatch({ type: "acquisition_rule", id: r.id, name: r.name, status: r.status, facts: r.facts || [], unknowns: r.unknowns || [], sources: r.sources || [] });
+  }
+  for (const r of game.codeOfConduct || []) {
+    addIfMatch({ type: "official_conduct_rule", id: r.id, name: r.name, summary: r.summary, source: game.officialLinks?.rules });
   }
   for (const r of mechanics.records || []) {
-    const hay = norm(JSON.stringify(r));
-    const shared = q.split(" ").filter(t => hay.includes(t)).length;
-    if (hay.includes(q) || shared) rows.push({ type: "mechanic", id: r.id, name: r.name, record: r, score: (hay.includes(q)?20:0)+shared });
+    addIfMatch({ type: "mechanic", id: r.id, name: r.name, record: r });
   }
   return { query: args.query, results: rows.sort((a,b) => b.score-a.score).slice(0,8) };
 }
@@ -483,6 +693,9 @@ async function executeTool(env, name, args) {
     case "get_skill": return getSkill(env, args);
     case "list_skills": return listSkills(env, args);
     case "compare_game_term": return compareGameTerm(env, args);
+    case "get_source_loot": return getSourceLoot(env, args);
+    case "get_game_info": return getGameInfo(env, args);
+    case "get_game_rules": return getGameRules(env, args);
     case "find_route": return findRoute(env, args);
     case "search_rules": return searchRules(env, args);
     case "lookup_term": return lookupTerm(env, args);
