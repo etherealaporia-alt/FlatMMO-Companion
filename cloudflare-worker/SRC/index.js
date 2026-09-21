@@ -193,7 +193,7 @@ function json(data, status = 200, origin = "*") {
     headers: {
       "content-type": "application/json; charset=utf-8",
       "access-control-allow-origin": origin,
-      "access-control-allow-headers": "content-type, authorization",
+      "access-control-allow-headers": "content-type, authorization, x-flatmmo-client",
       "access-control-allow-methods": "POST, OPTIONS",
       "vary": "Origin"
     }
@@ -201,10 +201,13 @@ function json(data, status = 200, origin = "*") {
 }
 
 function allowedOrigin(origin) {
-  if (!origin) return "*";
   if (origin === "https://etherealaporia-alt.github.io") return origin;
-  if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return origin;
+  if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin || "")) return origin;
   return null;
+}
+
+function validPublicClientId(value) {
+  return /^[a-zA-Z0-9_-]{8,128}$/.test(String(value || ""));
 }
 
 function norm(v) {
@@ -746,37 +749,70 @@ export default {
   async fetch(request, env) {
     const origin = request.headers.get("Origin");
     const corsOrigin = allowedOrigin(origin);
-    if (!corsOrigin) return new Response("Origin not allowed", { status: 403 });
-    if (request.method === "OPTIONS") return json({ ok: true }, 200, corsOrigin);
+    const expected = env.PROTOTYPE_TOKEN;
+    const auth = request.headers.get("Authorization") || "";
+    const isAdmin = Boolean(expected) && auth === `Bearer ${expected}`;
+    const responseOrigin = corsOrigin || "*";
 
-    // A simple browser-visible health check makes Git-connected deployment easier to verify.
+    if (request.method === "OPTIONS") {
+      if (!corsOrigin) return new Response("Origin not allowed", { status: 403 });
+      return json({ ok: true }, 200, corsOrigin);
+    }
+
+    // Browser-visible health check. Public readiness depends on AI + rate-limit bindings,
+    // not on the optional admin token.
     if (request.method === "GET") {
+      const publicReady = Boolean(env.AI && env.PUBLIC_CLIENT_RATE_LIMITER && env.PUBLIC_IP_RATE_LIMITER);
       return json({
         ok: true,
         service: "FlatMMO AI Prototype",
         model: env.MODEL || "@cf/zai-org/glm-4.7-flash",
-        protected: Boolean(env.PROTOTYPE_TOKEN),
-        ready: Boolean(env.PROTOTYPE_TOKEN)
-      }, env.PROTOTYPE_TOKEN ? 200 : 503, corsOrigin);
+        publicAccess: true,
+        rateLimited: Boolean(env.PUBLIC_CLIENT_RATE_LIMITER && env.PUBLIC_IP_RATE_LIMITER),
+        adminAccess: Boolean(expected),
+        ready: publicReady
+      }, publicReady ? 200 : 503, responseOrigin);
     }
-    if (request.method !== "POST") return json({ error: "POST only" }, 405, corsOrigin);
+    if (request.method !== "POST") return json({ error: "POST only" }, 405, responseOrigin);
 
-    // Fail closed. A Git deployment must never become an unauthenticated public AI relay
-    // just because the prototype secret has not been configured yet.
-    const expected = env.PROTOTYPE_TOKEN;
-    if (!expected) {
-      return json({
-        error: "prototype_not_configured",
-        message: "PROTOTYPE_TOKEN has not been configured in Cloudflare runtime secrets yet."
-      }, 503, corsOrigin);
+    // Normal public browser traffic must come from the published GitHub Pages site
+    // (or localhost during development). The admin bearer token can still be used from
+    // command-line/dev clients. Origin checking is a browser boundary, not authentication,
+    // so public requests are also rate-limited below.
+    if (!corsOrigin && !isAdmin) return new Response("Origin not allowed", { status: 403 });
+
+    if (!isAdmin) {
+      if (!env.PUBLIC_CLIENT_RATE_LIMITER || !env.PUBLIC_IP_RATE_LIMITER) {
+        return json({
+          error: "public_access_not_configured",
+          message: "Public rate limiting is not configured."
+        }, 503, responseOrigin);
+      }
+
+      const rawClientId = request.headers.get("X-FlatMMO-Client") || "";
+      const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+      const clientKey = validPublicClientId(rawClientId)
+        ? `client:${rawClientId}`
+        : `ip-fallback:${ip}`;
+
+      const [clientLimit, ipLimit] = await Promise.all([
+        env.PUBLIC_CLIENT_RATE_LIMITER.limit({ key: clientKey }),
+        env.PUBLIC_IP_RATE_LIMITER.limit({ key: `ip:${ip}` })
+      ]);
+
+      if (!clientLimit.success || !ipLimit.success) {
+        return json({
+          error: "rate_limited",
+          message: "Too many requests. Please wait a moment and try again."
+        }, 429, responseOrigin);
+      }
     }
-    const auth = request.headers.get("Authorization") || "";
-    if (auth !== `Bearer ${expected}`) return json({ error: "unauthorized" }, 401, corsOrigin);
 
     let body;
-    try { body = await request.json(); } catch { return json({ error: "invalid_json" }, 400, corsOrigin); }
+    try { body = await request.json(); } catch { return json({ error: "invalid_json" }, 400, responseOrigin); }
     const history = cleanMessages(body.messages);
-    if (!history.length || history[history.length - 1].role !== "user") return json({ error: "messages must end with a user message" }, 400, corsOrigin);
+    if (!history.length || history[history.length - 1].role !== "user") return json({ error: "messages must end with a user message" }, 400, responseOrigin);
+    const debugEnabled = Boolean(body.debug && isAdmin);
 
     const model = env.MODEL || "@cf/zai-org/glm-4.7-flash";
     const working = [{ role: "system", content: SYSTEM_PROMPT }, ...history];
@@ -800,7 +836,7 @@ export default {
         const call = ai.tool_calls?.[0];
         if (!call) {
           const answer = ai.content || "I couldn't form an answer from the available FlatMMO data.";
-          return json({ answer, model, toolTrace: body.debug ? trace : undefined }, 200, corsOrigin);
+          return json({ answer, model, toolTrace: debugEnabled ? trace : undefined }, 200, responseOrigin);
         }
 
         let args = call.arguments;
@@ -835,9 +871,9 @@ export default {
           content: JSON.stringify(toolResult)
         });
       }
-      return json({ error: "tool_loop_limit", message: "The model requested too many tool calls for one reply.", toolTrace: body.debug ? trace : undefined }, 502, corsOrigin);
+      return json({ error: "tool_loop_limit", message: "The model requested too many tool calls for one reply.", toolTrace: debugEnabled ? trace : undefined }, 502, responseOrigin);
     } catch (err) {
-      return json({ error: "ai_error", message: String(err?.message || err), toolTrace: body.debug ? trace : undefined }, 502, corsOrigin);
+      return json({ error: "ai_error", message: String(err?.message || err), toolTrace: debugEnabled ? trace : undefined }, 502, responseOrigin);
     }
   }
 };
