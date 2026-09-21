@@ -208,8 +208,8 @@ function workerLanding() {
 }
 
 function allowedOrigin(origin) {
-  if (origin === "https://etherealaporia-alt.github.io") return origin;
-  if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin || "")) return origin;
+  if (!origin) return null;
+  if (/^https?:\/\//.test(origin)) return origin;
   return null;
 }
 
