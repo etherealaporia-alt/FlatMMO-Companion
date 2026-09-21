@@ -21,18 +21,25 @@
 <div id="chat" class="panel"><div class="bot msg">Try talking normally. Example: “I'm Stealing 12 — can I get Green Leaf Seeds without fighting?”</div></div>
 <div class="panel">
 <textarea id="q" placeholder="Ask about FlatMMO..."></textarea>
-<div class="row" style="margin-top:10px"><button id="send">Send</button><button id="clear" class="secondary">Clear conversation</button></div>
+<div class="row" style="margin-top:10px"><button id="send">Send</button><button id="clear" class="secondary">Clear conversation</button><button id="openWorker" class="secondary">Open worker page</button></div>
 <div id="status" class="tiny"></div>
+<div id="diag" class="tiny" style="margin-top:8px;display:none"></div>
 </div>
 <script>
 const APP_VERSION = new Date().toISOString().slice(0, 10).replace(/-/g, '');
 const WORKER_URL='https://flatmmo-ai-prototype.etherealaporia.workers.dev/?v=' + APP_VERSION;
 const CLIENT_ID_KEY='flatmmo_ai_public_client';
-const $=s=>document.querySelector(s), chat=$('#chat'), q=$('#q'), send=$('#send'), status=$('#status');
+const $=s=>document.querySelector(s), chat=$('#chat'), q=$('#q'), send=$('#send'), status=$('#status'), diag=$('#diag');
+
+function setDiag(text){
+  diag.style.display = text ? 'block' : 'none';
+  diag.textContent = text || '';
+}
 
 if (location.protocol === 'file:') {
   status.innerHTML='<span class="error">Open this page from the deployed GitHub Pages URL, not as a local file. The worker cannot be called from file:// pages.</span>';
 }
+setDiag('Page origin: ' + (location.origin || 'unknown') + ' | worker target: ' + WORKER_URL);
 
 // Remove credentials/configuration saved by the private prototype page.
 localStorage.removeItem('flatmmo_ai_token');
@@ -60,23 +67,27 @@ async function ask(){
   add('user',text);q.value='';send.disabled=true;status.textContent='Thinking…';
   try {
     const requestUrl = WORKER_URL;
+    setDiag('Attempting fetch: ' + requestUrl + ' from origin ' + (location.origin || 'unknown'));
     const r=await fetch(requestUrl,{method:'POST',mode:'cors',credentials:'omit',headers:{'content-type':'application/json','x-flatmmo-client':clientId},body:JSON.stringify({messages})});
     let data;
     try { data = await r.json(); } catch { data = {}; }
     if(!r.ok)throw new Error((data && (data.message || data.error)) || ('HTTP '+r.status));
     messages.push({role:'assistant',content:data.answer});
     add('assistant',data.answer);status.textContent='';
+    setDiag('Fetch succeeded from ' + requestUrl + ' with response status ' + r.status + '.');
   } catch(e) {
     const baseMessage = String(e.message || e);
     const originNote = location.origin && location.origin !== 'null' ? ' Browser origin: ' + location.origin : ' Browser origin unavailable';
-    const hint = ' This page must be opened from the GitHub Pages URL, not a local file or stale cached copy.';
+    const hint = ' This page must be opened from the GitHub Pages URL, not a local file or stale cached copy. If it still fails from that URL, a browser extension or local cache is blocking the request.';
     status.innerHTML='<span class="error">Fetch failed: '+baseMessage.replace(/[<&]/g,c=>c==='<'?'&lt;':'&amp;') + originNote + hint.replace(/[<&]/g,c=>c==='<'?'&lt;':'&amp;')+'</span>';
+    setDiag('Fetch blocked or unreachable. Target: ' + WORKER_URL + ' | page origin: ' + (location.origin || 'unknown'));
     messages.pop();
   } finally {
     send.disabled=false;q.focus();
   }
 }
 send.onclick=ask;q.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();ask()}});$('#clear').onclick=()=>{messages=[];chat.innerHTML='<div class="bot msg">Conversation cleared.</div>';};
+$('#openWorker').onclick=()=>{window.open('https://flatmmo-ai-prototype.etherealaporia.workers.dev/?v=' + APP_VERSION, '_blank', 'noopener');};
 </script>
 </body>
 </html>
