@@ -15,6 +15,10 @@ HARD RULES:
 - Exact combat hit chance, damage rolls, DPS, kill time, survivability, and generic recommended combat levels are unresolved unless a tool explicitly returns them.
 - If a name is ambiguous, use search_entities and either resolve from context or ask a short clarification.
 - Prefer re-checking a FlatMMO fact with a tool rather than trusting your general model memory.
+- Previous assistant messages are conversation context only, never FlatMMO factual authority. Re-check factual follow-ups with tools even if an earlier assistant message stated the fact.
+- Official names returned by tools always win over your own wording. Never rename an official skill or entity.
+- Never claim that a FlatMMO skill does not exist unless get_skill has returned found:false for the current wording; before making that claim, use list_skills to check the canonical skill list.
+- For comparisons with RuneScape, OSRS, or another game, use compare_game_term. If a FlatMMO entity is named, also check that entity with the relevant FlatMMO tool. Do not ask whether the user wants you to check data that the available tools can check immediately.
 - General English or genre explanations that do not assert FlatMMO-specific facts may be answered directly.
 
 CONVERSATION:
@@ -89,11 +93,32 @@ const TOOLS = [
   },
   {
     name: "get_skill",
-    description: "Return the current Companion record for one official FlatMMO skill.",
+    description: "Resolve player wording to one official FlatMMO skill and return its current Companion record. Safe input wording such as 'forge skill' may resolve to the canonical official name Forging. Foreign-game terms such as RuneScape Smithing are not FlatMMO skill aliases.",
     parameters: {
       type: "object",
       properties: { skill: { type: "string" } },
       required: ["skill"]
+    }
+  },
+  {
+    name: "list_skills",
+    description: "Return the complete canonical list of official playable skills in the current Companion data. Use this when the player asks for all skills and before claiming that a proposed skill name does not exist.",
+    parameters: {
+      type: "object",
+      properties: {}
+    }
+  },
+  {
+    name: "compare_game_term",
+    description: "Look up a curated comparison between a foreign-game term (for example RuneScape Smithing) and its documented FlatMMO comparison. This is the preferred tool for cross-game terminology comparisons; it does not import foreign-game mechanics into FlatMMO.",
+    parameters: {
+      type: "object",
+      properties: {
+        foreign_game: { type: "string", description: "Foreign game name, such as RuneScape or OSRS." },
+        foreign_term: { type: "string", description: "Foreign-game term, such as Smithing." },
+        flatmmo_term: { type: "string", description: "Optional FlatMMO term named by the player, such as Forging." }
+      },
+      required: ["foreign_term"]
     }
   },
   {
@@ -196,6 +221,50 @@ function bestRecord(records, query) {
   return bestScore >= 80 ? best : null;
 }
 
+const SKILL_QUERY_NOISE = new Set(["skill", "skills", "level", "levels", "lvl", "the", "a", "an", "my", "flatmmo"]);
+const SAFE_SKILL_INPUT_ALIASES = new Map([
+  ["forge", "forging"],
+  ["firemake", "firemaking"]
+]);
+
+function skillQueryKey(value) {
+  const tokens = norm(value).split(" ").filter(Boolean).filter(t => !SKILL_QUERY_NOISE.has(t));
+  const cleaned = tokens.join(" ");
+  return SAFE_SKILL_INPUT_ALIASES.get(cleaned) || cleaned;
+}
+
+function skillRecordKeys(record) {
+  const values = [record?.name, record?.id, ...(record?.aliases || [])].filter(Boolean);
+  const out = new Set();
+  for (const value of values) {
+    const key = skillQueryKey(value);
+    if (key) out.add(key);
+  }
+  return [...out];
+}
+
+function skillMatchScore(record, query) {
+  const q = skillQueryKey(query);
+  if (!q) return 0;
+  let score = 0;
+  for (const x of skillRecordKeys(record)) {
+    if (x === q) score = Math.max(score, 1000);
+    else if (q.split(" ").includes(x) && x.length >= 4) score = Math.max(score, 900);
+    else if (x.split(" ").includes(q) && q.length >= 4) score = Math.max(score, 850);
+    else if (q.length >= 4 && x.length >= 4 && (x.startsWith(q) || q.startsWith(x))) score = Math.max(score, 700 - Math.abs(x.length - q.length));
+  }
+  return score;
+}
+
+function resolveSkillRecord(records, query) {
+  let best = null, bestScore = 0;
+  for (const record of records || []) {
+    const score = skillMatchScore(record, query);
+    if (score > bestScore) { best = record; bestScore = score; }
+  }
+  return bestScore >= 650 ? { record: best, score: bestScore, inputKey: skillQueryKey(query) } : null;
+}
+
 function routeAccessible(route, levels = {}) {
   if (!route.skill || route.level == null) return { status: "unknown_or_no_skill_gate" };
   const lookup = Object.entries(levels).find(([k]) => norm(k) === norm(route.skill));
@@ -217,6 +286,11 @@ async function searchEntities(env, args) {
     const data = await loadData(env, file);
     const q = norm(args.query);
     for (const r of data.records || []) {
+      if (type === "skill") {
+        const score = skillMatchScore(r, args.query);
+        if (score >= 650) results.push({ id: r.id, type, name: r.name, score, canonical: true });
+        continue;
+      }
       const names = [r.name, r.id, ...(r.aliases || [])].filter(Boolean);
       let score = 0;
       for (const n of names) {
@@ -289,9 +363,67 @@ async function getQuest(env, args) {
 
 async function getSkill(env, args) {
   const data = await loadData(env, "flatmmo-skills.json");
-  const r = bestRecord(data.records, args.skill);
-  if (!r) return { found: false, skill: args.skill };
-  return { found: true, skill: r };
+  const match = resolveSkillRecord(data.records, args.skill);
+  if (!match) {
+    return {
+      found: false,
+      requested: args.skill,
+      officialSkills: (data.records || []).map(r => r.name),
+      note: "No canonical skill matched this wording. Do not substitute a different skill or invent a renamed skill."
+    };
+  }
+  const r = match.record;
+  return {
+    found: true,
+    requested: args.skill,
+    canonicalName: r.name,
+    interpretedInput: match.inputKey,
+    skill: r,
+    note: `Use the official name ${r.name} in the answer.`
+  };
+}
+
+async function listSkills(env) {
+  const data = await loadData(env, "flatmmo-skills.json");
+  return {
+    count: (data.records || []).length,
+    skills: (data.records || []).map(r => ({ id: r.id, name: r.name, type: r.type }))
+  };
+}
+
+async function compareGameTerm(env, args) {
+  const data = await loadData(env, "flatmmo-language.json");
+  const game = norm(args.foreign_game || "");
+  const term = norm(args.foreign_term || "");
+  const flat = norm(args.flatmmo_term || "");
+  const matches = [];
+  for (const e of data.foreignComparisons || []) {
+    const gameNames = [e.foreignGame, ...(e.foreignAliases || [])].map(norm).filter(Boolean);
+    const foreignTerms = (e.foreignTerms || []).map(norm).filter(Boolean);
+    const flatTerm = norm(e.flatmmoTerm || "");
+    const gameMatch = !game || gameNames.some(x => x === game || x.includes(game) || game.includes(x));
+    const termMatch = !term || foreignTerms.some(x => x === term || x.includes(term) || term.includes(x));
+    const flatMatch = !flat || flatTerm === flat || flatTerm.includes(flat) || flat.includes(flatTerm);
+    if (!gameMatch || !termMatch || !flatMatch) continue;
+    let score = 0;
+    if (game && gameNames.some(x => x === game)) score += 100;
+    if (term && foreignTerms.some(x => x === term)) score += 100;
+    if (flat && flatTerm === flat) score += 100;
+    matches.push({
+      id: e.id,
+      foreignGame: e.foreignGame,
+      foreignTerms: e.foreignTerms || [],
+      flatmmoTerm: e.flatmmoTerm,
+      comparison: e.answer,
+      source: e.source,
+      mechanicsAuthority: false,
+      score
+    });
+  }
+  matches.sort((a, b) => b.score - a.score);
+  return matches.length
+    ? { found: true, match: matches[0], note: "This comparison is curated language guidance. FlatMMO mechanics still come from FlatMMO tools/data." }
+    : { found: false, foreign_game: args.foreign_game || null, foreign_term: args.foreign_term, flatmmo_term: args.flatmmo_term || null };
 }
 
 async function findRoute(env, args) {
@@ -349,6 +481,8 @@ async function executeTool(env, name, args) {
     case "get_monster": return getMonster(env, args);
     case "get_quest": return getQuest(env, args);
     case "get_skill": return getSkill(env, args);
+    case "list_skills": return listSkills(env, args);
+    case "compare_game_term": return compareGameTerm(env, args);
     case "find_route": return findRoute(env, args);
     case "search_rules": return searchRules(env, args);
     case "lookup_term": return lookupTerm(env, args);
@@ -382,6 +516,15 @@ function cleanMessages(messages) {
     .filter(m => m && ["user","assistant"].includes(m.role) && typeof m.content === "string")
     .slice(-MAX_MESSAGES)
     .map(m => ({ role: m.role, content: m.content.slice(0, MAX_CONTENT) }));
+}
+
+function needsToolGrounding(text) {
+  const q = norm(text);
+  if (!q) return false;
+  // Pure social turns are the only turns allowed to skip a tool on the first model pass.
+  // The prototype is otherwise a FlatMMO assistant, so factual, corrective, comparison,
+  // and follow-up turns must re-ground against current tools instead of trusting chat history.
+  return !/^(hi|hello|hey|hiya|thanks|thank you|cheers|nice|cool|good morning|good afternoon|good evening|good night|bye|goodbye|see you|lol|haha|ha)$/.test(q);
 }
 
 export default {
@@ -423,6 +566,7 @@ export default {
     const model = env.MODEL || "@cf/zai-org/glm-4.7-flash";
     const working = [{ role: "system", content: SYSTEM_PROMPT }, ...history];
     const trace = [];
+    const requireInitialGrounding = needsToolGrounding(history[history.length - 1]?.content);
 
     try {
       for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
@@ -430,7 +574,9 @@ export default {
           messages: working,
           // GLM-4.7-Flash uses the current OpenAI-compatible tool envelope.
           tools: TOOLS.map(tool => ({ type: "function", function: tool })),
-          tool_choice: "auto",
+          // Require one fresh deterministic lookup for substantive FlatMMO turns.
+          // Later rounds return to auto so the model can stop calling tools and answer.
+          tool_choice: round === 0 && requireInitialGrounding ? "required" : "auto",
           parallel_tool_calls: false,
           max_completion_tokens: 500,
           temperature: 0.2
@@ -480,5 +626,3 @@ export default {
     }
   }
 };
-
-
