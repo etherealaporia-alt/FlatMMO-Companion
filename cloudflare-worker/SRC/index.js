@@ -281,27 +281,29 @@ function randomRouteSemantics(route, targetName, pools = {}) {
   if (route.type === "pickpocket") {
     const pool = pickpocketPool(pools.items, route.victim);
     const target = pool.find(x => norm(x.item) === norm(targetName));
+    const targetChance = target?.chance || chanceFromDenominator(route.rarityDenominator, route.rarity || null);
     return {
       random: true,
       action: "pickpocket",
-      targetChance: target?.chance || chanceFromDenominator(route.rarityDenominator, route.rarity || null),
+      targetChance,
       actionSuccessSeparateFromDropRoll: true,
-      guarantee: target?.chance?.denominator === 1,
+      guarantee: targetChance.known ? targetChance.denominator === 1 : null,
       otherDocumentedOutcomes: pool.filter(x => norm(x.item) !== norm(targetName)),
-      note: "Pickpocket success chance and item drop chance are separate. A successful pickpocket does not guarantee this target unless its listed item chance is 1/1."
+      note: "Pickpocket success chance and item drop chance are separate. A successful pickpocket does not guarantee this target unless its listed item chance is 1/1. A null guarantee means the current data does not establish whether the target is guaranteed."
     };
   }
   if (route.type === "monster_drop") {
     const monster = (pools.monsters?.records || []).find(m => norm(m.name) === norm(route.monster));
     const table = monsterLootTable(monster);
     const target = table.find(x => norm(x.item) === norm(targetName));
+    const targetChance = target?.chance || chanceFromDenominator(route.rarityDenominator);
     return {
       random: true,
       action: "monster_drop",
-      targetChance: target?.chance || chanceFromDenominator(route.rarityDenominator),
-      guarantee: target?.chance?.denominator === 1,
+      targetChance,
+      guarantee: targetChance.known ? targetChance.denominator === 1 : null,
       otherDocumentedOutcomes: table.filter(x => norm(x.item) !== norm(targetName)),
-      note: "Monster loot-table entries with odds above 1/1 are chance-based. Other listed drops are additional documented drops and are not assumed to be mutually exclusive."
+      note: "Monster loot-table entries with odds above 1/1 are chance-based. A null guarantee means the current data does not establish whether the target is guaranteed. Other listed drops are additional documented drops and are not assumed to be mutually exclusive."
     };
   }
   return null;
