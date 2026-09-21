@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FlatMMO AI Prototype</title>
+<style>
+:root{font-family:system-ui,sans-serif;color-scheme:dark;background:#171513;color:#eee8dd}body{max-width:900px;margin:auto;padding:24px}h1{margin-bottom:4px}.sub{color:#bdb5a8;margin-top:0}.panel{background:#221f1b;border:1px solid #4a443b;border-radius:12px;padding:16px;margin:14px 0}.row{display:flex;gap:10px;flex-wrap:wrap}input,textarea,button{font:inherit}input,textarea{background:#12110f;color:#eee8dd;border:1px solid #5b5348;border-radius:8px;padding:10px}input{flex:1;min-width:220px}textarea{width:100%;min-height:82px;box-sizing:border-box}button{background:#4c6843;color:white;border:0;border-radius:8px;padding:10px 16px;cursor:pointer}button.secondary{background:#5c4b39}button:disabled{opacity:.6;cursor:wait}.msg{padding:12px 14px;border-radius:10px;margin:10px 0;white-space:pre-wrap}.user{background:#302a24}.bot{background:#223021}.debug{font-family:ui-monospace,monospace;font-size:12px;background:#111;padding:10px;border-radius:8px;overflow:auto;white-space:pre-wrap}.tiny{font-size:12px;color:#aaa}.error{color:#ffb3a7}
+</style>
+</head>
+<body>
+<h1>FlatMMO AI Prototype</h1>
+<p class="sub">Disposable test front-end. The model handles language; FlatMMO facts come from deterministic JSON tools.</p>
+<div class="panel">
+  <div class="row"><input id="worker" placeholder="https://flatmmo-ai-prototype.YOURNAME.workers.dev"><input id="token" type="password" placeholder="Prototype token"></div>
+  <p class="tiny">Worker URL and token are stored only in this browser's localStorage. Do not commit the token to GitHub.</p>
+  <label><input id="debugToggle" type="checkbox" style="min-width:auto"> Show tool trace</label>
+</div>
+<div id="chat" class="panel"><div class="bot msg">Try talking normally. Example: “I'm Stealing 12 — can I get Green Leaf Seeds without fighting?”</div></div>
+<div class="panel">
+<textarea id="q" placeholder="Ask about FlatMMO..."></textarea>
+<div class="row" style="margin-top:10px"><button id="send">Send</button><button id="clear" class="secondary">Clear conversation</button></div>
+<div id="status" class="tiny"></div>
+</div>
+<script>
+const $=s=>document.querySelector(s), chat=$('#chat'), worker=$('#worker'), token=$('#token'), q=$('#q'), send=$('#send'), status=$('#status'), debugToggle=$('#debugToggle');
+worker.value=localStorage.getItem('flatmmo_ai_worker')||'';token.value=localStorage.getItem('flatmmo_ai_token')||'';debugToggle.checked=localStorage.getItem('flatmmo_ai_debug')==='1';
+let messages=[];
+function add(role,text,trace){const d=document.createElement('div');d.className='msg '+(role==='user'?'user':'bot');d.textContent=text;chat.appendChild(d);if(trace&&debugToggle.checked){const x=document.createElement('div');x.className='debug';x.textContent=JSON.stringify(trace,null,2);chat.appendChild(x)}chat.scrollTop=chat.scrollHeight}
+async function ask(){const text=q.value.trim();if(!text)return;const url=worker.value.trim().replace(/\/$/,'');if(!url){status.textContent='Enter the Worker URL first.';return}localStorage.setItem('flatmmo_ai_worker',url);localStorage.setItem('flatmmo_ai_token',token.value);localStorage.setItem('flatmmo_ai_debug',debugToggle.checked?'1':'0');messages.push({role:'user',content:text});add('user',text);q.value='';send.disabled=true;status.textContent='Thinking…';try{const r=await fetch(url,{method:'POST',headers:{'content-type':'application/json',...(token.value?{'authorization':'Bearer '+token.value}:{})},body:JSON.stringify({messages,debug:debugToggle.checked})});const data=await r.json();if(!r.ok)throw new Error(data.message||data.error||('HTTP '+r.status));messages.push({role:'assistant',content:data.answer});add('assistant',data.answer,data.toolTrace);status.textContent='';}catch(e){status.innerHTML='<span class="error">'+String(e.message||e).replace(/[<&]/g,c=>c==='<'?'&lt;':'&amp;')+'</span>';messages.pop()}finally{send.disabled=false;q.focus()}}
+send.onclick=ask;q.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();ask()}});$('#clear').onclick=()=>{messages=[];chat.innerHTML='<div class="bot msg">Conversation cleared.</div>';};
+</script>
+</body>
+</html>

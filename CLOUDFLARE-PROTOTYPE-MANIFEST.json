@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "release": "cloudflare-github-ai-prototype-v0.2",
+  "generated": "2026-09-21",
+  "targetRepository": "etherealaporia-alt/FlatMMO-Companion",
+  "targetBranch": "v2-online",
+  "cloudflareRootDirectory": "cloudflare-worker",
+  "workerName": "flatmmo-ai-prototype",
+  "model": "@cf/zai-org/glm-4.7-flash",
+  "security": "PROTOTYPE_TOKEN is a required runtime secret; POST fails closed when it is missing.",
+  "files": [
+    {
+      "path": "CLOUDFLARE-GITHUB-SETUP.md",
+      "bytes": 3861,
+      "sha256": "2d20dad3d456e403c1a7b5d89e50d4e608422cecaecffdacfdeb9e88fd7cbd9f"
+    },
+    {
+      "path": "ai-prototype.html",
+      "bytes": 4295,
+      "sha256": "26a54e9c3751654cab84f1610c5c24a45e99e24e0352acfe8f56a6e38c8ebdc4"
+    },
+    {
+      "path": "cloudflare-worker/.gitignore",
+      "bytes": 59,
+      "sha256": "d68bd3b7ae533f3dd57aaa090b9f36cbba22b7b295c9eb5ed43d65f1f4b5c167"
+    },
+    {
+      "path": "cloudflare-worker/package.json",
+      "bytes": 237,
+      "sha256": "f21f8a93d2c5bbaba5422541a646417a4d02436787867bccfa450c6ccfe7522a"
+    },
+    {
+      "path": "cloudflare-worker/src/index.js",
+      "bytes": 21014,
+      "sha256": "a52c6b9c8fe24da5ce9539b1c34cf6f9d5dc1f651ccb4d9b27c943f66bbb3396"
+    },
+    {
+      "path": "cloudflare-worker/wrangler.jsonc",
+      "bytes": 327,
+      "sha256": "c45dd00f0a7bc40ee6f065cf4020c8c2a5c083aa149053c47c3835fc9cd5b4c5"
+    }
+  ]
+}
