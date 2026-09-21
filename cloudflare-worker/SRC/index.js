@@ -431,4 +431,54 @@ export default {
           // GLM-4.7-Flash uses the current OpenAI-compatible tool envelope.
           tools: TOOLS.map(tool => ({ type: "function", function: tool })),
           tool_choice: "auto",
-          parallel_to
+          parallel_tool_calls: false,
+          max_completion_tokens: 500,
+          temperature: 0.2
+        });
+        const ai = normalizeAi(raw);
+        const call = ai.tool_calls?.[0];
+        if (!call) {
+          const answer = ai.content || "I couldn't form an answer from the available FlatMMO data.";
+          return json({ answer, model, toolTrace: body.debug ? trace : undefined }, 200, corsOrigin);
+        }
+
+        let args = call.arguments;
+        if (typeof args === "string") {
+          try { args = JSON.parse(args); } catch { args = {}; }
+        }
+        const toolResult = await executeTool(env, call.name, args || {});
+        trace.push({ tool: call.name, arguments: args || {}, result: toolResult });
+
+        // Preserve the model-generated tool call ID for the next inference round.
+        // Current Workers AI chat models expect an OpenAI-compatible assistant
+        // tool_calls message followed by a tool result carrying tool_call_id.
+        const toolCallId = call.id || `call_${round}`;
+        const callArguments = typeof call.arguments === "string"
+          ? call.arguments
+          : JSON.stringify(args || {});
+        working.push({
+          role: "assistant",
+          content: null,
+          tool_calls: [{
+            id: toolCallId,
+            type: "function",
+            function: {
+              name: call.name,
+              arguments: callArguments
+            }
+          }]
+        });
+        working.push({
+          role: "tool",
+          tool_call_id: toolCallId,
+          content: JSON.stringify(toolResult)
+        });
+      }
+      return json({ error: "tool_loop_limit", message: "The model requested too many tool calls for one reply.", toolTrace: body.debug ? trace : undefined }, 502, corsOrigin);
+    } catch (err) {
+      return json({ error: "ai_error", message: String(err?.message || err), toolTrace: body.debug ? trace : undefined }, 502, corsOrigin);
+    }
+  }
+};
+
+
