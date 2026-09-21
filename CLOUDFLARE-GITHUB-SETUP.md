@@ -1,122 +1,65 @@
 # FlatMMO AI Prototype — GitHub → Cloudflare setup
 
-This package is designed to be added to the **`v2-online`** branch of `etherealaporia-alt/FlatMMO-Companion` without replacing the existing Companion.
+This prototype is deployed from **`v2-online`**. The public GitHub Pages front end calls the Cloudflare Worker directly; players do **not** need an API key, Worker URL, or shared password.
 
-## Repository layout after upload
-
-```text
-/ai-prototype.html
-/CLOUDFLARE-GITHUB-SETUP.md
-/CLOUDFLARE-PROTOTYPE-MANIFEST.json
-/cloudflare-worker/
-  .gitignore
-  package.json
-  wrangler.jsonc
-  /src/
-    index.js
-```
-
-The existing FlatMMO files remain untouched.
-
-## 1. Upload these files to GitHub
-
-Upload the contents of this package to the **root of `v2-online`**, preserving the `cloudflare-worker/` folder structure.
-
-Do not put any passwords, API tokens or Cloudflare secrets in GitHub.
-
-The prototype page will then be available through GitHub Pages after the normal Pages deployment at approximately:
+## Public request path
 
 ```text
-https://etherealaporia-alt.github.io/FlatMMO-Companion/ai-prototype.html
+Player browser
+→ GitHub Pages (`ai-prototype.html`)
+→ Cloudflare Worker
+→ Workers AI
+→ deterministic FlatMMO tools/data
 ```
 
-## 2. Connect Cloudflare Workers to the GitHub repository
+The browser creates a random anonymous client ID in localStorage. It is used only as a rate-limit key. A second, looser IP rate limit is a backstop against clients that continually replace their browser ID.
 
-In Cloudflare:
+The current limits are configured in `cloudflare-worker/wrangler.jsonc`:
 
-1. Open **Workers & Pages**.
-2. Create/import a Worker from a Git repository, or open the Worker and choose **Settings → Builds → Connect**.
-3. Authorize Cloudflare's GitHub integration if prompted.
-4. Repository: **`etherealaporia-alt/FlatMMO-Companion`**.
-5. Production branch: **`v2-online`**.
-6. Root directory: **`cloudflare-worker`**.
-7. Build command: **leave blank**.
-8. Deploy command: **`npx wrangler deploy`** (the Cloudflare default is fine).
-9. Save/deploy.
+- 12 public requests per minute per anonymous browser ID
+- 120 public requests per minute per source IP as an aggregate safety cap
 
-`wrangler.jsonc` supplies the Worker name, Workers AI binding, model, and data URL. The Worker uses the `AI` binding as `env.AI`; no external model API key is required.
+These are abuse controls, not billing/accounting quotas, and can be tuned later.
 
-## 3. Add the prototype password as a Cloudflare runtime secret
+## Deployment
 
-After the first Worker deployment:
+GitHub Actions deploys `cloudflare-worker/` when Worker files change on `v2-online`. `wrangler.jsonc` supplies the Worker name, Workers AI binding, model, data URL, and rate-limit bindings.
 
-1. Open the deployed Worker.
-2. Go to **Settings → Variables & Secrets**.
-3. Add a **Secret** named exactly:
-
-```text
-PROTOTYPE_TOKEN
-```
-
-4. Give it a random password known only to you while this is a private test.
-5. Deploy/apply the secret change.
-
-Do **not** add `PROTOTYPE_TOKEN` as a GitHub file, Wrangler `vars` value, or ordinary plaintext variable.
-
-The Worker deliberately fails closed until this secret exists. Opening the Worker URL before configuring it should return a JSON health response with `ready: false` and HTTP 503 rather than exposing an unprotected AI endpoint.
-
-## 4. Check the Worker
-
-Open the Worker's `.workers.dev` URL in a browser.
-
-When configured correctly, the health response should contain:
-
-```json
-{
-  "ok": true,
-  "service": "FlatMMO AI Prototype",
-  "protected": true,
-  "ready": true
-}
-```
-
-The response also reports the configured model.
-
-## 5. Open the GitHub Pages prototype
-
-Open:
+The public page is:
 
 ```text
 https://etherealaporia-alt.github.io/FlatMMO-Companion/ai-prototype.html
 ```
 
-Enter:
+The Worker is:
 
-- the Cloudflare Worker URL, such as `https://flatmmo-ai-prototype.<subdomain>.workers.dev`
-- the same `PROTOTYPE_TOKEN` password you stored in Cloudflare
+```text
+https://flatmmo-ai-prototype.etherealaporia.workers.dev
+```
 
-Enable **Show tool trace** while testing.
+## Optional admin token
 
-The browser stores the Worker URL and prototype password only in that browser's localStorage. The password is never added to the repository by these files.
+`PROTOTYPE_TOKEN` is no longer required for ordinary public use. If the existing Cloudflare runtime secret remains configured, it acts as an **admin/debug bypass**:
 
-## What this prototype is testing
+- requests with the correct Bearer token bypass public rate limiting
+- `debug: true` returns tool traces only for an authenticated admin request
+- the token must remain only in Cloudflare runtime secrets; never put it in GitHub or front-end code
 
-The LLM handles ordinary language, references, corrections and tool selection. FlatMMO-specific facts come from deterministic tools reading the current published Companion JSON.
+The public site does not read, store, or send this token. It also clears the old private-prototype token/Worker/debug localStorage entries when loaded.
 
-Current tools:
+## Browser-origin boundary
 
-- `search_entities`
-- `get_item`
-- `find_item_sources`
-- `get_monster`
-- `get_quest`
-- `get_skill`
-- `find_route`
-- `search_rules`
-- `lookup_term`
+Normal public POSTs are accepted from:
 
-This deliberately does **not** replace the production conversation engine yet.
+- `https://etherealaporia-alt.github.io`
+- `http://localhost...` / `http://127.0.0.1...` for local development
 
-## Important deployment note
+The Origin check is not treated as authentication; non-browser clients can forge Origin headers. Rate limiting remains the actual public abuse-control layer.
 
-Because Cloudflare is connected to `v2-online`, future pushes to that branch can trigger a Worker build as well as the existing GitHub Pages workflow. That is expected. The Worker project is isolated by setting its Cloudflare **Root directory** to `cloudflare-worker`.
+## Health check
+
+Opening the Worker URL returns JSON including `publicAccess`, `rateLimited`, `adminAccess`, and `ready`. Public readiness depends on the AI and rate-limit bindings, not on `PROTOTYPE_TOKEN`.
+
+## Future hardening
+
+If public abuse becomes material, add Cloudflare Turnstile with server-side Siteverify validation. The public Turnstile sitekey may live in the front end; the Turnstile secret must remain Worker-side.
