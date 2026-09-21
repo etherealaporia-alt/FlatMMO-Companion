@@ -14,9 +14,11 @@ html{scroll-padding-bottom:110px}html,body{margin:0;min-height:100%;background:v
 body{min-height:100vh;background-image:linear-gradient(#ffffff02 1px,transparent 1px);background-size:100% 32px}
 .shell{max-width:1000px;margin:0 auto;padding:24px 18px 130px}
 header{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:8px 2px 24px;border-bottom:1px solid var(--line);margin-bottom:22px}
+.home-link{color:var(--muted);font:700 .78rem var(--mono);white-space:nowrap}.home-link:hover{color:var(--accent)}
 h1{font-family:var(--mono);font-weight:800;letter-spacing:-.06em;font-size:clamp(1.8rem,5vw,2.5rem);line-height:1.1;margin:0 0 8px}.brand-flat{color:#d19b77}.brand-mmo{color:#9be452}.brand-companion{font-size:.54em;letter-spacing:0;color:var(--text);display:block;margin-top:6px}.sub{color:var(--muted);font-size:.85rem;line-height:1.5}
 .badge{padding:8px 10px;border:1px solid #567347;border-radius:4px;color:#bce6a9;background:#273520;font:700 .78rem var(--mono);white-space:nowrap}
 .card{background:var(--panel);border:1px solid var(--line);border-top:3px solid var(--wood);border-radius:8px;padding:18px;margin-bottom:18px;box-shadow:0 3px 0 #0003}
+.site-links{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:9px;margin-top:14px}.site-links a{display:block;background:var(--panel2);border:1px solid var(--line);border-radius:5px;color:var(--text);padding:12px;text-decoration:none}.site-links a:hover{border-color:var(--accent);color:var(--accent)}.site-links strong{display:block;font:700 .88rem var(--mono);margin-bottom:4px}.site-links span{display:block;color:var(--muted);font-size:.8rem;line-height:1.4}
 .section-heading{font:700 .88rem var(--mono);color:var(--text);margin:0 0 12px}.status{display:flex;gap:8px;flex-wrap:wrap;font-size:.8rem;color:var(--muted);line-height:1.5}.dot{width:7px;height:7px;border-radius:2px;display:inline-block;background:var(--good);margin-right:6px}.dot.warn{background:var(--warn)}.dot.bad{background:var(--bad)}
 .playerbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;margin-top:14px}
 .playerbar input,.compose-inner input{min-width:0;background:var(--panel2);border:1px solid var(--line);border-radius:5px;color:var(--text);font:inherit;font-size:16px;padding:12px;outline:none}input::placeholder{color:#a9ad9d;opacity:1}
@@ -45,8 +47,18 @@ dialog{background:var(--panel);color:var(--text);border:1px solid #687258;border
 <div class="shell">
 <header>
   <div><h1 aria-label="FlatMMO Companion"><span class="brand-flat">FLAT</span><span class="brand-mmo">MMO</span><span class="brand-companion">COMPANION</span></h1><div class="sub">Your next step, backed by game data.</div></div>
-  <div class="badge">Community companion</div>
+  <div><a class="home-link" href="https://etherealaporia-alt.github.io/FlatMMO-Companion/" aria-current="page">Return to public site</a><div class="badge" style="margin-top:8px">Community companion</div></div>
 </header>
+
+<nav class="card" aria-label="FlatMMO Companion pages">
+  <h2 class="section-heading">EXPLORE THE PROJECT</h2>
+  <div class="site-links">
+    <a href="ai.html"><strong>AI context</strong><span>Grounding data and canonical context.</span></a>
+    <a href="ai-prototype.html"><strong>AI prototype</strong><span>Public conversational AI preview.</span></a>
+    <a href="FlatMMO-Skill-Guides.html"><strong>Skill guides</strong><span>Practical guides for all listed skills.</span></a>
+    <a href="https://flatmmo-ai-prototype.etherealaporia.workers.dev/"><strong>Cloudflare Worker</strong><span>Public AI API health and landing page.</span></a>
+  </div>
+</nav>
 
 <section class="card" aria-label="Player and knowledge status">
   <h2 class="section-heading">YOUR ADVENTURE</h2>

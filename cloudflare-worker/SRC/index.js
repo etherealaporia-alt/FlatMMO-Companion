@@ -1,6 +1,7 @@
 const MAX_TOOL_ROUNDS = 6;
 const MAX_MESSAGES = 24;
 const MAX_CONTENT = 5000;
+const PUBLIC_SITE_URL = "https://etherealaporia-alt.github.io/FlatMMO-Companion/";
 
 const SYSTEM_PROMPT = `You are the conversational interface for FlatMMO Companion.
 
@@ -188,7 +189,7 @@ const TOOLS = [
 ];
 
 function json(data, status = 200, origin = "*") {
-  return new Response(JSON.stringify(data), {
+  return new Response(JSON.stringify({ publicSite: PUBLIC_SITE_URL, ...data }), {
     status,
     headers: {
       "content-type": "application/json; charset=utf-8",
@@ -197,6 +198,12 @@ function json(data, status = 200, origin = "*") {
       "access-control-allow-methods": "POST, OPTIONS",
       "vary": "Origin"
     }
+  });
+}
+
+function workerLanding() {
+  return new Response(`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FlatMMO AI Prototype Worker</title><body><main><h1>FlatMMO AI Prototype Worker</h1><p><a href="${PUBLIC_SITE_URL}">Open the FlatMMO Companion public site</a></p><p>This endpoint serves the public AI API.</p></main></body></html>`, {
+    headers: { "content-type": "text/html; charset=utf-8" }
   });
 }
 
@@ -762,6 +769,7 @@ export default {
     // Browser-visible health check. Public readiness depends on AI + rate-limit bindings,
     // not on the optional admin token.
     if (request.method === "GET") {
+      if ((request.headers.get("Accept") || "").includes("text/html")) return workerLanding();
       const publicReady = Boolean(env.AI && env.PUBLIC_CLIENT_RATE_LIMITER && env.PUBLIC_IP_RATE_LIMITER);
       return json({
         ok: true,
