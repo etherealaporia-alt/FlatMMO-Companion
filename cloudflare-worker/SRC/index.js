@@ -828,110 +828,61 @@ export default {
     const requireInitialGrounding = needsToolGrounding(history[history.length - 1]?.content);
 
     try {
-      if (!requireInitialGrounding) {
-        const raw = await env.AI.run(model, { messages: working });
+      for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
+        const raw = await env.AI.run(model, {
+          messages: working,
+          // GLM-4.7-Flash accepts the OpenAI-compatible function-tool envelope.
+          tools: TOOLS.map(tool => ({ type: "function", function: tool })),
+          // Require one fresh deterministic lookup for substantive FlatMMO turns.
+          // Later rounds return to auto so the model can stop calling tools and answer.
+          tool_choice: round === 0 && requireInitialGrounding ? "required" : "auto",
+          parallel_tool_calls: false,
+          max_completion_tokens: 500,
+          temperature: 0.2
+        });
         const ai = normalizeAi(raw);
-        return json({ answer: ai.content || "Hello.", model }, 200, responseOrigin);
-      }
-
-      const wrappedTools = TOOLS.map(tool => ({ type: "function", function: tool }));
-
-      const tests = [
-        {
-          name: "A: working messages + all wrapped tools",
-          input: {
-            messages: working,
-            tools: wrappedTools
-          }
-        },
-        {
-          name: "B: + tool_choice required",
-          input: {
-            messages: working,
-            tools: wrappedTools,
-            tool_choice: "required"
-          }
-        },
-        {
-          name: "C: + parallel_tool_calls false",
-          input: {
-            messages: working,
-            tools: wrappedTools,
-            tool_choice: "required",
-            parallel_tool_calls: false
-          }
-        },
-        {
-          name: "D: + max_completion_tokens 500",
-          input: {
-            messages: working,
-            tools: wrappedTools,
-            tool_choice: "required",
-            parallel_tool_calls: false,
-            max_completion_tokens: 500
-          }
-        },
-        {
-          name: "E: + temperature 0.2 (exact original first-round payload)",
-          input: {
-            messages: working,
-            tools: wrappedTools,
-            tool_choice: "required",
-            parallel_tool_calls: false,
-            max_completion_tokens: 500,
-            temperature: 0.2
-          }
+        const call = ai.tool_calls?.[0];
+        if (!call) {
+          const answer = ai.content || "I couldn't form an answer from the available FlatMMO data.";
+          return json({ answer, model, toolTrace: debugEnabled ? trace : undefined }, 200, responseOrigin);
         }
-      ];
 
-      const results = [];
-
-      for (const test of tests) {
-        try {
-          const raw = await env.AI.run(model, test.input);
-          const ai = normalizeAi(raw);
-          results.push({
-            name: test.name,
-            ok: true,
-            tool: ai.tool_calls?.[0]?.name || null,
-            hasText: Boolean(ai.content)
-          });
-        } catch (err) {
-          results.push({
-            name: test.name,
-            ok: false,
-            error: String(err?.message || err)
-          });
-          break;
+        let args = call.arguments;
+        if (typeof args === "string") {
+          try { args = JSON.parse(args); } catch { args = {}; }
         }
+        const toolResult = await executeTool(env, call.name, args || {});
+        trace.push({ tool: call.name, arguments: args || {}, result: toolResult });
+
+        // Preserve the model-generated tool call ID for the next inference round.
+        // Current Workers AI chat models expect an OpenAI-compatible assistant
+        // tool_calls message followed by a tool result carrying tool_call_id.
+        const toolCallId = call.id || `call_${round}`;
+        const callArguments = typeof call.arguments === "string"
+          ? call.arguments
+          : JSON.stringify(args || {});
+        working.push({
+          role: "assistant",
+          // Workers AI binding rejects null assistant content on tool-call turns.
+          content: ai.content || "",
+          tool_calls: [{
+            id: toolCallId,
+            type: "function",
+            function: {
+              name: call.name,
+              arguments: callArguments
+            }
+          }]
+        });
+        working.push({
+          role: "tool",
+          tool_call_id: toolCallId,
+          content: JSON.stringify(toolResult)
+        });
       }
-
-      const lines = ["REQUEST OPTION DIAGNOSTIC", ""];
-      for (const r of results) {
-        lines.push(`${r.ok ? "PASS" : "FAIL"} — ${r.name}${r.ok && r.tool ? ` — selected ${r.tool}` : ""}${!r.ok ? ` — ${r.error}` : ""}`);
-      }
-
-      const failed = results.find(r => !r.ok);
-      if (failed) {
-        lines.push("", `First failing stage: ${failed.name}`);
-      } else {
-        lines.push("", "All first-round request variants passed. The next suspect is the second tool-result/model round.");
-      }
-
-      return json({
-        answer: lines.join("\n"),
-        model,
-        diagnostic: {
-          stage: "request_option_isolation",
-          results
-        }
-      }, 200, responseOrigin);
-
+      return json({ error: "tool_loop_limit", message: "The model requested too many tool calls for one reply.", toolTrace: debugEnabled ? trace : undefined }, 502, responseOrigin);
     } catch (err) {
-      return json({
-        error: "request_option_diagnostic_error",
-        message: String(err?.message || err)
-      }, 502, responseOrigin);
+      return json({ error: "ai_error", message: String(err?.message || err), toolTrace: debugEnabled ? trace : undefined }, 502, responseOrigin);
     }
   }
 };
