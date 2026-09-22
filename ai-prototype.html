@@ -28,8 +28,9 @@
 <script>
 const APP_VERSION = new Date().toISOString().slice(0, 10).replace(/-/g, '');
 const IS_PAGES = location.hostname.endsWith('.pages.dev');
+const PAGE_API_CANDIDATES = ['/API/chat', '/api/chat'];
 const WORKER_URL = IS_PAGES
-  ? '/api/chat'
+  ? PAGE_API_CANDIDATES[0]
   : 'https://flatmmo-ai-prototype.etherealaporia.workers.dev/?v=' + APP_VERSION;
 const CLIENT_ID_KEY='flatmmo_ai_public_client';
 const $=s=>document.querySelector(s), chat=$('#chat'), q=$('#q'), send=$('#send'), status=$('#status'), diag=$('#diag');
@@ -69,11 +70,35 @@ async function ask(){
   messages.push({role:'user',content:text});
   add('user',text);q.value='';send.disabled=true;status.textContent='Thinking…';
   try {
-    const requestUrl = WORKER_URL;
-    setDiag('Attempting fetch: ' + requestUrl + ' from origin ' + (location.origin || 'unknown'));
-    const r=await fetch(requestUrl,{method:'POST',mode:'cors',credentials:'omit',headers:{'content-type':'application/json','x-flatmmo-client':clientId},body:JSON.stringify({messages})});
-    let data;
-    try { data = await r.json(); } catch { data = {}; }
+    const requestUrls = IS_PAGES ? PAGE_API_CANDIDATES : [WORKER_URL];
+    let r = null;
+    let data = {};
+    let requestUrl = requestUrls[0];
+    let lastError = null;
+
+    for (const candidate of requestUrls) {
+      requestUrl = candidate;
+      setDiag('Attempting fetch: ' + requestUrl + ' from origin ' + (location.origin || 'unknown'));
+      try {
+        const candidateResponse = await fetch(requestUrl,{method:'POST',mode:'cors',credentials:'omit',headers:{'content-type':'application/json','x-flatmmo-client':clientId},body:JSON.stringify({messages})});
+        let candidateData;
+        try { candidateData = await candidateResponse.json(); } catch { candidateData = {}; }
+
+        // On Pages, a 404/405 usually means the function route uses the other folder case.
+        if (IS_PAGES && (candidateResponse.status === 404 || candidateResponse.status === 405)) {
+          lastError = new Error((candidateData && (candidateData.message || candidateData.error)) || ('HTTP '+candidateResponse.status));
+          continue;
+        }
+
+        r = candidateResponse;
+        data = candidateData;
+        break;
+      } catch (candidateError) {
+        lastError = candidateError;
+      }
+    }
+
+    if (!r) throw lastError || new Error('No Pages API route responded.');
     if(!r.ok)throw new Error((data && (data.message || data.error)) || ('HTTP '+r.status));
     messages.push({role:'assistant',content:data.answer});
     add('assistant',data.answer);status.textContent='';
@@ -82,7 +107,7 @@ async function ask(){
     const baseMessage = String(e.message || e);
     const originNote = location.origin && location.origin !== 'null' ? ' Browser origin: ' + location.origin : ' Browser origin unavailable';
     const hint = IS_PAGES
-      ? ' This Pages deployment should expose /api/chat through the Pages Function. If it does not, check that functions/api/chat.js exists at the repository root and that Cloudflare redeployed the latest commit.'
+      ? ' This Pages deployment should expose /API/chat (or /api/chat) through the Pages Function. If it does not, check that functions/api/chat.js exists at the repository root and that Cloudflare redeployed the latest commit.'
       : ' This page must be opened from the deployed GitHub Pages URL, not a local file or stale cached copy. If it still fails from that URL, a browser extension, local cache, or network policy may be blocking the request.';
     status.innerHTML='<span class="error">Fetch failed: '+baseMessage.replace(/[<&]/g,c=>c==='<'?'&lt;':'&amp;') + originNote + hint.replace(/[<&]/g,c=>c==='<'?'&lt;':'&amp;')+'</span>';
     setDiag('Fetch blocked or unreachable. Target: ' + WORKER_URL + ' | page origin: ' + (location.origin || 'unknown'));
