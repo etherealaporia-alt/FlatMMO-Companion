@@ -828,6 +828,16 @@ export default {
     const requireInitialGrounding = needsToolGrounding(history[history.length - 1]?.content);
 
     try {
+      // Diagnostic baseline: pure social turns use the model with messages only.
+      // This deliberately bypasses every function-calling field so an error here
+      // cannot be caused by the tool schema, tool_choice, or parallel_tool_calls.
+      if (!requireInitialGrounding) {
+        const raw = await env.AI.run(model, { messages: working });
+        const ai = normalizeAi(raw);
+        const answer = ai.content || "Hello.";
+        return json({ answer, model, toolTrace: debugEnabled ? trace : undefined }, 200, responseOrigin);
+      }
+
       for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
         const raw = await env.AI.run(model, {
           messages: working,
