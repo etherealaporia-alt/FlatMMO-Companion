@@ -843,7 +843,7 @@ export default {
       // inference request itself is valid.
       const raw = await env.AI.run(model, {
         messages: working,
-        tools: [TOOLS[0]]
+        tools: [TOOLS[3]]
       });
 
       const ai = normalizeAi(raw);
