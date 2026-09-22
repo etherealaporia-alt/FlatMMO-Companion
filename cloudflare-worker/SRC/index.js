@@ -828,56 +828,130 @@ export default {
     const requireInitialGrounding = needsToolGrounding(history[history.length - 1]?.content);
 
     try {
-      // Diagnostic baseline: pure social turns use only messages.
+      // Keep a known-good baseline for social turns.
       if (!requireInitialGrounding) {
         const raw = await env.AI.run(model, { messages: working });
         const ai = normalizeAi(raw);
         const answer = ai.content || "Hello.";
-        return json({ answer, model, toolTrace: debugEnabled ? trace : undefined }, 200, responseOrigin);
+        return json({ answer, model }, 200, responseOrigin);
       }
 
-      // Diagnostic step 2:
-      // Use Cloudflare's minimal traditional function-calling shape:
-      // messages + flat tools only. Do NOT execute the tool or perform a
-      // second model round yet; this isolates whether the initial tool-bearing
-      // inference request itself is valid.
-      const raw = await env.AI.run(model, {
-        messages: working,
-        tools: [{ type: "function", function: TOOLS[3] }]
-      });
+      // Diagnostic: recursively test groups of wrapped tools.
+      // If a group fails, split it until the exact failing tool(s) are isolated.
+      // If both halves pass but the parent group fails, report a combination/size issue.
+      const probeMessages = [
+        { role: "system", content: "You are testing whether tool definitions are accepted. Respond normally or call a tool." },
+        { role: "user", content: "Test the available tools." }
+      ];
 
-      const ai = normalizeAi(raw);
-      const call = ai.tool_calls?.[0];
-
-      if (call) {
-        return json({
-          answer: `DIAGNOSTIC OK: Workers AI accepted the tool definitions and selected "${call.name}".`,
-          model,
-          diagnostic: {
-            stage: "initial_tool_call",
-            accepted: true,
-            tool: call.name
+      async function probe(indices) {
+        try {
+          await env.AI.run(model, {
+            messages: probeMessages,
+            tools: indices.map(i => ({ type: "function", function: TOOLS[i] }))
+          });
+          return {
+            ok: true,
+            indices,
+            names: indices.map(i => TOOLS[i].name)
+          };
+        } catch (err) {
+          if (indices.length === 1) {
+            return {
+              ok: false,
+              indices,
+              names: [TOOLS[indices[0]].name],
+              error: String(err?.message || err)
+            };
           }
-        }, 200, responseOrigin);
+
+          const mid = Math.ceil(indices.length / 2);
+          const left = await probe(indices.slice(0, mid));
+          const right = await probe(indices.slice(mid));
+
+          return {
+            ok: false,
+            indices,
+            names: indices.map(i => TOOLS[i].name),
+            error: String(err?.message || err),
+            left,
+            right,
+            combinationOnly: left.ok && right.ok
+          };
+        }
+      }
+
+      const all = TOOLS.map((_, i) => i);
+      const tree = await probe(all);
+
+      const failing = [];
+      const combinationFailures = [];
+
+      function collect(node) {
+        if (!node || node.ok) return;
+        if (node.indices?.length === 1) {
+          failing.push({
+            index: node.indices[0],
+            name: node.names[0],
+            error: node.error
+          });
+          return;
+        }
+        if (node.combinationOnly) {
+          combinationFailures.push({
+            indices: node.indices,
+            names: node.names,
+            error: node.error
+          });
+        }
+        collect(node.left);
+        collect(node.right);
+      }
+
+      collect(tree);
+
+      const lines = [
+        "TOOL SCHEMA DIAGNOSTIC COMPLETE",
+        "",
+        `Total tools: ${TOOLS.length}`,
+        `Individually failing tools: ${failing.length}`
+      ];
+
+      if (failing.length) {
+        lines.push("", "Failing tool(s):");
+        for (const item of failing) {
+          lines.push(`- #${item.index} ${item.name}: ${item.error}`);
+        }
+      } else {
+        lines.push("", "No individual tool schema failed.");
+      }
+
+      if (combinationFailures.length) {
+        lines.push("", "Combination/size failures:");
+        for (const item of combinationFailures) {
+          lines.push(`- ${item.names.join(", ")}`);
+        }
+      }
+
+      if (!failing.length && !combinationFailures.length && tree.ok) {
+        lines.push("", "The entire wrapped tool set was accepted in this diagnostic.");
       }
 
       return json({
-        answer: ai.content || "DIAGNOSTIC: Workers AI accepted the tools payload but did not select a tool.",
+        answer: lines.join("\n"),
         model,
         diagnostic: {
-          stage: "initial_tool_call",
-          accepted: true,
-          tool: null
+          stage: "tool_schema_isolation",
+          failing,
+          combinationFailures,
+          tree
         }
       }, 200, responseOrigin);
+
     } catch (err) {
       return json({
-        error: "ai_error_initial_tool_call",
-        message: String(err?.message || err),
-        diagnostic: {
-          stage: "initial_tool_call",
-          accepted: false
-        }
+        error: "tool_schema_diagnostic_error",
+        message: String(err?.message || err)
       }, 502, responseOrigin);
     }
   }
