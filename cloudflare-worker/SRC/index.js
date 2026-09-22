@@ -828,9 +828,7 @@ export default {
     const requireInitialGrounding = needsToolGrounding(history[history.length - 1]?.content);
 
     try {
-      // Diagnostic baseline: pure social turns use the model with messages only.
-      // This deliberately bypasses every function-calling field so an error here
-      // cannot be caused by the tool schema, tool_choice, or parallel_tool_calls.
+      // Diagnostic baseline: pure social turns use only messages.
       if (!requireInitialGrounding) {
         const raw = await env.AI.run(model, { messages: working });
         const ai = normalizeAi(raw);
@@ -838,60 +836,49 @@ export default {
         return json({ answer, model, toolTrace: debugEnabled ? trace : undefined }, 200, responseOrigin);
       }
 
-      for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
-        const raw = await env.AI.run(model, {
-          messages: working,
-          // Workers AI binding expects the flat function-tool definitions.
-          tools: TOOLS,
-          // Require one fresh deterministic lookup for substantive FlatMMO turns.
-          // Later rounds return to auto so the model can stop calling tools and answer.
-          tool_choice: round === 0 && requireInitialGrounding ? "required" : "auto",
-          parallel_tool_calls: false,
-          max_completion_tokens: 500,
-          temperature: 0.2
-        });
-        const ai = normalizeAi(raw);
-        const call = ai.tool_calls?.[0];
-        if (!call) {
-          const answer = ai.content || "I couldn't form an answer from the available FlatMMO data.";
-          return json({ answer, model, toolTrace: debugEnabled ? trace : undefined }, 200, responseOrigin);
-        }
+      // Diagnostic step 2:
+      // Use Cloudflare's minimal traditional function-calling shape:
+      // messages + flat tools only. Do NOT execute the tool or perform a
+      // second model round yet; this isolates whether the initial tool-bearing
+      // inference request itself is valid.
+      const raw = await env.AI.run(model, {
+        messages: working,
+        tools: TOOLS
+      });
 
-        let args = call.arguments;
-        if (typeof args === "string") {
-          try { args = JSON.parse(args); } catch { args = {}; }
-        }
-        const toolResult = await executeTool(env, call.name, args || {});
-        trace.push({ tool: call.name, arguments: args || {}, result: toolResult });
+      const ai = normalizeAi(raw);
+      const call = ai.tool_calls?.[0];
 
-        // Preserve the model-generated tool call ID for the next inference round.
-        // Current Workers AI chat models expect an OpenAI-compatible assistant
-        // tool_calls message followed by a tool result carrying tool_call_id.
-        const toolCallId = call.id || `call_${round}`;
-        const callArguments = typeof call.arguments === "string"
-          ? call.arguments
-          : JSON.stringify(args || {});
-        working.push({
-          role: "assistant",
-          content: null,
-          tool_calls: [{
-            id: toolCallId,
-            type: "function",
-            function: {
-              name: call.name,
-              arguments: callArguments
-            }
-          }]
-        });
-        working.push({
-          role: "tool",
-          tool_call_id: toolCallId,
-          content: JSON.stringify(toolResult)
-        });
+      if (call) {
+        return json({
+          answer: `DIAGNOSTIC OK: Workers AI accepted the tool definitions and selected "${call.name}".`,
+          model,
+          diagnostic: {
+            stage: "initial_tool_call",
+            accepted: true,
+            tool: call.name
+          }
+        }, 200, responseOrigin);
       }
-      return json({ error: "tool_loop_limit", message: "The model requested too many tool calls for one reply.", toolTrace: debugEnabled ? trace : undefined }, 502, responseOrigin);
+
+      return json({
+        answer: ai.content || "DIAGNOSTIC: Workers AI accepted the tools payload but did not select a tool.",
+        model,
+        diagnostic: {
+          stage: "initial_tool_call",
+          accepted: true,
+          tool: null
+        }
+      }, 200, responseOrigin);
     } catch (err) {
-      return json({ error: "ai_error", message: String(err?.message || err), toolTrace: debugEnabled ? trace : undefined }, 502, responseOrigin);
+      return json({
+        error: "ai_error_initial_tool_call",
+        message: String(err?.message || err),
+        diagnostic: {
+          stage: "initial_tool_call",
+          accepted: false
+        }
+      }, 502, responseOrigin);
     }
   }
 };
