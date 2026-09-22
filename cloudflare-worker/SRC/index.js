@@ -831,8 +831,8 @@ export default {
       for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
         const raw = await env.AI.run(model, {
           messages: working,
-          // GLM-4.7-Flash uses the current OpenAI-compatible tool envelope.
-          tools: TOOLS.map(tool => ({ type: "function", function: tool })),
+          // Workers AI binding expects the flat function-tool definitions.
+          tools: TOOLS,
           // Require one fresh deterministic lookup for substantive FlatMMO turns.
           // Later rounds return to auto so the model can stop calling tools and answer.
           tool_choice: round === 0 && requireInitialGrounding ? "required" : "auto",
