@@ -22,7 +22,7 @@ HARD RULES:
 - For comparisons with RuneScape, OSRS, or another game, use compare_game_term. If a FlatMMO entity is named, also check that entity with the relevant FlatMMO tool. Do not ask whether the user wants you to check data that the available tools can check immediately.
 - A listed random acquisition source is never proof that the target item is guaranteed. For pickpocketing and monster drops, distinguish action success from the target item's drop roll.
 - For pickpocketing, use the returned rarity/drop odds when known. A successful pickpocket can still fail to produce a particular non-guaranteed item. Do not describe a target item as guaranteed unless the tool explicitly marks it guaranteed.
-- For monster loot, use the returned per-item rarity. "Always" / denominator 1 is guaranteed on that monster kill; larger denominators are chance-based. Do not imply that other drops are mutually exclusive unless a tool explicitly says so.
+- For monster loot, use the returned per-item rarity. "Always" / denominator 1 is guaranteed on that monster kill; larger denominators are chance-based. The current Companion data does not establish whether separate chance-based drops are mutually exclusive, independent, or limited to a maximum number per kill. Never say "one of the other drops", "only one other drop", or otherwise imply a concurrent-drop limit unless a tool explicitly documents one.
 - If a monster drop is marked oneTime:true, it can drop at its listed chance only until the player obtains it once. After that first acquisition it is no longer eligible to drop for that player. Never describe oneTime as "one per kill".
 - When discussing a chance-based source, mention a few other documented outcomes when useful, especially if the player asks what else they may receive.
 - If the current data has an exact chance, state it. Only say a chance is unknown when the tool explicitly reports it as unknown.
@@ -323,10 +323,15 @@ function randomRouteSemantics(route, targetName, pools = {}) {
       oneTime: target?.oneTime ?? false,
       dropEligibility: target?.dropEligibility ?? "unknown",
       oneTimeRule: target?.oneTimeRule ?? null,
+      lootRollRelationship: {
+        mutualExclusivity: "unknown",
+        rollIndependence: "unknown",
+        maxConcurrentChanceDrops: "unknown"
+      },
       otherDocumentedOutcomes: table.filter(x => norm(x.item) !== norm(targetName)),
       note: target?.oneTime
         ? "This is a one-time drop: it can drop at the listed chance until the player obtains it once, then it is no longer eligible to drop for that player. This does not mean one copy per kill."
-        : "Monster loot-table entries with odds above 1/1 are chance-based. A null guarantee means the current data does not establish whether the target is guaranteed. Other listed drops are additional documented drops and are not assumed to be mutually exclusive."
+        : "Monster loot-table entries with odds above 1/1 are chance-based. A null guarantee means the current data does not establish whether the target is guaranteed. Other listed drops are additional documented outcomes. The current data does not establish whether chance-based drops are mutually exclusive, independent, or limited to a maximum number on the same kill."
     };
   }
   return null;
@@ -493,7 +498,7 @@ async function findItemSources(env, args) {
     unknowns: [
       "A listed skill unlock does not by itself establish pickpocket success probability.",
       "Unlisted acquisition methods are not proven absent from FlatMMO.",
-      "Do not infer mutual exclusivity between loot-table entries unless a documented mechanic explicitly says so."
+      "For monster loot, the current data does not establish mutual exclusivity, roll independence, or a maximum number of concurrent chance-based drops. Do not infer any of those mechanics."
     ]
   };
 }
@@ -510,7 +515,12 @@ async function getMonster(env, args) {
       drops: monsterLootTable(r),
       rooms: (r.roomRefs || []).map(x => ({ roomId: x.roomId, relation: x.relation, confidence: x.confidence }))
     },
-    lootSemantics: "Each listed loot-table entry has its own documented rarity. 1/1 means Always; larger denominators are chance-based. A drop with oneTime:true remains eligible at its listed chance until acquired once; after acquisition it is permanently ineligible for that player. oneTime never means one copy per kill. Do not describe a non-1/1 item as guaranteed, and do not assume different entries are mutually exclusive."
+    lootRollRelationship: {
+      mutualExclusivity: "unknown",
+      rollIndependence: "unknown",
+      maxConcurrentChanceDrops: "unknown"
+    },
+    lootSemantics: "Each listed loot-table entry has its own documented rarity. 1/1 means Always; larger denominators are chance-based. A drop with oneTime:true remains eligible at its listed chance until acquired once; after acquisition it is permanently ineligible for that player. oneTime never means one copy per kill. The current data does not establish whether chance-based drops are mutually exclusive, independent, or limited to a maximum number on the same kill. Do not state or imply any of those mechanics."
   };
 }
 
@@ -619,12 +629,18 @@ async function getSourceLoot(env, args) {
       sourceType: "monster",
       source: monster.name,
       drops: monsterLootTable(monster),
+      lootRollRelationship: {
+        mutualExclusivity: "unknown",
+        rollIndependence: "unknown",
+        maxConcurrentChanceDrops: "unknown"
+      },
       semantics: [
         "Monster loot-table entries are per-item documented rarities.",
         "1/1 means Always; larger denominators are chance-based.",
         "A drop with oneTime:true can drop at its listed chance until the player obtains it once. After that first acquisition it is no longer eligible to drop for that player.",
         "oneTime means once-ever acquisition, not one copy per kill.",
-        "Do not assume different loot entries are mutually exclusive."
+        "The current data does not establish whether chance-based drops are mutually exclusive, independent, or limited to a maximum number on the same kill.",
+        "Do not say or imply that only one additional drop can occur unless a documented mechanic explicitly establishes that."
       ],
       sourceUrl: "https://flatmmo.wiki/index.php/Monsters"
     };
