@@ -23,6 +23,7 @@ HARD RULES:
 - A listed random acquisition source is never proof that the target item is guaranteed. For pickpocketing and monster drops, distinguish action success from the target item's drop roll.
 - For pickpocketing, use the returned rarity/drop odds when known. A successful pickpocket can still fail to produce a particular non-guaranteed item. Do not describe a target item as guaranteed unless the tool explicitly marks it guaranteed.
 - For monster loot, use the returned per-item rarity. "Always" / denominator 1 is guaranteed on that monster kill; larger denominators are chance-based. Do not imply that other drops are mutually exclusive unless a tool explicitly says so.
+- If a monster drop is marked oneTime:true, it can drop at its listed chance only until the player obtains it once. After that first acquisition it is no longer eligible to drop for that player. Never describe oneTime as "one per kill".
 - When discussing a chance-based source, mention a few other documented outcomes when useful, especially if the player asks what else they may receive.
 - If the current data has an exact chance, state it. Only say a chance is unknown when the tool explicitly reports it as unknown.
 - For questions about FlatMMO itself, its official rules, or where to get current community help, use get_game_info/get_game_rules. When current community help would be useful, you may suggest the official Discord via the Discord link in the game window or official site.
@@ -278,13 +279,20 @@ function pickpocketPool(itemsData, victim) {
 }
 
 function monsterLootTable(monster) {
-  return (monster?.drops || []).map(d => ({
-    item: titleId(d.item),
-    min: d.min,
-    max: d.max,
-    chance: chanceFromDenominator(d.rarity_denominator, d.rarity_denominator === 1 ? "Always" : null),
-    unique: !!d.unique
-  }));
+  return (monster?.drops || []).map(d => {
+    const oneTime = !!d.unique;
+    return {
+      item: titleId(d.item),
+      min: d.min,
+      max: d.max,
+      chance: chanceFromDenominator(d.rarity_denominator, d.rarity_denominator === 1 ? "Always" : null),
+      oneTime,
+      dropEligibility: oneTime ? "until_first_acquisition" : "normal",
+      oneTimeRule: oneTime
+        ? "Can drop at the listed chance until the player obtains it once. After the first acquisition, it is no longer eligible to drop for that player."
+        : null
+    };
+  });
 }
 
 function randomRouteSemantics(route, targetName, pools = {}) {
@@ -312,8 +320,13 @@ function randomRouteSemantics(route, targetName, pools = {}) {
       action: "monster_drop",
       targetChance,
       guarantee: targetChance.known ? targetChance.denominator === 1 : null,
+      oneTime: target?.oneTime ?? false,
+      dropEligibility: target?.dropEligibility ?? "unknown",
+      oneTimeRule: target?.oneTimeRule ?? null,
       otherDocumentedOutcomes: table.filter(x => norm(x.item) !== norm(targetName)),
-      note: "Monster loot-table entries with odds above 1/1 are chance-based. A null guarantee means the current data does not establish whether the target is guaranteed. Other listed drops are additional documented drops and are not assumed to be mutually exclusive."
+      note: target?.oneTime
+        ? "This is a one-time drop: it can drop at the listed chance until the player obtains it once, then it is no longer eligible to drop for that player. This does not mean one copy per kill."
+        : "Monster loot-table entries with odds above 1/1 are chance-based. A null guarantee means the current data does not establish whether the target is guaranteed. Other listed drops are additional documented drops and are not assumed to be mutually exclusive."
     };
   }
   return null;
@@ -497,7 +510,7 @@ async function getMonster(env, args) {
       drops: monsterLootTable(r),
       rooms: (r.roomRefs || []).map(x => ({ roomId: x.roomId, relation: x.relation, confidence: x.confidence }))
     },
-    lootSemantics: "Each listed loot-table entry has its own documented rarity. 1/1 means Always; larger denominators are chance-based. Do not describe a non-1/1 item as guaranteed, and do not assume different entries are mutually exclusive."
+    lootSemantics: "Each listed loot-table entry has its own documented rarity. 1/1 means Always; larger denominators are chance-based. A drop with oneTime:true remains eligible at its listed chance until acquired once; after acquisition it is permanently ineligible for that player. oneTime never means one copy per kill. Do not describe a non-1/1 item as guaranteed, and do not assume different entries are mutually exclusive."
   };
 }
 
@@ -609,6 +622,8 @@ async function getSourceLoot(env, args) {
       semantics: [
         "Monster loot-table entries are per-item documented rarities.",
         "1/1 means Always; larger denominators are chance-based.",
+        "A drop with oneTime:true can drop at its listed chance until the player obtains it once. After that first acquisition it is no longer eligible to drop for that player.",
+        "oneTime means once-ever acquisition, not one copy per kill.",
         "Do not assume different loot entries are mutually exclusive."
       ],
       sourceUrl: "https://flatmmo.wiki/index.php/Monsters"
