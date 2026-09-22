@@ -828,129 +828,108 @@ export default {
     const requireInitialGrounding = needsToolGrounding(history[history.length - 1]?.content);
 
     try {
-      // Keep a known-good baseline for social turns.
       if (!requireInitialGrounding) {
         const raw = await env.AI.run(model, { messages: working });
         const ai = normalizeAi(raw);
-        const answer = ai.content || "Hello.";
-        return json({ answer, model }, 200, responseOrigin);
+        return json({ answer: ai.content || "Hello.", model }, 200, responseOrigin);
       }
 
-      // Diagnostic: recursively test groups of wrapped tools.
-      // If a group fails, split it until the exact failing tool(s) are isolated.
-      // If both halves pass but the parent group fails, report a combination/size issue.
-      const probeMessages = [
-        { role: "system", content: "You are testing whether tool definitions are accepted. Respond normally or call a tool." },
-        { role: "user", content: "Test the available tools." }
-      ];
+      const wrappedTools = TOOLS.map(tool => ({ type: "function", function: tool }));
 
-      async function probe(indices) {
-        try {
-          await env.AI.run(model, {
-            messages: probeMessages,
-            tools: indices.map(i => ({ type: "function", function: TOOLS[i] }))
-          });
-          return {
-            ok: true,
-            indices,
-            names: indices.map(i => TOOLS[i].name)
-          };
-        } catch (err) {
-          if (indices.length === 1) {
-            return {
-              ok: false,
-              indices,
-              names: [TOOLS[indices[0]].name],
-              error: String(err?.message || err)
-            };
+      const tests = [
+        {
+          name: "A: working messages + all wrapped tools",
+          input: {
+            messages: working,
+            tools: wrappedTools
           }
-
-          const mid = Math.ceil(indices.length / 2);
-          const left = await probe(indices.slice(0, mid));
-          const right = await probe(indices.slice(mid));
-
-          return {
-            ok: false,
-            indices,
-            names: indices.map(i => TOOLS[i].name),
-            error: String(err?.message || err),
-            left,
-            right,
-            combinationOnly: left.ok && right.ok
-          };
+        },
+        {
+          name: "B: + tool_choice required",
+          input: {
+            messages: working,
+            tools: wrappedTools,
+            tool_choice: "required"
+          }
+        },
+        {
+          name: "C: + parallel_tool_calls false",
+          input: {
+            messages: working,
+            tools: wrappedTools,
+            tool_choice: "required",
+            parallel_tool_calls: false
+          }
+        },
+        {
+          name: "D: + max_completion_tokens 500",
+          input: {
+            messages: working,
+            tools: wrappedTools,
+            tool_choice: "required",
+            parallel_tool_calls: false,
+            max_completion_tokens: 500
+          }
+        },
+        {
+          name: "E: + temperature 0.2 (exact original first-round payload)",
+          input: {
+            messages: working,
+            tools: wrappedTools,
+            tool_choice: "required",
+            parallel_tool_calls: false,
+            max_completion_tokens: 500,
+            temperature: 0.2
+          }
         }
-      }
-
-      const all = TOOLS.map((_, i) => i);
-      const tree = await probe(all);
-
-      const failing = [];
-      const combinationFailures = [];
-
-      function collect(node) {
-        if (!node || node.ok) return;
-        if (node.indices?.length === 1) {
-          failing.push({
-            index: node.indices[0],
-            name: node.names[0],
-            error: node.error
-          });
-          return;
-        }
-        if (node.combinationOnly) {
-          combinationFailures.push({
-            indices: node.indices,
-            names: node.names,
-            error: node.error
-          });
-        }
-        collect(node.left);
-        collect(node.right);
-      }
-
-      collect(tree);
-
-      const lines = [
-        "TOOL SCHEMA DIAGNOSTIC COMPLETE",
-        "",
-        `Total tools: ${TOOLS.length}`,
-        `Individually failing tools: ${failing.length}`
       ];
 
-      if (failing.length) {
-        lines.push("", "Failing tool(s):");
-        for (const item of failing) {
-          lines.push(`- #${item.index} ${item.name}: ${item.error}`);
+      const results = [];
+
+      for (const test of tests) {
+        try {
+          const raw = await env.AI.run(model, test.input);
+          const ai = normalizeAi(raw);
+          results.push({
+            name: test.name,
+            ok: true,
+            tool: ai.tool_calls?.[0]?.name || null,
+            hasText: Boolean(ai.content)
+          });
+        } catch (err) {
+          results.push({
+            name: test.name,
+            ok: false,
+            error: String(err?.message || err)
+          });
+          break;
         }
+      }
+
+      const lines = ["REQUEST OPTION DIAGNOSTIC", ""];
+      for (const r of results) {
+        lines.push(`${r.ok ? "PASS" : "FAIL"} — ${r.name}${r.ok && r.tool ? ` — selected ${r.tool}` : ""}${!r.ok ? ` — ${r.error}` : ""}`);
+      }
+
+      const failed = results.find(r => !r.ok);
+      if (failed) {
+        lines.push("", `First failing stage: ${failed.name}`);
       } else {
-        lines.push("", "No individual tool schema failed.");
-      }
-
-      if (combinationFailures.length) {
-        lines.push("", "Combination/size failures:");
-        for (const item of combinationFailures) {
-          lines.push(`- ${item.names.join(", ")}`);
-        }
-      }
-
-      if (!failing.length && !combinationFailures.length && tree.ok) {
-        lines.push("", "The entire wrapped tool set was accepted in this diagnostic.");
+        lines.push("", "All first-round request variants passed. The next suspect is the second tool-result/model round.");
       }
 
       return json({
         answer: lines.join("\n"),
         model,
         diagnostic: {
-          stage: "tool_schema_isolation",
-          failing,
-          combinationFailures,
-          tree
+          stage: "request_option_isolation",
+          results
         }
       }, 200, responseOrigin);
 
     } catch (err) {
       return json({
-        error: "tool_schema_diagnostic_error",
+        error: "request_option_diagnostic_error",
         message: String(err?.message || err)
       }, 502, responseOrigin);
     }
